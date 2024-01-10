@@ -29,6 +29,8 @@ returns table(
 	"xG Against" numeric,
 	"xG Against /Match" numeric,
 	"xG Diff" numeric,
+	"xPoints" bigint,
+	"DiffPoints" bigint,
 	/*"xG Diff /Match" numeric,*/
 	"Yellow Cards" bigint,
 	"Red Cards" bigint,
@@ -81,8 +83,10 @@ begin
 		round(set_numeric_stat(sum(home_xg_against)::numeric, sum(away_xg_against)::numeric, side) / set_bigint_stat(sum(home_nb_wins + home_nb_draws + home_nb_loses), sum(away_nb_wins + away_nb_draws + away_nb_loses), side)::numeric, 2) as "xG Against /Match",
 
 		set_numeric_stat(sum(home_xg_for - home_xg_against)::numeric, sum(away_xg_for - away_xg_against)::numeric, side) as "xG Diff",
-		/*round(set_numeric_stat(cast(sum(home_xg_for - home_xg_against) as numeric), cast(sum(away_xg_for - away_xg_against) as numeric), side) / set_bigint_stat(sum(home_nb_wins + home_nb_draws + home_nb_loses), sum(away_nb_wins + away_nb_draws + away_nb_loses), side)::numeric, 2) as "xG Diff /Match",*/
-		
+
+		set_bigint_stat(sum(home_x_points), sum(away_x_points), side) as "xPoints",
+		set_bigint_stat(sum(home_points - home_x_points), sum(away_points - away_x_points), side) as "DiffPoints",
+
 		set_bigint_stat(sum(home_y_cards), sum(away_y_card), side) as "Yellow Cards",
 		set_bigint_stat(sum(home_r_cards), sum(away_r_cards), side) as "Red Cards",
 		set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), side) as "Incl. 2 Yellow Cards",
@@ -129,6 +133,14 @@ begin
 				else 0
 			end as home_points,
 			0 as away_points,
+
+			case
+				when ts.xg > ts2.xg then 3
+				when ts.xg = ts2.xg then 1
+				else 0
+			end as home_x_points,
+			0 as away_x_points,
+			
 			case
 				when home_score > away_score then 1 else 0
 			end as home_nb_wins,
@@ -144,6 +156,8 @@ begin
 		from match h
 		left join team_stats ts 
 		on h.home_team = ts.id_team and h.id = ts.id_match
+		left join team_stats ts2
+		on h.id = ts2.id_match and ts.id_team <> ts2.id_team
 		where 
 			id_championship = id_chp and 
 			season = id_season and 
@@ -190,6 +204,13 @@ begin
 				when away_score = home_score then 1
 				else 0
 			end as away_points,
+
+			0 as home_x_points,
+			case
+				when ts.xg > ts2.xg then 3
+				when ts.xg = ts2.xg then 1
+				else 0
+			end as away_x_points,
 			
 			0 as home_nb_wins,
 			case
@@ -206,6 +227,8 @@ begin
 		from match a
 		left join team_stats ts 
 		on a.away_team = ts.id_team and a.id = ts.id_match
+		left join team_stats ts2
+		on a.id = ts2.id_match and ts.id_team <> ts2.id_team
 		where 
 			id_championship = id_chp and 
 			season = id_season and 
