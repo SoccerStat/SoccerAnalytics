@@ -24,18 +24,24 @@ returns table(
 	"Goals Against" bigint,
 	"Goals Diff" bigint,
 	"Clean Sheets" bigint,
+	/*"xPoints" bigint,
+	"xPoints/Match" numeric,
+	"xWins" bigint,
+	"xDraws" bigint,
+	"xLoses" bigint,*/
 	"xG For" numeric,
 	"xG For /Match" numeric,
 	"xG Against" numeric,
 	"xG Against /Match" numeric,
-	"xG Diff" numeric,
-	"xPoints" bigint,
+	/*"xG Diff" numeric,
 	"DiffPoints" bigint,
-	/*"xG Diff /Match" numeric,*/
+	"xG Diff /Match" numeric,*/
 	"Yellow Cards" bigint,
 	"Red Cards" bigint,
 	"Incl. 2 Yellow Cards" bigint,
 	"Fouls" bigint,
+	"Shots" bigint,
+	"Shots on Target" bigint,
 	"Last Opponent" varchar(100)
 )
 as $$
@@ -75,6 +81,13 @@ begin
 		set_bigint_stat(sum(home_goal_for - home_goal_against), sum(away_goal_for - away_goal_against), side) as "Goals Diff",
 
 		set_bigint_stat(sum(home_clean_sheets), sum(away_clean_sheets), side) as "Clean Sheets",
+
+		/*set_bigint_stat(sum(home_x_points), sum(away_x_points), side) as "xPoints",
+		round(set_bigint_stat(sum(home_x_points), sum(away_x_points), side)::numeric / set_bigint_stat(sum(home_x_wins + home_x_draws + home_x_loses), sum(away_x_wins + away_x_draws + away_x_loses), side)::numeric, 2) as "xPoints/Match",
+
+		set_bigint_stat(sum(home_x_wins), sum(away_x_wins), side) as "xWins",
+		set_bigint_stat(sum(home_x_draws), sum(away_x_draws), side) as "xDraws",
+		set_bigint_stat(sum(home_x_loses), sum(away_x_loses), side) as "xLoses",*/
 		
 		set_numeric_stat(sum(home_xg_for)::numeric, sum(away_xg_for)::numeric, side) as "xG For",
 		round(set_numeric_stat(sum(home_xg_for)::numeric, sum(away_xg_for)::numeric, side) / set_bigint_stat(sum(home_nb_wins + home_nb_draws + home_nb_loses), sum(away_nb_wins + away_nb_draws + away_nb_loses), side)::numeric, 2) as "xG For /Match",
@@ -82,16 +95,18 @@ begin
 		set_numeric_stat(sum(home_xg_against)::numeric, sum(away_xg_against)::numeric, side) as "xG Against",
 		round(set_numeric_stat(sum(home_xg_against)::numeric, sum(away_xg_against)::numeric, side) / set_bigint_stat(sum(home_nb_wins + home_nb_draws + home_nb_loses), sum(away_nb_wins + away_nb_draws + away_nb_loses), side)::numeric, 2) as "xG Against /Match",
 
-		set_numeric_stat(sum(home_xg_for - home_xg_against)::numeric, sum(away_xg_for - away_xg_against)::numeric, side) as "xG Diff",
+		/*set_numeric_stat(sum(home_xg_for - home_xg_against)::numeric, sum(away_xg_for - away_xg_against)::numeric, side) as "xG Diff",
 
-		set_bigint_stat(sum(home_x_points), sum(away_x_points), side) as "xPoints",
-		set_bigint_stat(sum(home_points - home_x_points), sum(away_points - away_x_points), side) as "DiffPoints",
+		set_bigint_stat(sum(home_points - home_x_points), sum(away_points - away_x_points), side) as "DiffPoints",*/
 
 		set_bigint_stat(sum(home_y_cards), sum(away_y_card), side) as "Yellow Cards",
 		set_bigint_stat(sum(home_r_cards), sum(away_r_cards), side) as "Red Cards",
 		set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), side) as "Incl. 2 Yellow Cards",
 		
 		set_bigint_stat(sum(home_fouls), sum(away_fouls), side) as "Fouls",
+
+		set_bigint_stat(sum(home_shots), sum(away_shots), side) as "Shots",
+		set_bigint_stat(sum(home_shots_ot), sum(away_shots_ot), side) as "Shots on Target",
 
 		get_last_opponent(c.id, id_season) as "Last Opponent"
 		
@@ -109,6 +124,12 @@ begin
 			
 			ts.fouls as home_fouls,
 			0 as away_fouls,
+
+			ts.shots as home_shots,
+			0 as away_shots,
+
+			ts.on_target as home_shots_ot,
+			0 as away_shots_ot,
 			
 			home_score as home_goal_for,
 			0 as away_goal_for,
@@ -145,14 +166,28 @@ begin
 				when home_score > away_score then 1 else 0
 			end as home_nb_wins,
 			0 as away_nb_wins,
+			/*case
+				when ts.xg > ts2.xg then 1 else 0
+			end as home_x_wins,
+			0 as away_x_wins,*/
+
 			case
 				when home_score = away_score then 1 else 0
 			end as home_nb_draws,
 			0 as away_nb_draws,
+			/*case
+				when ts.xg = ts2.xg then 1 else 0
+			end as home_x_draws,
+			0 as away_x_draws,*/
+
 			case
 				when home_score < away_score then 1 else 0
 			end as home_nb_loses,
-			0 as away_nb_loses
+			0 as away_nb_loses/*,
+			case
+				when ts.xg < ts2.xg then 1 else 0
+			end as home_x_loses,
+			0 as away_x_loses*/
 		from match h
 		left join team_stats ts 
 		on h.home_team = ts.id_team and h.id = ts.id_match
@@ -180,6 +215,12 @@ begin
 			
 			0 as home_fouls,
 			ts.fouls as away_fouls,
+
+			0 as home_shots,
+			ts.shots as away_shots,
+
+			0 as home_shots_ot,
+			ts.on_target as away_shots_ot,
 
 			0 as home_goal_for,
 			away_score as away_goal_for,
@@ -216,14 +257,28 @@ begin
 			case
 				when away_score > home_score then 1 else 0
 			end as away_nb_wins,
+			/*0 as home_x_wins,
+			case
+				when ts.xg > ts2.xg then 1 else 0
+			end as away_x_wins,*/
+
 			0 as home_nb_draws,
 			case
 				when away_score = home_score then 1 else 0
 			end as away_nb_draws,
+			/*0 as home_x_draws,
+			case
+				when ts.xg = ts2.xg then 1 else 0
+			end as away_x_draws,*/
+
 			0 as home_nb_loses,
 			case
 				when away_score < home_score then 1 else 0
-			end as away_nb_loses
+			end as away_nb_loses/*,
+			0 as home_x_loses,
+			case
+				when ts.xg < ts2.xg then 1 else 0
+			end as away_x_loses*/
 		from match a
 		left join team_stats ts 
 		on a.away_team = ts.id_team and a.id = ts.id_match
