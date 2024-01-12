@@ -87,19 +87,18 @@ class TeamsRanking:
                 side := '{side}',
                 first_week := {first_week},
                 last_week := {last_week}
-            );
-            """)
+                );""")
         
         justice_ranking = self._build_justice_ranking( \
-            self.db.df_from_query(f"""
-                            select * 
-                            from teams_justice_table(
-                                id_chp := '{id_chp}', 
-                                id_season := '{season}', 
-                                first_week := {first_week},
-                                last_week := {last_week}
-                            );
-                            """),
+            self.db.df_from_query(
+                f"""
+                select * 
+                from teams_justice_table(
+                    id_chp := '{id_chp}', 
+                    id_season := '{season}', 
+                    first_week := {first_week},
+                    last_week := {last_week}
+                    );"""),
             side,
             n_sim,
             r)

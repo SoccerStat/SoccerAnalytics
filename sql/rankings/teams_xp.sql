@@ -4,8 +4,7 @@ create or replace function teams_justice_table(
 	in id_chp varchar(100),
 	in id_season varchar(20),
 	in first_week int default 1,
-	in last_week int default 100/*,
-	in side ranking_type default 'both'*/
+	in last_week int default 100
 )
 returns table(
     "id_match" varchar(20),
@@ -25,9 +24,6 @@ begin
 	if first_week > last_week then
 		raise exception 'Choose first_week as being lower than last_week';
 	end if;
-	/*if side not in ('home', 'away', 'both') then
-        raise exception 'Invalid value for ranking_type. Valid values are: home, away, both';
-    end if;*/
    
 	return query
     select 
@@ -45,12 +41,6 @@ begin
 
         length(m.week) <= 2 and
         cast(m.week as int) >= first_week and
-        cast(m.week as int) <= last_week /*and
-        
-        case
-            when side = 'home' then ts.played_home = true
-            when side = 'away' then ts.played_home = false
-            else true
-        end;*/;
+        cast(m.week as int) <= last_week;
 end;
 $$ language plpgsql;
