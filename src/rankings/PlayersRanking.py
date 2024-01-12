@@ -1,3 +1,5 @@
+import pandas as pd
+
 from postgres.PostgresToDataFrame import PostgresToDataframe
 
 class PlayersRanking:
@@ -11,7 +13,8 @@ class PlayersRanking:
         side :str, 
         first_week: int, 
         last_week: int
-    ):
+    ) -> pd.DataFrame:
+        
         self.db.execute_sql_file("sql/rankings/players.sql")
         
         return self.db.df_from_query(

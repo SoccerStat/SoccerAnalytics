@@ -18,6 +18,9 @@ returns table(
 	"GK" bool,
 	"Club" text,
 	"Matches" bigint,
+	"Wins" bigint,
+	"Draws" bigint,
+	"Loses" bigint,
 	"Goals" bigint,
 	"Penalties" bigint,
 	"Assists" bigint,
@@ -70,7 +73,11 @@ begin
 			
 			string_agg(distinct c.complete_name, ', ') as Club,
 
-			set_bigint_stat(sum(home_matches), sum(away_matches), side) as Matches,
+			set_bigint_stat(sum(home_nb_wins + home_nb_draws + home_nb_loses), sum(away_nb_wins + away_nb_draws + away_nb_loses), side) as Matches,
+
+			set_bigint_stat(sum(home_nb_wins), sum(away_nb_wins), side) as Wins,
+			set_bigint_stat(sum(home_nb_draws), sum(away_nb_draws), side) as Draws,
+			set_bigint_stat(sum(home_nb_loses), sum(away_nb_loses), side) as Loses,
 			
 			set_bigint_stat(sum(home_goals), sum(away_goals), side) as Goals,
 			set_bigint_stat(sum(home_pens_made), sum(away_pens_made), side) as Penalties,
@@ -125,14 +132,30 @@ begin
 				ps.cards_yellow_red as home_cards_yellow_red,
 				0 as away_cards_yellow_red,
 
-				1 as home_matches,
-				0 as away_matches,
+				case
+					when home_score > away_score then 1 else 0
+				end as home_nb_wins,
+				0 as away_nb_wins,
+
+				case
+					when home_score = away_score then 1 else 0
+				end as home_nb_draws,
+				0 as away_nb_draws,
+
+				case
+					when home_score < away_score then 1 else 0
+				end as home_nb_loses,
+				0 as away_nb_loses,
 
 				ps.minutes as home_minutes,
 				0 as away_minutes
 			from player_stats ps
 			left join match h
 			on ps.id_match = h.id
+			left join team_stats ts 
+			on h.away_team = ts.id_team and h.id = ts.id_match
+			left join team_stats ts2
+			on h.id = ts2.id_match and ts.id_team <> ts2.id_team
 			where 
 				ps.played_home and
 				h.id_championship = id_chp and
@@ -179,14 +202,30 @@ begin
 				0 as home_cards_yellow_red,
 				ps.cards_yellow_red as away_cards_yellow_red,
 
-				0 as home_matches,
-				1 as away_matches,
+				0 as home_nb_wins,
+				case
+					when away_score > home_score then 1 else 0
+				end as away_nb_wins,
+
+				0 as home_nb_draws,
+				case
+					when away_score = home_score then 1 else 0
+				end as away_nb_draws,
+
+				0 as home_nb_loses,
+				case
+					when away_score < home_score then 1 else 0
+				end as away_nb_loses,
 
 				0 as home_minutes,
 				ps.minutes as away_minutes
 			from player_stats ps
 			left join match a
 			on ps.id_match = a.id
+			left join team_stats ts 
+			on a.away_team = ts.id_team and a.id = ts.id_match
+			left join team_stats ts2
+			on a.id = ts2.id_match and ts.id_team <> ts2.id_team
 			where 
 				not ps.played_home and
 				a.id_championship = id_chp and
@@ -196,13 +235,14 @@ begin
 				
 				cast(week as int) >= first_week and
 				cast(week as int) <= last_week
-			) as stats
+			) as "stats"
 			join club c 
 			on team = c.id
 			join player p
 			on stats.id_player = p.id
 		group by Player, "Last Opponent"
 	)
+
 	select 
 		rank() over (
 			order by
@@ -216,6 +256,10 @@ begin
 		ps.GK,
 		ps.Club,
 		ps.Matches,
+
+		ps.Wins,
+		ps.Draws,
+		ps.Loses,
 
 		ps.Goals,
 		ps.Penalties,

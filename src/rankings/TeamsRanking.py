@@ -107,7 +107,7 @@ class TeamsRanking:
             teams_ranking, 
             justice_ranking, 
             left_on='Club', 
-            right_index=True)
+            right_on='Club')
         
         teams_ranking['xP/Match'] = \
             round(teams_ranking['xP'] / teams_ranking['Matches'], r)
