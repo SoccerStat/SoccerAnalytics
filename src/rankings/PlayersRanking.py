@@ -25,4 +25,4 @@ class PlayersRanking:
                 side := '{side}', 
                 first_week := {first_week}, 
                 last_week := {last_week}
-                );""").set_index('Ranking')
+                );""") #.set_index('Ranking')

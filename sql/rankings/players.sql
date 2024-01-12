@@ -13,8 +13,9 @@ create or replace function players_rankings(
 	in side ranking_type default 'both'
 )
 returns table(
-	"Ranking" bigint,
+	--"Ranking" bigint,
 	"Player" varchar(100),
+	"Age" bigint,
 	"GK" bool,
 	"Club" text,
 	"Matches" bigint,
@@ -33,6 +34,7 @@ returns table(
 	"Red Cards" bigint,
 	"Incl. 2 Yellow Cards" bigint,
 	"Minutes" bigint,
+	"Captain" bigint,
 	"Last Opponent" varchar(100)
 	--Attendance numeric,
 )
@@ -66,6 +68,10 @@ begin
 		select
 			p.name as Player,
 
+			EXTRACT(YEAR FROM age(current_date, date_birth))::bigint/* || ' ans, ' ||
+			EXTRACT(MONTH FROM age(current_date, date_birth)) || ' months, ' ||
+			EXTRACT(DAY FROM age(current_date, date_birth)) || ' days'*/ AS Age,
+
 			case
 				when set_bigint_stat(sum(home_gk), sum(away_gk), side) > 0 then true
 				else false
@@ -94,6 +100,8 @@ begin
 			set_bigint_stat(sum(home_cards_yellow_red), sum(away_cards_yellow_red), side) as "Incl. 2 Yellow Cards",
 			
 			set_bigint_stat(sum(home_minutes), sum(away_minutes), side) as Minutes,
+
+			set_bigint_stat(sum(home_captain), sum(away_captain), side) as Captain,
 			
 			get_last_opponent(c.id, id_season) as "Last Opponent"
 
@@ -147,15 +155,20 @@ begin
 				end as home_nb_loses,
 				0 as away_nb_loses,
 
+				case
+					when ts.id_captain = ps.id_player then 1 else 0
+				end as home_captain,
+				0 as away_captain,
+
 				ps.minutes as home_minutes,
 				0 as away_minutes
 			from player_stats ps
 			left join match h
 			on ps.id_match = h.id
 			left join team_stats ts 
-			on h.away_team = ts.id_team and h.id = ts.id_match
-			left join team_stats ts2
-			on h.id = ts2.id_match and ts.id_team <> ts2.id_team
+			on h.home_team = ts.id_team and h.id = ts.id_match
+			--left join team_stats ts2
+			--on h.id = ts2.id_match and ts.id_team <> ts2.id_team
 			where 
 				ps.played_home and
 				h.id_championship = id_chp and
@@ -217,6 +230,11 @@ begin
 					when away_score < home_score then 1 else 0
 				end as away_nb_loses,
 
+				0 as home_captain,
+				case
+					when ts.id_captain = ps.id_player then 1 else 0
+				end as away_captain,
+
 				0 as home_minutes,
 				ps.minutes as away_minutes
 			from player_stats ps
@@ -224,8 +242,8 @@ begin
 			on ps.id_match = a.id
 			left join team_stats ts 
 			on a.away_team = ts.id_team and a.id = ts.id_match
-			left join team_stats ts2
-			on a.id = ts2.id_match and ts.id_team <> ts2.id_team
+			--left join team_stats ts2
+			--on a.id = ts2.id_match and ts.id_team <> ts2.id_team
 			where 
 				not ps.played_home and
 				a.id_championship = id_chp and
@@ -240,19 +258,20 @@ begin
 			on team = c.id
 			join player p
 			on stats.id_player = p.id
-		group by Player, "Last Opponent"
+		group by Player, Age, "Last Opponent"
 	)
 
 	select 
-		rank() over (
+		/*rank() over (
 			order by
 				ps.Goals desc, 
 				ps.Penalties asc, 
 				ps.Assists desc, 
 				ps.Minutes asc
-		) as Ranking,
+		) as Ranking,*/
 		
 		ps.Player,
+		ps.Age,
 		ps.GK,
 		ps.Club,
 		ps.Matches,
@@ -286,6 +305,8 @@ begin
 		ps."Incl. 2 Yellow Cards",
 
 		ps.Minutes,
+
+		ps.Captain,
 
 		ps."Last Opponent"
 	from players_stats ps;
