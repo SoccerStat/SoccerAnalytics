@@ -50,25 +50,35 @@ begin
    
 	return query
 
-	with teams_stats as (
+	with selected_match as (
+		select id, home_team, away_team, attendance, home_score, away_score
+		from match 
+		where 
+			id_championship = id_chp and 
+			season = id_season and 
+			length(week) <= 2 and 
+			cast(week as int) >= first_week and 
+			cast(week as int) <= last_week
+	),
+	teams_stats as (
 		select
 			complete_name as Club,
 			
 			round(avg(att), 0) as Attendance,
 			
-			set_bigint_stat(sum(home_nb_wins + home_nb_draws + home_nb_loses), sum(away_nb_wins + away_nb_draws + away_nb_loses), side) as Matches,
+			set_bigint_stat(sum(case when home_match then 1 else 0 end), sum(case when away_match then 1 else 0 end), side) as Matches,
 			
 			set_bigint_stat(sum(home_points), sum(away_points), side) as Points,
 			
-			set_bigint_stat(sum(home_nb_wins), sum(away_nb_wins), side) as Wins,
-			set_bigint_stat(sum(home_nb_draws), sum(away_nb_draws), side) as Draws,
-			set_bigint_stat(sum(home_nb_loses), sum(away_nb_loses), side) as Loses,
+			set_bigint_stat(sum(case when home_win then 1 else 0 end), sum(case when away_win then 1 else 0 end), side) as Wins,
+			set_bigint_stat(sum(case when home_draw then 1 else 0 end), sum(case when away_draw then 1 else 0 end), side) as Draws,
+			set_bigint_stat(sum(case when home_lose then 1 else 0 end), sum(case when away_lose then 1 else 0 end), side) as Loses,
 			
 			set_bigint_stat(sum(home_goal_for), sum(away_goal_for), side) as "Goals For",
 			set_bigint_stat(sum(home_goal_against), sum(away_goal_against), side) as "Goals Against",
 			set_bigint_stat(sum(home_goal_for - home_goal_against), sum(away_goal_for - away_goal_against), side) as "Goals Diff",
 
-			set_bigint_stat(sum(home_clean_sheets), sum(away_clean_sheets), side) as "Clean Sheets",
+			set_bigint_stat(sum(case when home_clean_sheet then 1 else 0 end), sum(case when away_clean_sheet then 1 else 0 end), side) as "Clean Sheets",
 			
 			set_numeric_stat(sum(home_xg_for)::numeric, sum(away_xg_for)::numeric, side) as "xG For",
 
@@ -87,6 +97,9 @@ begin
 			
 		from
 			(select
+				true as home_match,
+				false as away_match,
+
 				home_team as team,
 				h.attendance as att,
 				
@@ -112,15 +125,15 @@ begin
 				0 as away_goal_against,
 
 				case
-					when away_score = 0 then 1
-					else 0
-				end as home_clean_sheets,
-				0 as away_clean_sheets,
+					when away_score = 0 then true else false
+				end as home_clean_sheet,
+				false as away_clean_sheet,
 
 				ts.xg as home_xg_for,
 				0.0 as away_xg_for,
 
-				(select xg from team_stats ts_away where ts_away.id_team = h.away_team and ts_away.id_match = h.id) as home_xg_against,
+				--(select xg from team_stats ts_away where ts_away.id_team = h.away_team and ts_away.id_match = h.id) as home_xg_against,
+				ts_away.xg as home_xg_against,
 				0.0 as away_xg_against,
 
 				case
@@ -131,41 +144,37 @@ begin
 				0 as away_points,
 
 				case
-					when ts.xg > ts2.xg then 3
-					when ts.xg = ts2.xg then 1
+					when ts.xg > ts_away.xg then 3
+					when ts.xg = ts_away.xg then 1
 					else 0
 				end as home_x_points,
 				0 as away_x_points,
 				
 				case
-					when home_score > away_score then 1 else 0
-				end as home_nb_wins,
-				0 as away_nb_wins,
+					when home_score > away_score then true else false
+				end as home_win,
+				false as away_win,
 
 				case
-					when home_score = away_score then 1 else 0
-				end as home_nb_draws,
-				0 as away_nb_draws,
+					when home_score = away_score then true else false
+				end as home_draw,
+				false as away_draw,
 
 				case
-					when home_score < away_score then 1 else 0
-				end as home_nb_loses,
-				0 as away_nb_loses
-			from match h
+					when home_score < away_score then true else false
+				end as home_lose,
+				false as away_lose
+			from selected_match as h
 			left join team_stats ts 
-			on h.home_team = ts.id_team and h.id = ts.id_match
-			left join team_stats ts2
-			on h.id = ts2.id_match and ts.id_team <> ts2.id_team
-			where 
-				id_championship = id_chp and 
-				season = id_season and 
-				length(week) <= 2 and 
-				cast(week as int) >= first_week and 
-				cast(week as int) <= last_week
-			
+			on h.id = ts.id_match and h.home_team = ts.id_team
+			left join team_stats ts_away
+			on h.id = ts_away.id_match and h.away_team = ts_away.id_team
 			union all
 			
 			select
+				false as home_match,
+				true as away_match,
+
 				away_team as team,
 				null as att,
 				
@@ -190,17 +199,17 @@ begin
 				0 as home_goal_against,
 				home_score as away_goal_against,
 
-				0 as home_clean_sheets,
+				false as home_clean_sheet,
 				case
-					when home_score = 0 then 1
-					else 0
-				end as away_clean_sheets,
+					when home_score = 0 then true else false
+				end as away_clean_sheet,
 
 				0.0 as home_xg_for,
 				ts.xg as away_xg_for,
 
 				0.0 as home_xg_against,
-				(select xg from team_stats ts_home where ts_home.id_team = a.home_team and ts_home.id_match = a.id) as away_xg_against,
+				--(select xg from team_stats ts_home where ts_home.id_team = a.home_team and ts_home.id_match = a.id) as away_xg_against,
+				ts_home.xg as away_xg_against,
 
 				0 as home_points,
 				case
@@ -211,38 +220,31 @@ begin
 
 				0 as home_x_points,
 				case
-					when ts.xg > ts2.xg then 3
-					when ts.xg = ts2.xg then 1
+					when ts.xg > ts_home.xg then 3
+					when ts.xg = ts_home.xg then 1
 					else 0
 				end as away_x_points,
 				
-				0 as home_nb_wins,
+				false as home_win,
 				case
-					when away_score > home_score then 1 else 0
-				end as away_nb_wins,
+					when away_score > home_score then true else false
+				end as away_win,
 
-				0 as home_nb_draws,
+				false as home_draw,
 				case
-					when away_score = home_score then 1 else 0
-				end as away_nb_draws,
+					when away_score = home_score then true else false
+				end as away_draw,
 
-				0 as home_nb_loses,
+				false as home_lose,
 				case
-					when away_score < home_score then 1 else 0
-				end as away_nb_loses
-			from match a
+					when away_score < home_score then true else false
+				end as away_lose
+			from selected_match as a
 			left join team_stats ts 
 			on a.away_team = ts.id_team and a.id = ts.id_match
-			left join team_stats ts2
-			on a.id = ts2.id_match and ts.id_team <> ts2.id_team
-			where 
-				id_championship = id_chp and 
-				season = id_season and 
-				
-				length(week) <= 2 and 
-				cast(week as int) >= first_week and 
-				cast( week as int) <= last_week) as "stats"
-		join club c
+			left join team_stats ts_home
+			on a.id = ts_home.id_match and a.home_team = ts_home.id_team) as "stats"
+		join (select id, complete_name from club) as c
 		on team = c.id
 		group by Club, "Last Opponent"
 	)
