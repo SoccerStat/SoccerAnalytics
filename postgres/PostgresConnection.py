@@ -2,7 +2,7 @@ from yaml import load, SafeLoader
 import psycopg2
 
 class PostgresConnection:
-    def __init__(self, env):
+    def __init__(self, env: str):
         with open(f"conf/{env}.yaml", 'r') as file:
             conf = load(file, Loader=SafeLoader)['postgres']
         
@@ -13,7 +13,7 @@ class PostgresConnection:
         self.password = conf["password"]
         self.conn = None
         
-    def connect(self):
+    def connect(self) -> None:
         try:
             self.conn = psycopg2.connect(
                 host=self.host,
@@ -26,7 +26,7 @@ class PostgresConnection:
         except psycopg2.Error as e:
             print(f"Error: Could not connect to PostgreSQL. {e}")
         
-    def close(self):
+    def close(self) -> None:
         if self.conn:
             self.conn.close()
             print("Connection to PostgreSQL closed.")
