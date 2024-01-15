@@ -7,7 +7,7 @@ class TeamsRanking:
     def __init__(self, postgres_to_dataframe: PostgresToDataframe):
         self.db = postgres_to_dataframe
     
-    def _simulate_matches(
+    def __simulate_matches(
         self, 
         teams: pd.DataFrame, 
         n_sim: int, 
@@ -56,11 +56,15 @@ class TeamsRanking:
         if not team_stats.empty:
             return \
                 pd.concat(
-                    [self._simulate_matches(team_stats.loc[team_stats['id_match'] == id_match].copy(), n_sim, r) for id_match in team_stats['id_match'].unique()]) \
-                        .query(side_filter) \
-                            [['Club', 'xP']] \
-                                .groupby('Club') \
-                                    .sum('xP')
+                    [self.__simulate_matches(
+                        team_stats.loc[team_stats['id_match'] == id_match].copy(), 
+                        n_sim,
+                        r
+                    ) for id_match in team_stats['id_match'].unique()]
+                ) \
+                    .query(side_filter)[['Club', 'xP']] \
+                        .groupby('Club') \
+                            .sum('xP')
         else:
             return pd.DataFrame(column=['Club', 'xP'])
     

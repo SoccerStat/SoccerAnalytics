@@ -16,6 +16,9 @@ returns table(
 	--"Ranking" bigint,
 	"Player" varchar(100),
 	"Age" bigint,
+	"Height" bigint,
+	"Weight" bigint,
+	"Nationalities" varchar[],
 	"Footed" varchar(20),
 	"GK" bool,
 	"Club" text,
@@ -109,6 +112,10 @@ begin
 			EXTRACT(MONTH FROM age(current_date, date_birth)) || ' months, ' ||
 			EXTRACT(DAY FROM age(current_date, date_birth)) || ' days'*/ AS Age,
 
+			p.height::bigint as Height,
+			p.weight::bigint as Weight,
+
+			array_agg(distinct pn.id_nationality) as Nationalities,
 			p.footed as Footed,
 
 			case
@@ -313,9 +320,11 @@ begin
 			) as "stats"
 			join (select id, complete_name from club) as c 
 			on team = c.id
-			join (select id, name, date_birth, footed from player) as p
+			join (select id, name, date_birth, footed, height, weight from player) as p
 			on stats.id_player = p.id
-		group by Player, Age, Footed, "Last Opponent"
+			left join player_nationality pn
+			on p.id = pn.id_player
+		group by Player, Age, Height, Weight, Footed, "Last Opponent"
 	)
 
 	select 
@@ -329,6 +338,11 @@ begin
 		
 		ps.Player,
 		ps.Age,
+
+		ps.Height,
+		ps.Weight,
+		ps.Nationalities,
+
 		ps.Footed,
 		ps.GK,
 
