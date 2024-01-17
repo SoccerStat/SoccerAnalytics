@@ -39,7 +39,7 @@ class TeamsRanking:
         return teams[['played_home', 'Club', 'xP']]
 
 
-    def _build_justice_ranking(
+    def __build_justice_ranking(
         self, 
         team_stats: pd.DataFrame, 
         side: str,
@@ -66,7 +66,28 @@ class TeamsRanking:
                         .groupby('Club') \
                             .sum('xP')
         else:
-            return pd.DataFrame(column=['Club', 'xP'])
+            return pd.DataFrame(columns=['Club', 'xP'])
+        
+    def __merge_rankings(
+        self,
+        merged_ranking: pd.DataFrame, 
+        justice_ranking: pd.DataFrame,
+        r: int
+        ) -> pd.DataFrame:
+        
+        merged_ranking = pd.merge(
+            merged_ranking, 
+            justice_ranking, 
+            left_on='Club', 
+            right_on='Club')
+        
+        merged_ranking['xP/Match'] = \
+            round(merged_ranking['xP'] / merged_ranking['Matches'], r)
+            
+        merged_ranking['Diff Points'] = \
+            merged_ranking['Points'] - merged_ranking['xP']
+        
+        return merged_ranking.set_index("Ranking")
     
     def build_ranking(
         self,
@@ -93,7 +114,7 @@ class TeamsRanking:
                 last_week := {last_week}
                 );""")
         
-        justice_ranking = self._build_justice_ranking( \
+        justice_ranking = self.__build_justice_ranking( \
             self.db.df_from_query(
                 f"""
                 select * 
@@ -107,16 +128,8 @@ class TeamsRanking:
             n_sim,
             r)
         
-        teams_ranking = pd.merge(
-            teams_ranking, 
-            justice_ranking, 
-            left_on='Club', 
-            right_on='Club')
-        
-        teams_ranking['xP/Match'] = \
-            round(teams_ranking['xP'] / teams_ranking['Matches'], r)
+        try:
+            return self.__merge_rankings(teams_ranking, justice_ranking, r)
+        except:
+            print("Erreur while merging dataframes.")
             
-        teams_ranking['Diff Points'] = \
-            teams_ranking['Points'] - teams_ranking['xP']
-        
-        return teams_ranking.set_index("Ranking")

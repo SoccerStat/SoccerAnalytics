@@ -7,11 +7,17 @@ class PostgresConnection:
             conf = load(file, Loader=SafeLoader)['postgres']
         
         self.host = conf["host"]
-        self.port = int(conf["port"])
+        self.port = conf["port"]
         self.database = conf["database"]
         self.username = conf["username"]
         self.password = conf["password"]
-        self.conn = None
+        self.conn: psycopg2.extensions.connection = None
+        
+    def get_conn(self):
+        return self.conn
+    
+    def get_cursor(self) -> psycopg2.extensions.cursor:
+        return self.conn.cursor()
         
     def connect(self) -> None:
         try:
