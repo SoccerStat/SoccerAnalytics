@@ -3,9 +3,9 @@ drop function if exists teams_ranking;
 create or replace function teams_ranking(
 	in id_chp varchar(100),
 	in id_season varchar(20),
-	in first_week int default 1,
-	in last_week int default 100,
-	in side ranking_type default 'both'
+	in first_week int,
+	in last_week int,
+	in side ranking_type
 )
 returns table(
 	"Ranking" bigint,
@@ -30,23 +30,12 @@ returns table(
 	"Incl. 2 Yellow Cards" bigint,
 	"Fouls" bigint,
 	"Shots" bigint,
-	"Shots on Target" bigint,
-	"Last Opponent" varchar(100)
+	"Shots on Target" bigint--,
+	--"Last Opponent" varchar(100)
 )
 as $$
 begin
-	if id_chp not in (select id from championship) then
-		raise exception 'Invalid value for id_chp. Valid values are ligue_1, premier_league, serie_a, la_liga, fussball_bundesliga';
-	end if;
-	if id_season  !~ '^\d{4}-(\d{4})$' or (substring(id_season, 1, 4)::int + 1)::text != substring(id_season, 6, 4) then 
-		raise exception 'Wrong format of season. It should be like "2022-2023".';
-	end if;
-	if first_week > last_week then
-		raise exception 'Choose first_week as being lower than last_week';
-	end if;
-	if side not in ('home', 'away', 'both') then
-        raise exception 'Invalid value for ranking_type. Valid values are: home, away, both';
-    end if;
+	PERFORM check_parameters(id_chp, id_season, first_week, last_week, side);
    
 	return query
 
@@ -57,8 +46,7 @@ begin
 			id_championship = id_chp and 
 			season = id_season and 
 			length(week) <= 2 and 
-			cast(week as int) >= first_week and 
-			cast(week as int) <= last_week
+			cast(week as int) between first_week and last_week
 	),
 	teams_stats as (
 		select
@@ -91,9 +79,9 @@ begin
 			set_bigint_stat(sum(home_fouls), sum(away_fouls), side) as Fouls,
 
 			set_bigint_stat(sum(home_shots), sum(away_shots), side) as Shots,
-			set_bigint_stat(sum(home_shots_ot), sum(away_shots_ot), side) as "Shots on Target",
+			set_bigint_stat(sum(home_shots_ot), sum(away_shots_ot), side) as "Shots on Target"--,
 
-			get_last_opponent(c.id, id_season) as "Last Opponent"
+			--get_last_opponent(c.id, id_season) as "Last Opponent"
 			
 		from
 			(select
@@ -132,7 +120,6 @@ begin
 				ts.xg as home_xg_for,
 				0.0 as away_xg_for,
 
-				--(select xg from team_stats ts_away where ts_away.id_team = h.away_team and ts_away.id_match = h.id) as home_xg_against,
 				ts_away.xg as home_xg_against,
 				0.0 as away_xg_against,
 
@@ -208,7 +195,6 @@ begin
 				ts.xg as away_xg_for,
 
 				0.0 as home_xg_against,
-				--(select xg from team_stats ts_home where ts_home.id_team = a.home_team and ts_home.id_match = a.id) as away_xg_against,
 				ts_home.xg as away_xg_against,
 
 				0 as home_points,
@@ -246,7 +232,7 @@ begin
 			on a.id = ts_home.id_match and a.home_team = ts_home.id_team) as "stats"
 		join (select id, complete_name from club) as c
 		on team = c.id
-		group by Club, "Last Opponent"
+		group by Club--, "Last Opponent"
 	)
 
 	select
@@ -294,9 +280,9 @@ begin
 		ts.Fouls,
 
 		ts.Shots,
-		ts."Shots on Target",
+		ts."Shots on Target"--,
 
-		ts."Last Opponent"
+		--ts."Last Opponent"
 	from teams_stats ts;
 		
 end;

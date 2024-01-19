@@ -7,10 +7,9 @@ drop function if exists players_rankings;
 create or replace function players_rankings(
 	in id_chp varchar(100),
 	in id_season varchar(20),
-	/*in which varchar(20) default 'scorer',*/
-	in first_week int default 1,
-	in last_week int default 100,
-	in side ranking_type default 'both'
+	in first_week int,
+	in last_week int,
+	in side ranking_type
 )
 returns table(
 	--"Ranking" bigint,
@@ -18,8 +17,8 @@ returns table(
 	"Age" bigint,
 	"Height" bigint,
 	"Weight" bigint,
-	"Nationalities" varchar[],
 	"Footed" varchar(20),
+	"Nationalities" varchar[],
 	"GK" bool,
 	"Club" text,
 	"Matches" bigint,
@@ -41,27 +40,13 @@ returns table(
 	"Captain" bigint,
 	"Started" bigint,
 	"Sub In" bigint,
-	"Sub Out" bigint,
-	"Last Opponent" varchar(100)
+	"Sub Out" bigint--,
+	--"Last Opponent" varchar(100)
 	--Attendance numeric,
 )
 as $$
 begin
-	/*if which not in ('scorer', 'assist') then
-		raise exception 'Invalid value for the type of player ranking. Valid values for "which" parameter are scorer, assist.';
-	end if;*/
-	if id_chp not in (select id from championship) then
-		raise exception 'Invalid value for id_chp. Valid values are ligue_1, premier_league, serie_a, la_liga, fussball_bundesliga';
-	end if;
-	if id_season  !~ '^\d{4}-(\d{4})$' or (substring(id_season, 1, 4)::int + 1)::text != substring(id_season, 6, 4) then 
-		raise exception 'Wrong format of season. It should be like "2022-2023".';
-	end if;
-	if first_week > last_week then
-		raise exception 'Choose first_week as being lower than last_week';
-	end if;
-	if side not in ('home', 'away', 'both') then
-        raise exception 'Invalid value for ranking_type. Valid values are: home, away, both';
-    end if;
+	PERFORM check_parameters(id_chp, id_season, first_week, last_week, side);
 	
 	return query
 
@@ -78,8 +63,7 @@ begin
 			id_championship = id_chp and
 			season = id_season and
 			length(week) <= 2 and
-			cast(week as int) >= first_week and
-			cast(week as int) <= last_week
+			cast(week as int) between first_week and last_week
 	),
 
 	players_compo as (
@@ -104,19 +88,18 @@ begin
 		on m.id = e.id_match and c.id_club = e.id_club and (c.id_player = e.id_player_out)
 	),
 
+	players_nationalities as (
+		select
+			id_player,
+			array_agg(distinct id_nationality) as Nationalities
+		from player_nationality pn
+		group by id_player
+	),
+
 	players_stats as (
 		select
-			p.name as Player,
-
-			EXTRACT(YEAR FROM age(current_date, date_birth))::bigint/* || ' ans, ' ||
-			EXTRACT(MONTH FROM age(current_date, date_birth)) || ' months, ' ||
-			EXTRACT(DAY FROM age(current_date, date_birth)) || ' days'*/ AS Age,
-
-			p.height::bigint as Height,
-			p.weight::bigint as Weight,
-
-			array_agg(distinct pn.id_nationality) as Nationalities,
-			p.footed as Footed,
+			stats.id_player,
+			pn.Nationalities,
 
 			case
 				when set_bigint_stat(sum(case when home_gk then 1 else 0 end), sum(case when away_gk then 1 else 0 end), side) > 0 then true
@@ -151,9 +134,9 @@ begin
 
 			set_bigint_stat(sum(case when home_started then 1 else 0 end), sum(case when away_started then 1 else 0 end), side) as Started,
 			set_bigint_stat(sum(case when home_sub_in then 1 else 0 end), sum(case when away_sub_in then 1 else 0 end), side) as "Sub In",
-			set_bigint_stat(sum(case when home_sub_out then 1 else 0 end), sum(case when away_sub_out then 1 else 0 end), side) as "Sub Out",
+			set_bigint_stat(sum(case when home_sub_out then 1 else 0 end), sum(case when away_sub_out then 1 else 0 end), side) as "Sub Out"--,
 			
-			get_last_opponent(c.id, id_season) as "Last Opponent"
+			--get_last_opponent(c.id, id_season) as "Last Opponent"
 
 		from
 			(select
@@ -161,6 +144,7 @@ begin
 				false as away_match,
 
 				ps.id_player,
+
 				home_team as team,
 
 				case
@@ -243,6 +227,7 @@ begin
 				true as away_match,
 
 				ps.id_player,
+
 				away_team as team,
 
 				false as home_gk,
@@ -320,11 +305,9 @@ begin
 			) as "stats"
 			join (select id, complete_name from club) as c 
 			on team = c.id
-			join (select id, name, date_birth, footed, height, weight from player) as p
-			on stats.id_player = p.id
-			left join player_nationality pn
-			on p.id = pn.id_player
-		group by Player, Age, Height, Weight, Footed, "Last Opponent"
+			join players_nationalities pn
+			on stats.id_player = pn.id_player
+		group by stats.id_player, pn.Nationalities--, "Last Opponent"
 	)
 
 	select 
@@ -335,18 +318,24 @@ begin
 				ps.Assists desc, 
 				ps.Minutes asc
 		) as Ranking,*/
+
+		p.name as Player,
+
+		EXTRACT(YEAR FROM age(current_date, date_birth))::bigint/* || ' ans, ' ||
+		EXTRACT(MONTH FROM age(current_date, date_birth)) || ' months, ' ||
+		EXTRACT(DAY FROM age(current_date, date_birth)) || ' days'*/ AS Age,
+
+		p.height::bigint as Height,
+		p.weight::bigint as Weight,
+
+		p.footed as Footed,
 		
-		ps.Player,
-		ps.Age,
+		ps.Nationalities as Nationalities,
 
-		ps.Height,
-		ps.Weight,
-		ps.Nationalities,
-
-		ps.Footed,
 		ps.GK,
 
 		ps.Club,
+
 		ps.Matches,
 
 		ps.Wins,
@@ -383,9 +372,11 @@ begin
 
 		ps.Started,
 		ps."Sub In",
-		ps."Sub Out",
+		ps."Sub Out"--,
 
-		ps."Last Opponent"
-	from players_stats ps;
+		--ps."Last Opponent"
+	from players_stats ps
+	left join player p
+	on ps.id_player = p.id;
 end;
 $$ language plpgsql;

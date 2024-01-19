@@ -1,3 +1,4 @@
+drop function if exists check_parameters;
 drop function if exists set_bigint_stat;
 drop function if exists set_numeric_stat;
 drop function if exists get_last_opponent;
@@ -9,13 +10,43 @@ create type ranking_type as enum ('home', 'away', 'both');
 create type team_ranking as enum ('Points', 'Wins', 'Draws', 'Loses', 'Goals For', 'Goals Against', 'Goals Diff', 'xG', 'Yellow Cards', 'Red Cards', 'Fouls');
 create type player_ranking as enum ('scorer', 'assist');
 
+create or replace function check_parameters(
+	in id_chp varchar(100),
+	in id_season varchar(20),
+	in first_week int,
+	in last_week int,
+	in side ranking_type
+)
+returns void as
+$$
+begin
+    /*if which not in ('scorer', 'assist') then
+		raise exception 'Invalid value for the type of player ranking. Valid values for "which" parameter are scorer, assist.';
+	end if;*/
+	if id_chp not in (select id from championship) then
+		raise exception 'Invalid value for id_chp. Valid values are ligue_1, premier_league, serie_a, la_liga, fussball_bundesliga';
+	end if;
+	if id_season  !~ '^\d{4}-(\d{4})$' or (substring(id_season, 1, 4)::int + 1)::text != substring(id_season, 6, 4) then 
+		raise exception 'Wrong format of season. It should be like "2022-2023".';
+	end if;
+	if first_week > last_week then
+		raise exception 'Choose first_week as being lower than last_week';
+	end if;
+	if side not in ('home', 'away', 'both') then
+        raise exception 'Invalid value for ranking_type. Valid values are: home, away, both';
+    end if;
+end;
+$$
+language plpgsql;
+
+
 create or replace function set_bigint_stat(
 	in home_stat bigint,
 	in away_stat bigint,
 	in side ranking_type
 )
-returns bigint 
-as $$
+returns bigint as 
+$$
 begin
 	if side = 'home' then 
 		return home_stat;
@@ -25,15 +56,17 @@ begin
 		return home_stat + away_stat;
 	end if;
 end;
-$$ language plpgsql;
+$$ 
+language plpgsql;
+
 
 create or replace function set_numeric_stat(
 	in home_stat numeric,
 	in away_stat numeric,
 	in side ranking_type
 )
-returns numeric 
-as $$
+returns numeric as
+$$
 begin
 	if side = 'home' then 
 		return home_stat;
@@ -43,7 +76,9 @@ begin
 		return home_stat + away_stat;
 	end if;
 end;
-$$ language plpgsql;
+$$ 
+language plpgsql;
+
 
 /*
  * TODO: A revoir // Ajouter paramètres first_week, last_week pour choper le dernier adversaire de la période sélectionnée

@@ -93,11 +93,11 @@ class TeamsRanking:
         self,
         id_chp: str, 
         season: str, 
-        side :str, 
-        first_week: int, 
-        last_week: int,
-        n_sim: int,
-        r: int) -> pd.DataFrame:
+        first_week: int = 1, 
+        last_week: int = 100,
+        side: str = 'both',
+        n_sim: int = 1000000,
+        r: int = 2) -> pd.DataFrame:
         
         self.db.execute_sql_file("sql/rankings/sub_functions.sql")
         self.db.execute_sql_file("sql/rankings/teams.sql")
@@ -109,9 +109,9 @@ class TeamsRanking:
             from teams_ranking(
                 id_chp := '{id_chp}',
                 id_season := '{season}',
-                side := '{side}',
                 first_week := {first_week},
-                last_week := {last_week}
+                last_week := {last_week},
+                side := '{side}'
                 );""")
         
         justice_ranking = self.__build_justice_ranking( \

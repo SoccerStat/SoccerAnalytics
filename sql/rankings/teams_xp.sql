@@ -3,8 +3,8 @@ drop function if exists teams_justice_table;
 create or replace function teams_justice_table(
 	in id_chp varchar(100),
 	in id_season varchar(20),
-	in first_week int default 1,
-	in last_week int default 100
+	in first_week int,
+	in last_week int
 )
 returns table(
     "id_match" varchar(20),

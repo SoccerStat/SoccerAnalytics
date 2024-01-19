@@ -10,9 +10,9 @@ class PlayersRanking:
         self,
         id_chp: str, 
         season: str, 
-        side :str, 
-        first_week: int, 
-        last_week: int
+        first_week: int = 1, 
+        last_week: int = 100,
+        side :str = 'both'
     ) -> pd.DataFrame:
         
         self.db.execute_sql_file("sql/rankings/players.sql")
@@ -22,7 +22,7 @@ class PlayersRanking:
             from players_rankings(
                 id_chp := '{id_chp}', 
                 id_season := '{season}', 
-                side := '{side}', 
                 first_week := {first_week}, 
-                last_week := {last_week}
+                last_week := {last_week},
+                side := '{side}'
                 );""") #.set_index('Ranking')
