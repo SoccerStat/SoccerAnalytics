@@ -54,19 +54,19 @@ begin
 			
 			round(avg(att), 0) as Attendance,
 			
-			set_bigint_stat(sum(case when home_match then 1 else 0 end), sum(case when away_match then 1 else 0 end), side) as Matches,
+			set_bigint_stat(sum(home_match), sum(away_match), side) as Matches,
 			
 			set_bigint_stat(sum(home_points), sum(away_points), side) as Points,
 			
-			set_bigint_stat(sum(case when home_win then 1 else 0 end), sum(case when away_win then 1 else 0 end), side) as Wins,
-			set_bigint_stat(sum(case when home_draw then 1 else 0 end), sum(case when away_draw then 1 else 0 end), side) as Draws,
-			set_bigint_stat(sum(case when home_lose then 1 else 0 end), sum(case when away_lose then 1 else 0 end), side) as Loses,
+			set_bigint_stat(sum(home_win), sum(away_win), side) as Wins,
+			set_bigint_stat(sum(home_draw), sum(away_draw), side) as Draws,
+			set_bigint_stat(sum(home_lose), sum(away_lose), side) as Loses,
 			
 			set_bigint_stat(sum(home_goal_for), sum(away_goal_for), side) as "Goals For",
 			set_bigint_stat(sum(home_goal_against), sum(away_goal_against), side) as "Goals Against",
 			set_bigint_stat(sum(home_goal_for - home_goal_against), sum(away_goal_for - away_goal_against), side) as "Goals Diff",
 
-			set_bigint_stat(sum(case when home_clean_sheet then 1 else 0 end), sum(case when away_clean_sheet then 1 else 0 end), side) as "Clean Sheets",
+			set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), side) as "Clean Sheets",
 			
 			set_numeric_stat(sum(home_xg_for)::numeric, sum(away_xg_for)::numeric, side) as "xG For",
 
@@ -85,8 +85,8 @@ begin
 			
 		from
 			(select
-				true as home_match,
-				false as away_match,
+				1 as home_match,
+				0 as away_match,
 
 				home_team as team,
 				h.attendance as att,
@@ -113,9 +113,9 @@ begin
 				0 as away_goal_against,
 
 				case
-					when away_score = 0 then true else false
+					when away_score = 0 then 1 else 0
 				end as home_clean_sheet,
-				false as away_clean_sheet,
+				0 as away_clean_sheet,
 
 				ts.xg as home_xg_for,
 				0.0 as away_xg_for,
@@ -138,19 +138,19 @@ begin
 				0 as away_x_points,
 				
 				case
-					when home_score > away_score then true else false
+					when home_score > away_score then 1 else 0
 				end as home_win,
-				false as away_win,
+				0 as away_win,
 
 				case
-					when home_score = away_score then true else false
+					when home_score = away_score then 1 else 0
 				end as home_draw,
-				false as away_draw,
+				0 as away_draw,
 
 				case
-					when home_score < away_score then true else false
+					when home_score < away_score then 1 else 0
 				end as home_lose,
-				false as away_lose
+				0 as away_lose
 			from selected_match as h
 			left join team_stats ts 
 			on h.id = ts.id_match and h.home_team = ts.id_team
@@ -159,8 +159,8 @@ begin
 			union all
 			
 			select
-				false as home_match,
-				true as away_match,
+				0 as home_match,
+				1 as away_match,
 
 				away_team as team,
 				null as att,
@@ -186,9 +186,9 @@ begin
 				0 as home_goal_against,
 				home_score as away_goal_against,
 
-				false as home_clean_sheet,
+				0 as home_clean_sheet,
 				case
-					when home_score = 0 then true else false
+					when home_score = 0 then 1 else 0
 				end as away_clean_sheet,
 
 				0.0 as home_xg_for,
@@ -211,19 +211,19 @@ begin
 					else 0
 				end as away_x_points,
 				
-				false as home_win,
+				0 as home_win,
 				case
-					when away_score > home_score then true else false
+					when away_score > home_score then 1 else 0
 				end as away_win,
 
-				false as home_draw,
+				0 as home_draw,
 				case
-					when away_score = home_score then true else false
+					when away_score = home_score then 1 else 0
 				end as away_draw,
 
-				false as home_lose,
+				0 as home_lose,
 				case
-					when away_score < home_score then true else false
+					when away_score < home_score then 1 else 0
 				end as away_lose
 			from selected_match as a
 			left join team_stats ts 

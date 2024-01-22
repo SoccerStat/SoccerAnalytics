@@ -72,12 +72,12 @@ begin
 			c.id_player,
 			c.starting,
 			case 
-				when not c.starting then true
-				else false
+				when not c.starting then 1
+				else 0
 			end as sub_in,
 			case
-				when e.id_player_out = c.id_player then true
-				else false
+				when e.id_player_out = c.id_player then 1
+				else 0
 			end as sub_out
 		from compo c
 		join (select id, id_championship, season from match where id_championship = id_chp and season = season) as m
@@ -102,17 +102,17 @@ begin
 			pn.Nationalities,
 
 			case
-				when set_bigint_stat(sum(case when home_gk then 1 else 0 end), sum(case when away_gk then 1 else 0 end), side) > 0 then true
+				when set_bigint_stat(sum(home_gk), sum(away_gk), side) > 0 then true
 				else false
 			end as GK,
 			
 			string_agg(distinct c.complete_name, ', ') as Club,
 
-			set_bigint_stat(sum(case when home_match then 1 else 0 end), sum(case when away_match then 1 else 0 end), side) as Matches,
+			set_bigint_stat(sum(home_match), sum(away_match), side) as Matches,
 
-			set_bigint_stat(sum(case when home_win then 1 else 0 end), sum(case when away_win then 1 else 0 end), side) as Wins,
-			set_bigint_stat(sum(case when home_draw then 1 else 0 end), sum(case when away_draw then 1 else 0 end), side) as Draws,
-			set_bigint_stat(sum(case when home_lose then 1 else 0 end), sum(case when away_lose then 1 else 0 end), side) as Loses,
+			set_bigint_stat(sum(home_win), sum(away_win), side) as Wins,
+			set_bigint_stat(sum(home_draw), sum(away_draw), side) as Draws,
+			set_bigint_stat(sum(home_lose), sum(away_lose), side) as Loses,
 			
 			set_bigint_stat(sum(home_goals), sum(away_goals), side) as Goals,
 			set_bigint_stat(sum(home_pens_made), sum(away_pens_made), side) as Penalties,
@@ -122,7 +122,7 @@ begin
 
 			set_numeric_stat(sum(home_xg_assists)::numeric, sum(away_xg_assists)::numeric, side) as "xG Assists",
 
-			set_bigint_stat(sum(case when home_clean_sheet then 1 else 0 end), sum(case when away_clean_sheet then 1 else 0 end), side) as "Clean Sheets",
+			set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), side) as "Clean Sheets",
 			
 			set_bigint_stat(sum(home_cards_yellow), sum(away_cards_yellow), side) as "Yellow Cards",
 			set_bigint_stat(sum(home_cards_red), sum(away_cards_red), side) as "Red Cards",
@@ -130,27 +130,27 @@ begin
 			
 			set_bigint_stat(sum(home_minutes), sum(away_minutes), side) as Minutes,
 
-			set_bigint_stat(sum(case when home_captain then 1 else 0 end), sum(case when away_captain then 1 else 0 end), side) as Captain,
+			set_bigint_stat(sum(home_captain), sum(away_captain), side) as Captain,
 
-			set_bigint_stat(sum(case when home_started then 1 else 0 end), sum(case when away_started then 1 else 0 end), side) as Started,
-			set_bigint_stat(sum(case when home_sub_in then 1 else 0 end), sum(case when away_sub_in then 1 else 0 end), side) as "Sub In",
-			set_bigint_stat(sum(case when home_sub_out then 1 else 0 end), sum(case when away_sub_out then 1 else 0 end), side) as "Sub Out"--,
+			set_bigint_stat(sum(home_started), sum(away_started), side) as Started,
+			set_bigint_stat(sum(home_sub_in), sum(away_sub_in), side) as "Sub In",
+			set_bigint_stat(sum(home_sub_out), sum(away_sub_out), side) as "Sub Out"--,
 			
 			--get_last_opponent(c.id, id_season) as "Last Opponent"
 
 		from
 			(select
-				true as home_match,
-				false as away_match,
+				1 as home_match,
+				0 as away_match,
 
 				ps.id_player,
 
 				home_team as team,
 
 				case
-					when ps.position = 'gk' then true else false
+					when ps.position = 'gk' then 1 else 0
 				end as home_gk,
-				false as away_gk,
+				0 as away_gk,
 				
 				ps.goals as home_goals,
 				0 as away_goals,
@@ -164,9 +164,9 @@ begin
 				0.0 as away_xg_assists,
 
 				case
-					when h.away_score = 0 then true else false
+					when h.away_score = 0 then 1 else 0
 				end as home_clean_sheet,
-				false as away_clean_sheet,
+				0 as away_clean_sheet,
 
 				ps.cards_yellow as home_cards_yellow,
 				0 as away_cards_yellow,
@@ -176,40 +176,42 @@ begin
 				0 as away_cards_yellow_red,
 
 				case
-					when home_score > away_score then true else false
+					when home_score > away_score then 1 else 0
 				end as home_win,
-				false as away_win,
+				0 as away_win,
 
 				case
-					when home_score = away_score then true else false
+					when home_score = away_score then 1 else 0
 				end as home_draw,
-				false as away_draw,
+				0 as away_draw,
 
 				case
-					when home_score < away_score then true else false
+					when home_score < away_score then 1 else 0
 				end as home_lose,
-				false as away_lose,
+				0 as away_lose,
 
 				case
-					when ts.id_captain = ps.id_player then true else false
+					when ts.id_captain = ps.id_player then 1 else 0
 				end as home_captain,
-				false as away_captain,
+				0 as away_captain,
 
 				ps.minutes as home_minutes,
 				0 as away_minutes,
 
-				c.starting as home_started,
-				false as away_started,
+				case
+					when c.starting then 1 else 0
+				end as home_started,
+				0 as away_started,
 				
 				case
-					when not c.starting then true else false
+					when not c.starting then 1 else 0
 				end as home_sub_in,
-				false as away_sub_in,
+				0 as away_sub_in,
 				
 				case
-					when e.id_player_out = c.id_player then true else false
+					when e.id_player_out = c.id_player then 1 else 0
 				end as home_sub_out,
-				false as away_sub_out
+				0 as away_sub_out
 			from (select * from player_stats where played_home) as ps
 			left join selected_match as h
 			on ps.id_match = h.id
@@ -223,16 +225,16 @@ begin
 			union all
 
 			select
-				false as home_match,
-				true as away_match,
+				0 as home_match,
+				1 as away_match,
 
 				ps.id_player,
 
 				away_team as team,
 
-				false as home_gk,
+				0 as home_gk,
 				case
-					when ps.position = 'gk' then true else false
+					when ps.position = 'gk' then 1 else 0
 				end as away_gk,
 				
 				0 as home_goals,
@@ -246,9 +248,9 @@ begin
 				0.0 as home_xg_assists,
 				ps.xg_assist as away_xg_assists,
 
-				false as home_clean_sheet,
+				0 as home_clean_sheet,
 				case
-					when a.home_score = 0 then true else false
+					when a.home_score = 0 then 1 else 0
 				end as away_clean_sheet,
 
 				0 as home_cards_yellow,
@@ -258,40 +260,42 @@ begin
 				0 as home_cards_yellow_red,
 				ps.cards_yellow_red as away_cards_yellow_red,
 
-				false as home_win,
+				0 as home_win,
 				case
-					when away_score > home_score then true else false
+					when away_score > home_score then 1 else 0
 				end as away_win,
 
-				false as home_draw,
+				0 as home_draw,
 				case
-					when away_score = home_score then true else false
+					when away_score = home_score then 1 else 0
 				end as away_draw,
 
-				false as home_lose,
+				0 as home_lose,
 				case
-					when away_score < home_score then true else false
+					when away_score < home_score then 1 else 0
 				end as away_lose,
 
-				false as home_captain,
+				0 as home_captain,
 				case
-					when ts.id_captain = ps.id_player then true else false
+					when ts.id_captain = ps.id_player then 1 else 0
 				end as away_captain,
 
 				0 as home_minutes,
 				ps.minutes as away_minutes,
 
-				false as home_started,
-				c.starting as away_started,
-				
-				false as home_sub_in,
+				0 as home_started,
 				case
-					when not c.starting then true else false
+					when c.starting then 1 else 0
+				end as away_started,
+				
+				0 as home_sub_in,
+				case
+					when not c.starting then 1 else 0
 				end as away_sub_in,
 				
-				false as home_sub_out,
+				0 as home_sub_out,
 				case
-					when e.id_player_out = c.id_player then true else false
+					when e.id_player_out = c.id_player then 1 else 0
 				end as away_sub_out
 			from (select * from player_stats where not played_home) as ps
 			left join selected_match as a

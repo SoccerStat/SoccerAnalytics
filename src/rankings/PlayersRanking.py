@@ -15,6 +15,7 @@ class PlayersRanking:
         side :str = 'both'
     ) -> pd.DataFrame:
         
+        self.db.execute_sql_file("sql/rankings/sub_functions.sql")
         self.db.execute_sql_file("sql/rankings/players.sql")
         
         return self.db.df_from_query(
