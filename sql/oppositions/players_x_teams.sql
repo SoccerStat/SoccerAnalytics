@@ -1,7 +1,9 @@
 drop function if exists players_oppositions;
 
 create or replace function players_oppositions(
-    in player varchar(100)/*,
+    in player varchar(100),
+    in id_chp varchar(20) default 'all',
+    in id_season varchar(20) default 'all'/*,
 	in side ranking_type*/
 )
 returns table(
@@ -27,7 +29,7 @@ begin
     with oppositions as (
         select
             id_player,
-            p.full_name as player,
+            p.name as player,
             case 
                 when played_home then m.home_team
                 else m.away_team
@@ -68,7 +70,9 @@ begin
         on ps.id_match = m.id
         join player p
         on ps.id_player = p.id
-        where p.full_name = player
+        where p.name = player
+        and case when id_chp = 'all' then true else m.id_championship = id_chp end
+        and case when id_season = 'all' then true else m.season = id_season end
     )
     
     select

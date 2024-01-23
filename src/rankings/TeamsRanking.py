@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from postgres.PostgresToDataFrame import PostgresToDataframe
+from postgres.PostgresQuerying import PostgresQuerying
 
 class TeamsRanking:
-    def __init__(self, postgres_to_dataframe: PostgresToDataframe):
+    def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
     
     def __simulate_matches(

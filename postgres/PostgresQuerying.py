@@ -5,7 +5,7 @@ from typing import Optional
 
 from postgres.PostgresConnection import PostgresConnection
 
-class PostgresToDataframe:
+class PostgresQuerying:
     def __init__(self, env: str):
         self.postgres_conn = PostgresConnection(env)
         self.postgres_conn.connect()

@@ -1,9 +1,9 @@
 import pandas as pd
 
-from postgres.PostgresToDataFrame import PostgresToDataframe
+from postgres.PostgresQuerying import PostgresQuerying
 
 class PlayersRanking:
-    def __init__(self, postgres_to_dataframe: PostgresToDataframe):
+    def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
         
     def build_ranking(

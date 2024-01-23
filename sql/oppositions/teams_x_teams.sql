@@ -1,7 +1,9 @@
 drop function if exists teams_oppositions;
 
 create or replace function teams_oppositions(
-    in team varchar(100)/*,
+    in team varchar(100),
+    in id_chp varchar(20) default 'all',
+    in id_season varchar(20) default 'all'/*,
 	in side ranking_type*/
 )
 returns table(
@@ -28,11 +30,11 @@ begin
             case 
                 when played_home then m.home_team
                 else m.away_team
-            end as team,
+            end as id_team,
             case 
                 when played_home then m.away_team
                 else m.home_team
-            end as opponent,
+            end as id_opponent,
 
             case
                 when played_home then home_score
@@ -67,6 +69,8 @@ begin
         from match m
         join team_stats ts
         on m.id = ts.id_match
+        where case when id_chp = 'all' then true else m.id_championship = id_chp end
+        and case when id_season = 'all' then true else m.season = id_season end
     )
 
     select
@@ -88,10 +92,11 @@ begin
         sum(r_cards) as "Red Cards"
 
     from oppositions os
-    join (select id, complete_name from club where complete_name = team) t
-    on os.team = t.id
+    join club t
+    on os.id_team = t.id
     join club o
-    on os.opponent = o.id
+    on os.id_opponent = o.id
+    where t.complete_name = team
     group by t.complete_name, o.complete_name;
 end;
 $$ language plpgsql;
