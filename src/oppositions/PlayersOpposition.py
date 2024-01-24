@@ -12,7 +12,7 @@ class PlayersOpposition(Oppositions):
         player: str
     ) -> pd.DataFrame:
         
-        self.db.execute_sql_file("sql/oppositions/players_x_teams.sql")
+        self.db.execute_sql_file("sql/oppositions/player_x_teams.sql")
         
         return self.db.df_from_query(
             f"""select * 
@@ -22,11 +22,12 @@ class PlayersOpposition(Oppositions):
         
     def build_matrix(
         self,
+        stat: str,
         id_chp: str = 'all',
         season: str = 'all'
     ) -> pd.DataFrame:
         
-        self.db.execute_sql_file("sql/oppositions/players_x_teams.sql")
+        self.db.execute_sql_file("sql/oppositions/player_x_teams.sql")
         
         cursor_players = self.db.execute_query_get_cursor(
             f"""select p.name as "Player"
@@ -35,8 +36,8 @@ class PlayersOpposition(Oppositions):
             on pc.id_player = p.id
             join club_championship cc
             on pc.id_club = cc.id_club and pc.season = cc.season
-            where {f"id_championship = '{id_chp}'" if id_chp != "all" else 'true'}
-            and {f"pc.season = '{season}'" if season != "all" else 'true'}
+            where {f"id_championship = '{id_chp}'" if id_chp != "all" else "true"}
+            and {f"pc.season = '{season}'" if season != "all" else "true"}
             group by p.name
             ;"""
         )
@@ -63,7 +64,7 @@ class PlayersOpposition(Oppositions):
                 
                 for player in players:
                     cursor_oppositions = self.db.execute_query_get_cursor(
-                        f"""select * 
+                        f"""select "Player", "Opponent", "{stat}" 
                         from players_oppositions(
                             player := '{player.replace("'", "''")}',
                             id_chp := '{id_chp}',
@@ -75,7 +76,7 @@ class PlayersOpposition(Oppositions):
                     cursor_oppositions.close()
                     
                     for stats in data:
-                        df.loc[stats[0], stats[1]] = stats[6]
+                        df.loc[stats[0], stats[1]] = stats[2]
                         
                 return df
                 

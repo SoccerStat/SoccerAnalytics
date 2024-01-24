@@ -84,9 +84,10 @@ begin
 
         sum(goals_for) as "Goals For",
         sum(goals_against) as "Goals Against",
+        
         sum(shots) as Shots,
-
         sum(on_target) as "Shots on Target",
+        
         sum(y_cards) as "Yellow Cards",
         sum(yr_cards) as "Incl. 2 Yellow Cards",
         sum(r_cards) as "Red Cards"

@@ -12,7 +12,7 @@ class TeamsOpposition(Oppositions):
         team: str
     ) -> pd.DataFrame:
         
-        self.db.execute_sql_file("sql/oppositions/teams_x_teams.sql")
+        self.db.execute_sql_file("sql/oppositions/team_x_teams.sql")
         
         return self.db.df_from_query(
             f"""select * 
@@ -22,11 +22,12 @@ class TeamsOpposition(Oppositions):
         
     def build_matrix(
         self,
-        id_chp: str,
-        season: str = "all"
+        stat: str,
+        id_chp: str = 'all',
+        season: str = 'all'
     ) -> list:
         
-        self.db.execute_sql_file("sql/oppositions/teams_x_teams.sql")
+        self.db.execute_sql_file("sql/oppositions/team_x_teams.sql")
         
         cursor_instance = self.db.execute_query_get_cursor(
             f"""select c.complete_name as "Club"
@@ -46,9 +47,9 @@ class TeamsOpposition(Oppositions):
 
                 for team in teams:
                     cursor_oppositions = self.db.execute_query_get_cursor(
-                        f"""select * 
+                        f"""select "Team", "Opponent", "{stat}"
                         from teams_oppositions(
-                            team := '{team}',
+                            team := '{team.replace("'", "''")}',
                             id_chp := '{id_chp}',
                             id_season := '{season}'
                             );""")
@@ -57,7 +58,7 @@ class TeamsOpposition(Oppositions):
                     cursor_oppositions.close()
                     
                     for stats in data:
-                        df.loc[stats[0], stats[1]] = stats[6]
+                        df.loc[stats[0], stats[1]] = stats[2]
                     
                 return df
 
