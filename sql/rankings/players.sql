@@ -60,10 +60,10 @@ begin
 		select id, home_team, away_team, home_score, away_score 
 		from match
 		where 
-			id_championship = id_chp and
-			season = id_season and
-			length(week) <= 2 and
-			cast(week as int) between first_week and last_week
+			id_championship = id_chp
+			and season = id_season
+			and length(week) <= 2
+			and cast(week as int) between first_week and last_week
 	),
 
 	players_compo as (
@@ -80,7 +80,15 @@ begin
 				else 0
 			end as sub_out
 		from compo c
-		join (select id, id_championship, season from match where id_championship = id_chp and season = season) as m
+		join (
+			select id, id_championship, season 
+			from match 
+			where 
+				id_championship = id_chp 
+				and season = id_season
+				and length(week) <= 2 
+				and cast(week as int) between first_week and last_week
+			) as m
 		on c.id_match = m.id
 		join player_stats ps
 		on c.id_match = ps.id_match and ps.id_player = c.id_player
