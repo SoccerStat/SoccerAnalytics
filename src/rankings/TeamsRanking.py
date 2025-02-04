@@ -57,10 +57,10 @@ class TeamsRanking:
             return \
                 pd.concat(
                     [self.__simulate_matches(
-                        team_stats.loc[team_stats['id_match'] == id_match].copy(), 
+                        team_stats.loc[team_stats['match'] == id_match].copy(),
                         n_sim,
                         r
-                    ) for id_match in team_stats['id_match'].unique()]
+                    ) for id_match in team_stats['match'].unique()]
                 ) \
                     .query(side_filter)[['Club', 'xP']] \
                         .groupby('Club') \

@@ -38,8 +38,8 @@ begin
             ts.xg::numeric, 
             ts.nb_shots_total::bigint
         from %I.team_stats ts 
-        join dwh_upper.club c on ts.team = c.id 
         join %I.match m on m.id = ts.match 
+        join dwh_upper.club c on ts.team = m.competition || ''_'' || c.id
         where
             m.competition = ''' || id_chp || ''' and 
 
