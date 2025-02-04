@@ -86,7 +86,7 @@ begin
 				0 as away_goal_against,
 
 				case
-					when ts_away.Score = 0 then 1 else 0
+					when ts_away.score = 0 then 1 else 0
 				end as home_clean_sheet,
 				0 as away_clean_sheet,
 
