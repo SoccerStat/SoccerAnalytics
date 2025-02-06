@@ -5,16 +5,16 @@ from postgres.PostgresQuerying import PostgresQuerying
 class PlayersRanking:
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
-        
+
     def build_ranking(
         self,
-        id_chp: str, 
-        season: str, 
-        first_week: int = 1, 
+        id_chp: str,
+        season: str,
+        first_week: int = 1,
         last_week: int = 100,
         side :str = 'both'
     ) -> pd.DataFrame:
-        
+
         season = season.replace('-', '_')
 
         self.db.execute_sql_file("sql/rankings/sub_functions.sql")

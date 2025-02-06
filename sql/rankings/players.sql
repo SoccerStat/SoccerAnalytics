@@ -30,8 +30,8 @@ returns table(
 	"Assists" bigint,
 	"xG" numeric,
 	"xG/90" numeric,
-	"xG Assists" numeric,
-	"xG Assists /90" numeric,
+	--"xG Assists" numeric,
+	--"xG Assists /90" numeric,
 	"Clean Sheets" bigint,
 	"Yellow Cards" bigint,
 	"Red Cards" bigint,
@@ -59,6 +59,42 @@ begin
 		GROUP BY id_player, "position"
 	)*/
 
+	/*
+	home_compo as (
+		select
+			m.id,
+			c.player,
+			c.started,
+			case 
+				when not c.started then 1
+				else 0
+			end as sub_in,
+			case
+				when e.player_out = c.player then 1
+				else 0
+			end as sub_out
+		from (select * from %I.compo where played_home) as c
+		join selected_match m
+		on c.match = m.id
+		join player_main_stats pms
+		on c.id_match = pms.match and pms.player = c.player
+		left join (select id, match from %I.event where played_home) as e
+		on m.id = e.match
+		left join %I.sub_event se
+		on c.player = se.player_out
+	),
+	*/
+
+	/*set_numeric_stat(sum(home_xg_assists)::numeric, sum(away_xg_assists)::numeric, ''' || side || ''') as "xG Assists",*/
+
+	/*
+	ps."xG Assists",
+	case
+		when ps.Matches <> 0 then round(ps."xG Assists" / ps.Matches, 2)
+		else 0.0
+	end as "xG Assists /90",
+	*/
+
 	query := format(
 		'with selected_match as (
 			select id, home_team, away_team, competition
@@ -75,28 +111,6 @@ begin
 			from dwh_upper.player_nationality pn
 			group by player
 		),
-		players_compo as (
-			select
-				m.id,
-				c.iplayer,
-				c.started,
-				case 
-					when not c.started then 1
-					else 0
-				end as sub_in,
-				case
-					when e.player_out = c.player then 1
-					else 0
-				end as sub_out
-			from %I.compo c
-			join selected_match m
-			on c.match = m.id
-			join player_main_stats pms
-			on c.id_match = pms.match and pms.player = c.player
-			left join %I.event e
-			left join %I.sub_event se
-			on m.id = e.match and c.id_club = e.team and c.player = se.player_out
-		),
 		home_stats as (
 			select
 				1 as home_match,
@@ -104,10 +118,13 @@ begin
 
 				pms.player,
 
+				h.competition,
+
 				h.home_team as team,
 
 				case
-					when pms.position = ''gk'' then 1 else 0
+					when pms.position = ''gk'' then 1 
+					else 0
 				end as home_gk,
 				0 as away_gk,
 				
@@ -121,7 +138,8 @@ begin
 				0.0 as away_xg,
 
 				case
-					when ts.score = 0 then 1 else 0
+					when ts.score = 0 then 1 
+					else 0
 				end as home_clean_sheet,
 				0 as away_clean_sheet,
 
@@ -133,22 +151,26 @@ begin
 				0 as away_cards_yellow_red,
 
 				case
-					when ts.score > ts_away.score then 1 else 0
+					when ts.score > ts_away.score then 1 
+					else 0
 				end as home_win,
 				0 as away_win,
 
 				case
-					when ts.score = ts_away.score then 1 else 0
+					when ts.score = ts_away.score then 1 
+					else 0
 				end as home_draw,
 				0 as away_draw,
 
 				case
-					when ts.score < ts_away.score then 1 else 0
+					when ts.score < ts_away.score then 1 
+					else 0
 				end as home_lose,
 				0 as away_lose,
 
 				case
-					when ts.captain = pms.player then 1 else 0
+					when ts.captain = pms.player then 1 
+					else 0
 				end as home_captain,
 				0 as away_captain,
 
@@ -156,32 +178,35 @@ begin
 				0 as away_minutes,
 
 				case
-					when c.started then 1 else 0
+					when c.started then 1 
+					else 0
 				end as home_started,
 				0 as away_started,
 				
 				case
-					when not c.started then 1 else 0
+					when not c.started then 1 
+					else 0
 				end as home_sub_in,
 				0 as away_sub_in,
 				
 				case
-					when se.player_out = c.player then 1 else 0
+					when se.player_out = c.player then 1 
+					else 0
 				end as home_sub_out,
 				0 as away_sub_out
 			from (select * from %I.player_main_stats where played_home) as pms
 			left join selected_match as h
-			on pms.id_match = h.id
-			left join (select id_match, id_team, id_captain from %I.team_stats where played_home) as ts 
-			on h.id = ts.match and h.team = ts.team
-			left join (select id_match, id_team, id_captain from %I.team_stats where not played_home) as ts_away
-			on h.id = ts_away.match and h.team = ts_away.team
+			on pms.match = h.id
+			left join (select match, team, captain, score from %I.team_stats where played_home) as ts 
+			on h.id = ts.match
+			left join (select match, team, captain, score from %I.team_stats where not played_home) as ts_away
+			on h.id = ts_away.match
 			left join (select * from %I.compo where played_home) as c
 			on h.id = c.match and pms.player = c.player
 			left join (select * from %I.event where played_home) as e
 			on h.id = e.match
 			left join %I.sub_event se
-			pms.player = se.player_out
+			on pms.player = se.player_out
 		),
 		away_stats as (
 			select
@@ -189,6 +214,8 @@ begin
 				1 as away_match,
 
 				pms.player,
+
+				a.competition,
 
 				a.away_team as team,
 
@@ -255,16 +282,16 @@ begin
 				case
 					when se.player_out = c.player then 1 else 0
 				end as away_sub_out
-			from (select * from player_main_stats where not played_home) as pms
+			from (select * from %I.player_main_stats where not played_home) as pms
 			left join selected_match as a
 			on pms.match = a.id
 			left join (select match, team, captain, score from %I.team_stats where not played_home) as ts 
 			on a.id = ts.match and a.away_team = ts.team
 			left join (select match, team, captain, score from %I.team_stats where played_home) as ts_home
-			on h.id = ts.match and h.home_team = ts_home.team
-			left join (select * from compo where not played_home) c
+			on a.id = ts.match and a.home_team = ts_home.team
+			left join (select * from %I.compo where not played_home) c
 			on a.id = c.match and pms.player = c.player
-			left join (select * from %I.event where not played home) as e
+			left join (select * from %I.event where not played_home) as e
 			on a.id = e.match
 			left join %I.sub_event se
 			on pms.player = se.player_out
@@ -275,49 +302,47 @@ begin
 				pn.Nationalities,
 
 				case
-					when set_bigint_stat(sum(home_gk), sum(away_gk), side) > 0 then true
+					when set_bigint_stat(sum(home_gk), sum(away_gk), ''' || side || ''') > 0 then true
 					else false
 				end as GK,
 				
-				string_agg(distinct c.complete_name, '', '') as Club,
+				string_agg(distinct c.name, '', '') as Club,
 
-				set_bigint_stat(sum(home_match), sum(away_match), side) as Matches,
+				set_bigint_stat(sum(home_match), sum(away_match), ''' || side || ''') as Matches,
 
-				set_bigint_stat(sum(home_win), sum(away_win), side) as Wins,
-				set_bigint_stat(sum(home_draw), sum(away_draw), side) as Draws,
-				set_bigint_stat(sum(home_lose), sum(away_lose), side) as Loses,
+				set_bigint_stat(sum(home_win), sum(away_win), ''' || side || ''') as Wins,
+				set_bigint_stat(sum(home_draw), sum(away_draw), ''' || side || ''') as Draws,
+				set_bigint_stat(sum(home_lose), sum(away_lose), ''' || side || ''') as Loses,
 				
-				set_bigint_stat(sum(home_goals), sum(away_goals), side) as Goals,
-				set_bigint_stat(sum(home_pens_made), sum(away_pens_made), side) as Penalties,
-				set_bigint_stat(sum(home_assists), sum(away_assists), side) as Assists,
+				set_bigint_stat(sum(home_goals), sum(away_goals), ''' || side || ''') as Goals,
+				set_bigint_stat(sum(home_pens_made), sum(away_pens_made), ''' || side || ''') as Penalties,
+				set_bigint_stat(sum(home_assists), sum(away_assists), ''' || side || ''') as Assists,
 
-				set_numeric_stat(sum(home_xg)::numeric, sum(away_xg)::numeric, side) as xG,
+				set_numeric_stat(sum(home_xg)::numeric, sum(away_xg)::numeric, ''' || side || ''') as xG,
 
-				set_numeric_stat(sum(home_xg_assists)::numeric, sum(away_xg_assists)::numeric, side) as "xG Assists",
-
-				set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), side) as "Clean Sheets",
+				set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), ''' || side || ''') as "Clean Sheets",
 				
-				set_bigint_stat(sum(home_cards_yellow), sum(away_cards_yellow), side) as "Yellow Cards",
-				set_bigint_stat(sum(home_cards_red), sum(away_cards_red), side) as "Red Cards",
-				set_bigint_stat(sum(home_cards_yellow_red), sum(away_cards_yellow_red), side) as "Incl. 2 Yellow Cards",
+				set_bigint_stat(sum(home_cards_yellow), sum(away_cards_yellow), ''' || side || ''') as "Yellow Cards",
+				set_bigint_stat(sum(home_cards_red), sum(away_cards_red), ''' || side || ''') as "Red Cards",
+				set_bigint_stat(sum(home_cards_yellow_red), sum(away_cards_yellow_red), ''' || side || ''') as "Incl. 2 Yellow Cards",
 				
-				set_bigint_stat(sum(home_minutes), sum(away_minutes), side) as Minutes,
+				set_bigint_stat(sum(home_minutes), sum(away_minutes), ''' || side || ''') as Minutes,
 
-				set_bigint_stat(sum(home_captain), sum(away_captain), side) as Captain,
+				set_bigint_stat(sum(home_captain), sum(away_captain), ''' || side || ''') as Captain,
 
-				set_bigint_stat(sum(home_started), sum(away_started), side) as Started,
-				set_bigint_stat(sum(home_sub_in), sum(away_sub_in), side) as "Sub In",
-				set_bigint_stat(sum(home_sub_out), sum(away_sub_out), side) as "Sub Out"
+				set_bigint_stat(sum(home_started), sum(away_started), ''' || side || ''') as Started,
+				set_bigint_stat(sum(home_sub_in), sum(away_sub_in), ''' || side || ''') as "Sub In",
+				set_bigint_stat(sum(home_sub_out), sum(away_sub_out), ''' || side || ''') as "Sub Out"
 				
-			from(
+			from (
 				select *
 				from home_stats
 				union all
 				select *
 				from away_stats
 			) as "stats"
-			join (select id, complete_name from dwh_upper.club) as c 
-			on team = c.id
+			join (select id, name from dwh_upper.club) as c 
+			on team = competition || ''_'' || c.id
 			join players_nationalities pn
 			on stats.player = pn.player
 			group by stats.player, pn.Nationalities
@@ -325,12 +350,12 @@ begin
 		select 
 			p.name as Player,
 
-			EXTRACT(YEAR FROM age(current_date, date_birth))::bigint AS Age,
+			EXTRACT(YEAR FROM age(current_date, birth_date))::bigint AS Age,
 
 			p.height::bigint as Height,
 			p.weight::bigint as Weight,
 
-			p.footed as Footed,
+			p.strong_foot as Footed,
 			
 			ps.Nationalities as Nationalities,
 
@@ -350,17 +375,9 @@ begin
 
 			ps.xG,
 			case
-				when ps.Matches <> 0 then
-					round(ps.xG / ps.Matches, 2)
+				when ps.Matches <> 0 then round(ps.xG / ps.Matches, 2)
 				else 0.0
 			end as "xG/90",
-
-			ps."xG Assists",
-			case
-				when ps.Matches <> 0 then
-					round(ps."xG Assists" / ps.Matches, 2)
-				else 0.0
-			end as "xG Assists /90",
 
 			ps."Clean Sheets",
 
@@ -374,18 +391,19 @@ begin
 
 			ps.Started,
 			ps."Sub In",
-			ps."Sub Out
-
+			ps."Sub Out"
 		from players_stats ps
 		left join dwh_upper.player p
-		on ps.player = p.id',
+		on ps.player = p.id
+		',
 		season_schema, season_schema, 
 		season_schema, season_schema, 
 		season_schema, season_schema, 
 		season_schema, season_schema, 
 		season_schema, season_schema, 
 		season_schema, season_schema,
-		season_schema, season_schema 
+		season_schema, season_schema,
+		season_schema, season_schema
 	);
 	RETURN QUERY EXECUTE query USING id_chp, id_season, first_week, last_week, side;
 end;

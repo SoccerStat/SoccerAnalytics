@@ -42,6 +42,7 @@ begin
 
 	season_schema = 'dwh_' || id_season;
     ----,--get_last_opponent(c.id, id_season) as "Last Opponent"
+
 	query := format(
 		'with selected_match as (
 			select id, home_team, away_team, attendance, competition
