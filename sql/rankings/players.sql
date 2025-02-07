@@ -5,7 +5,7 @@
 drop function if exists players_rankings;
 
 create or replace function players_rankings(
-	in id_chp varchar(100),
+	in id_comp varchar(100),
 	in id_season varchar(20),
 	in first_week int,
 	in last_week int,
@@ -49,7 +49,7 @@ DECLARE
     season_schema text;
 	query text;
 begin
-	PERFORM check_parameters(id_chp, id_season, first_week, last_week, side);
+	PERFORM check_parameters(id_comp, id_season, first_week, last_week, side);
 
 	season_schema = 'dwh_' || id_season;
 	
@@ -100,7 +100,7 @@ begin
 			select id, home_team, away_team, competition
 			from %I.match
 			where 
-				competition = ''' || id_chp || ''' 
+				competition = ''' || id_comp || ''' 
 				and length(week) <= 2 
 				and cast(week as int) between ''' || first_week || ''' and ''' || last_week || '''
 		),
@@ -401,6 +401,7 @@ begin
 		season_schema, season_schema,
 		season_schema, season_schema
 	);
-	RETURN QUERY EXECUTE query USING id_chp, id_season, first_week, last_week, side;
+	
+	RETURN QUERY EXECUTE query USING id_comp, id_season, first_week, last_week, side;
 end;
 $$ language plpgsql;

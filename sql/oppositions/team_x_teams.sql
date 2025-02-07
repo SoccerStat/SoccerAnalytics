@@ -1,9 +1,9 @@
-drop function if exists teams_oppositions;
+drop function if exists public.teams_oppositions;
 
-create or replace function teams_oppositions(
+create or replace function public.teams_oppositions(
     in team varchar(100),
-    in id_chp varchar(20) default 'all',
-    in id_season varchar(20) default 'all'/*,
+    in id_comp varchar(20),
+    in id_season varchar(20)/*,
 	in side ranking_type*/
 )
 returns table(
@@ -22,6 +22,9 @@ returns table(
     "Red Cards" bigint
 )
 as $$
+DECLARE
+    season_schema text;
+	query text;
 begin
     return query
 
@@ -69,7 +72,7 @@ begin
         from match m
         join team_stats ts
         on m.id = ts.id_match
-        where case when id_chp = 'all' then true else m.id_championship = id_chp end
+        where case when id_comp = 'all' then true else m.id_championship = id_comp end
         and case when id_season = 'all' then true else m.season = id_season end
     )
 

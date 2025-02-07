@@ -23,7 +23,7 @@ class TeamsOpposition(Oppositions):
     def build_matrix(
         self,
         stat: str,
-        id_chp: str = 'all',
+        id_comp: str = 'all',
         season: str = 'all'
     ) -> list:
         
@@ -34,7 +34,7 @@ class TeamsOpposition(Oppositions):
             from club_championship cc
             join club c
             on cc.id_club = c.id
-            where {f"id_championship = '{id_chp}'" if id_chp != "all" else "true"}
+            where {f"id_championship = '{id_comp}'" if id_comp != "all" else "true"}
             and {f"season = '{season}'" if season != "all" else "true"}
             group by c.complete_name
             ;"""
@@ -50,7 +50,7 @@ class TeamsOpposition(Oppositions):
                         f"""select "Team", "Opponent", "{stat}"
                         from teams_oppositions(
                             team := '{team.replace("'", "''")}',
-                            id_chp := '{id_chp}',
+                            id_comp := '{id_comp}',
                             id_season := '{season}'
                             );""")
                     

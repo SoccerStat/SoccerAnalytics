@@ -11,7 +11,7 @@ create type public.team_ranking as enum ('Points', 'Wins', 'Draws', 'Loses', 'Go
 create type public.player_ranking as enum ('scorer', 'assist');
 
 create or replace function public.check_parameters(
-	in id_chp varchar(100),
+	in id_comp varchar(100),
 	in id_season varchar(20),
 	in first_week int,
 	in last_week int,
@@ -23,8 +23,8 @@ begin
     /*if which not in ('scorer', 'assist') then
 		raise exception 'Invalid value for the type of player ranking. Valid values for "which" parameter are scorer, assist.';
 	end if;*/
-	if id_chp not in (select id from dwh_upper.championship) then
-		raise exception 'Invalid value for id_chp. Valid values are ligue_1, premier_league, serie_a, la_liga, fussball_bundesliga';
+	if id_comp not in (select id from dwh_upper.championship) then
+		raise exception 'Invalid value for id_comp. Valid values are ligue_1, premier_league, serie_a, la_liga, fussball_bundesliga';
 	end if;
 	if id_season  !~ '^\d{4}_(\d{4})$' or (substring(id_season, 1, 4)::int + 1)::text != substring(id_season, 6, 4) then 
 		raise exception 'Wrong format of season. It should be like "2022_2023".';

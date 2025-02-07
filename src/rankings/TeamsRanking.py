@@ -91,7 +91,7 @@ class TeamsRanking:
 
     def build_ranking(
         self,
-        id_chp: str,
+        id_comp: str,
         season: str,
         first_week: int = 1,
         last_week: int = 100,
@@ -109,7 +109,7 @@ class TeamsRanking:
             f"""
             select *
             from teams_ranking(
-                id_chp := '{id_chp}',
+                id_comp := '{id_comp}',
                 id_season := '{season}',
                 first_week := {first_week},
                 last_week := {last_week},
@@ -121,7 +121,7 @@ class TeamsRanking:
                 f"""
                 select * 
                 from teams_justice_table(
-                    id_chp := '{id_chp}', 
+                    id_comp := '{id_comp}', 
                     id_season := '{season}', 
                     first_week := {first_week},
                     last_week := {last_week}

@@ -8,7 +8,7 @@ class PlayersRanking:
 
     def build_ranking(
         self,
-        id_chp: str,
+        id_comp: str,
         season: str,
         first_week: int = 1,
         last_week: int = 100,
@@ -23,7 +23,7 @@ class PlayersRanking:
         return self.db.df_from_query(
             f"""select * 
             from players_rankings(
-                id_chp := '{id_chp}', 
+                id_comp := '{id_comp}', 
                 id_season := '{season}', 
                 first_week := {first_week}, 
                 last_week := {last_week},
