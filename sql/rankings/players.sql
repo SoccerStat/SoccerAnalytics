@@ -190,23 +190,21 @@ begin
 				0 as away_sub_in,
 				
 				case
-					when se.player_out = c.player then 1 
+					when e.player_out = c.player then 1 
 					else 0
 				end as home_sub_out,
 				0 as away_sub_out
-			from (select * from %I.player_main_stats where played_home) as pms
-			left join selected_match as h
+			from selected_match as h
+			join (select * from %I.player_main_stats where played_home) as pms
 			on pms.match = h.id
-			left join (select match, team, captain, score from %I.team_stats where played_home) as ts 
-			on h.id = ts.match
-			left join (select match, team, captain, score from %I.team_stats where not played_home) as ts_away
+			join (select match, team, captain, score from %I.team_stats where played_home) as ts 
+			on h.id = ts.match and ts.team = h.home_team
+			join (select match, team, captain, score from %I.team_stats where not played_home) as ts_away
 			on h.id = ts_away.match
-			left join (select * from %I.compo where played_home) as c
+			join (select * from %I.compo where played_home) as c
 			on h.id = c.match and pms.player = c.player
-			left join (select * from %I.event where played_home) as e
-			on h.id = e.match
-			left join %I.sub_event se
-			on pms.player = se.player_out
+			left join (select match, team, player_in, player_out from %I.event e join %I.sub_event se on e.id = se.id where e.played_home) as e
+			on h.id = e.match and (e.player_in = c.player or e.player_out = c.player)
 		),
 		away_stats as (
 			select
@@ -280,21 +278,19 @@ begin
 				
 				0 as home_sub_out,
 				case
-					when se.player_out = c.player then 1 else 0
+					when e.player_out = c.player then 1 else 0
 				end as away_sub_out
-			from (select * from %I.player_main_stats where not played_home) as pms
-			left join selected_match as a
+			from selected_match as a
+			join (select * from %I.player_main_stats where not played_home) as pms
 			on pms.match = a.id
-			left join (select match, team, captain, score from %I.team_stats where not played_home) as ts 
-			on a.id = ts.match and a.away_team = ts.team
-			left join (select match, team, captain, score from %I.team_stats where played_home) as ts_home
-			on a.id = ts.match and a.home_team = ts_home.team
-			left join (select * from %I.compo where not played_home) c
+			join (select match, team, captain, score from %I.team_stats where not played_home) as ts 
+			on a.id = ts.match and ts.team = a.away_team
+			join (select match, team, captain, score from %I.team_stats where played_home) as ts_home
+			on a.id = ts_home.match
+			join (select * from %I.compo where not played_home) c
 			on a.id = c.match and pms.player = c.player
-			left join (select * from %I.event where not played_home) as e
-			on a.id = e.match
-			left join %I.sub_event se
-			on pms.player = se.player_out
+			left join (select match, team, player_in, player_out from %I.event e join %I.sub_event se on e.id = se.id where not e.played_home) as e
+			on a.id = e.match and (e.player_in = c.player or e.player_out = c.player)
 		),
 		players_stats as (
 			select
@@ -393,7 +389,7 @@ begin
 			ps."Sub In",
 			ps."Sub Out"
 		from players_stats ps
-		left join dwh_upper.player p
+		join dwh_upper.player p
 		on ps.player = p.id
 		',
 		season_schema, season_schema, 
