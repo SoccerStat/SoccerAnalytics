@@ -16,6 +16,7 @@ returns table(
     "Goals" bigint,
     "Assists" bigint,
     "Minutes" bigint,
+    "Minutes/Match" numeric,
     "Shots" bigint,
     "Shots on Target" bigint,
     "Yellow Cards" bigint,
@@ -27,6 +28,8 @@ DECLARE
     season_schema text;
 	query text;
 begin
+    season_schema = 'dwh_' || id_season;
+
     query := format(
         'with oppositions as (
             select
@@ -60,8 +63,8 @@ begin
                 ps.nb_goals,
                 ps.nb_assists,
                 ps.nb_minutes,
-                ps.nb_position,
-                ps.nb_played_home,
+                ps.position,
+                ps.played_home,
                 ps.nb_shots,
                 ps.nb_shots_on_target,
                 ps.nb_cards_yellow,
@@ -90,6 +93,7 @@ begin
             sum(nb_goals) as "Goals",
             sum(nb_assists) as "Assists",
             sum(nb_minutes) as "Minutes",
+            round(sum(nb_minutes)/sum(win + draw + lose), 2) as "Minutes/Match",
             sum(nb_shots) as "Shots",
             sum(nb_shots_on_target) as "Shots on Target",
             sum(nb_cards_yellow) as "Yellow Cards",

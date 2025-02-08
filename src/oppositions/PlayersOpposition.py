@@ -11,7 +11,7 @@ class PlayersOpposition:
         self,
         player: str,
         id_comp: str = 'all',
-        id_season: str = 'all'
+        season: str = 'all'
     ) -> pd.DataFrame:
 
         self.db.execute_sql_file("sql/oppositions/player_x_teams.sql")
@@ -19,9 +19,9 @@ class PlayersOpposition:
         return self.db.df_from_query(
             f"""select * 
             from players_oppositions(
-                player := '{player}',
+                player := '{player.replace("'", "''")}',
                 id_comp := '{id_comp}',
-                id_season := '{id_season.replace('-', '_')}'
+                id_season := '{season.replace('-', '_')}'
                 );""")
 
     def build_matrix(
@@ -31,29 +31,29 @@ class PlayersOpposition:
         season: str = 'all'
     ) -> pd.DataFrame:
 
+        season_schema = f"dwh_{season.replace('-', '_')}"
+
         self.db.execute_sql_file("sql/oppositions/player_x_teams.sql")
 
         cursor_players = self.db.execute_query_get_cursor(
             f"""select p.name as "Player"
-            from player p
-            join player_club pc
-            on pc.id_player = p.id
-            join club_championship cc
-            on pc.id_club = cc.id_club and pc.season = cc.season
-            where {f"id_championship = '{id_comp}'" if id_comp != "all" else "true"}
-            and {f"pc.season = '{season}'" if season != "all" else "true"}
+            from dwh_upper.player p
+            join {season_schema}.team_player tp
+            on tp.player = p.id
+            join {season_schema}.team t
+            on tp.team = t.id
+            where t.competition = '{id_comp}'
             group by p.name
             ;"""
         )
 
         cursor_teams = self.db.execute_query_get_cursor(
-            f"""select c.complete_name as "Club"
-            from club_championship cc
-            join club c
-            on cc.id_club = c.id
-            where {f"id_championship = '{id_comp}'" if id_comp != "all" else "true"}
-            and {f"season = '{season}'" if season != "all" else "true"}
-            group by c.complete_name
+            f"""select c.name as "Club"
+            from {season_schema}.team t
+            join dwh_upper.club c
+            on t.id = t.competition || '_' || c.id
+            where t.competition = '{id_comp}'
+            group by c.name
             ;"""
         )
 
@@ -68,12 +68,13 @@ class PlayersOpposition:
 
             for player in players:
                 cursor_oppositions = self.db.execute_query_get_cursor(
-                    f"""select "Player", "Opponent", "{stat}" 
+                    f"""select "Player", "Opponent", "{stat}"
                     from players_oppositions(
                         player := '{player.replace("'", "''")}',
                         id_comp := '{id_comp}',
-                        id_season := '{season}'
-                        );""")
+                        id_season := '{season.replace('-', '_')}'
+                        );"""
+                )
 
                 data = cursor_oppositions.fetchall()
 

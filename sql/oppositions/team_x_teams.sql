@@ -26,81 +26,86 @@ DECLARE
     season_schema text;
 	query text;
 begin
-    return query
+    season_schema = 'dwh_' || id_season;
 
-    with oppositions as (
+    query := format(
+        'with oppositions as (
+            select
+                case 
+                    when played_home then m.home_team
+                    else m.away_team
+                end as id_team,
+                case 
+                    when played_home then m.away_team
+                    else m.home_team
+                end as id_opponent,
+
+                case
+                    when played_home then home_score
+                    else away_score
+                end as goals_for,
+                case 
+                    when not played_home then home_score
+                    else away_score
+                end as goals_against,
+
+                case
+                    when played_home and home_score > away_score then 1
+                    when not played_home and away_score > home_score then 1
+                    else 0
+                end as win,
+                case
+                    when home_score = away_score then 1
+                    else 0
+                end as draw,
+                case
+                    when played_home and home_score < away_score then 1
+                    when not played_home and away_score < home_score then 1
+                    else 0
+                end as lose,
+
+                shots,
+                on_target,
+                y_cards,
+                yr_cards,
+                r_cards
+
+            from match m
+            join team_stats ts
+            on m.id = ts.id_match
+            where case when id_comp = 'all' then true else m.id_championship = id_comp end
+            and case when id_season = 'all' then true else m.season = id_season end
+        )
+
         select
-            case 
-                when played_home then m.home_team
-                else m.away_team
-            end as id_team,
-            case 
-                when played_home then m.away_team
-                else m.home_team
-            end as id_opponent,
+            t.complete_name as Team,
+            o.complete_name as Opponent,
 
-            case
-                when played_home then home_score
-                else away_score
-            end as goals_for,
-            case 
-                when not played_home then home_score
-                else away_score
-            end as goals_against,
+            sum(win + draw + lose) as Matches,
+            sum(win) as Wins,
+            sum(draw) as Draws,
+            sum(lose) as Loses,
 
-            case
-                when played_home and home_score > away_score then 1
-                when not played_home and away_score > home_score then 1
-                else 0
-            end as win,
-            case
-                when home_score = away_score then 1
-                else 0
-            end as draw,
-            case
-                when played_home and home_score < away_score then 1
-                when not played_home and away_score < home_score then 1
-                else 0
-            end as lose,
+            sum(goals_for) as "Goals For",
+            sum(goals_against) as "Goals Against",
+            
+            sum(shots) as Shots,
+            sum(on_target) as "Shots on Target",
+            
+            sum(y_cards) as "Yellow Cards",
+            sum(yr_cards) as "Incl. 2 Yellow Cards",
+            sum(r_cards) as "Red Cards"
 
-            shots,
-            on_target,
-            y_cards,
-            yr_cards,
-            r_cards
+        from oppositions os
+        join dwh_upper.club t
+        on os.id_team = t.id
+        join club o
+        on os.id_opponent = o.id
+        where t.complete_name = team
+        group by t.complete_name, o.complete_name;',
 
-        from match m
-        join team_stats ts
-        on m.id = ts.id_match
-        where case when id_comp = 'all' then true else m.id_championship = id_comp end
-        and case when id_season = 'all' then true else m.season = id_season end
-    )
+    );
 
-    select
-        t.complete_name as Team,
-        o.complete_name as Opponent,
-
-        sum(win + draw + lose) as Matches,
-        sum(win) as Wins,
-        sum(draw) as Draws,
-        sum(lose) as Loses,
-
-        sum(goals_for) as "Goals For",
-        sum(goals_against) as "Goals Against",
-        
-        sum(shots) as Shots,
-        sum(on_target) as "Shots on Target",
-        
-        sum(y_cards) as "Yellow Cards",
-        sum(yr_cards) as "Incl. 2 Yellow Cards",
-        sum(r_cards) as "Red Cards"
-
-    from oppositions os
-    join club t
-    on os.id_team = t.id
-    join club o
-    on os.id_opponent = o.id
-    where t.complete_name = team
-    group by t.complete_name, o.complete_name;
+    RETURN QUERY EXECUTE query USING team, id_comp, id_season;
 end;
 $$ language plpgsql;

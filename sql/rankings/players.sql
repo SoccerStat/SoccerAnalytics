@@ -37,6 +37,7 @@ returns table(
 	"Red Cards" bigint,
 	"Incl. 2 Yellow Cards" bigint,
 	"Minutes" bigint,
+	"Minutes/Match" numeric,
 	"Captain" bigint,
 	"Started" bigint,
 	"Sub In" bigint,
@@ -382,6 +383,10 @@ begin
 			ps."Incl. 2 Yellow Cards",
 
 			ps.Minutes,
+			case
+				when ps.Matches <> 0 then round(ps.Minutes / ps.Matches, 2)
+				else 0.0
+			end as "Minutes/Match",
 
 			ps.Captain,
 
