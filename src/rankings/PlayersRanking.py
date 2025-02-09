@@ -12,7 +12,7 @@ class PlayersRanking:
         season: str,
         first_week: int = 1,
         last_week: int = 100,
-        side :str = 'both'
+        side:str = 'both'
     ) -> pd.DataFrame:
 
         season = season.replace('-', '_')

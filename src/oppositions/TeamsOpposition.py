@@ -1,15 +1,17 @@
 import pandas as pd
 
 from postgres.PostgresQuerying import PostgresQuerying
-from src.oppositions.Oppositions import Oppositions
 
-class TeamsOpposition(Oppositions):
+class TeamsOpposition:
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
 
     def build_oppositions(
         self,
-        team: str
+        team: str,
+        id_comp: str,
+        id_season: str,
+        side: str = 'both'
     ) -> pd.DataFrame:
 
         self.db.execute_sql_file("sql/oppositions/team_x_teams.sql")
@@ -17,7 +19,10 @@ class TeamsOpposition(Oppositions):
         return self.db.df_from_query(
             f"""select * 
             from teams_oppositions(
-                team := '{team}'
+                team := '{team}',
+                id_comp := '{id_comp}',
+                id_season := '{id_season.replace('-', '_')}',
+                side := '{side}'
                 );""")
 
     def build_matrix(
