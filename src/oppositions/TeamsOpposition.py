@@ -23,7 +23,8 @@ class TeamsOpposition:
                 id_comp := '{id_comp}',
                 id_season := '{id_season.replace('-', '_')}',
                 side := '{side}'
-                );""")
+                ) as "to"
+            where "to"."Matches" != 0;""")
 
     def build_matrix(
         self,

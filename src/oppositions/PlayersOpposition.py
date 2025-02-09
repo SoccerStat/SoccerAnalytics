@@ -10,8 +10,9 @@ class PlayersOpposition:
     def build_oppositions(
         self,
         player: str,
-        id_comp: str = 'all',
-        season: str = 'all'
+        id_comp: str,
+        season: str,
+        side: str = "both"
     ) -> pd.DataFrame:
 
         self.db.execute_sql_file("sql/oppositions/player_x_teams.sql")
@@ -21,8 +22,10 @@ class PlayersOpposition:
             from players_oppositions(
                 player := '{player.replace("'", "''")}',
                 id_comp := '{id_comp}',
-                id_season := '{season.replace('-', '_')}'
-                );""")
+                id_season := '{season.replace('-', '_')}',
+                side := '{side}'
+                ) as "po"
+            where "po"."Matches" != 0;""")
 
     def build_matrix(
         self,
