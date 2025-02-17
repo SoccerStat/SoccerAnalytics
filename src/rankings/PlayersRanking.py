@@ -1,4 +1,5 @@
 import pandas as pd
+from psycopg2 import sql
 
 from postgres.PostgresQuerying import PostgresQuerying
 
@@ -20,12 +21,15 @@ class PlayersRanking:
         self.db.execute_sql_file("sql/rankings/sub_functions.sql")
         self.db.execute_sql_file("sql/rankings/players.sql")
 
-        return self.db.df_from_query(
-            f"""select * 
+        query = sql.SQL("""
+            select * 
             from dwh_utils.players_rankings(
-                id_comp := '{id_comp}', 
-                id_season := '{season}', 
-                first_week := {first_week}, 
-                last_week := {last_week},
-                side := '{side}'
-                );""") #.set_index('Ranking')
+                id_comp := %s, 
+                id_season := %s,
+                first_week := %s,
+                last_week := %s,
+                side := %s
+            );
+        """) #.set_index('Ranking')
+
+        return self.db.df_from_query(query, (id_comp, season, first_week, last_week, side))

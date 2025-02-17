@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from psycopg2 import sql
 
 from postgres.PostgresQuerying import PostgresQuerying
 
@@ -105,27 +106,31 @@ class TeamsRanking:
         self.db.execute_sql_file("sql/rankings/teams.sql")
         self.db.execute_sql_file("sql/rankings/teams_xp.sql")
 
-        teams_ranking = self.db.df_from_query( \
-            f"""
+        teams_query = sql.SQL("""
             select *
             from dwh_utils.teams_ranking(
-                id_comp := '{id_comp}',
-                id_season := '{season}',
-                first_week := {first_week},
-                last_week := {last_week},
-                side := '{side}'
-                );""")
+                id_comp := %s,
+                id_season := %s,
+                first_week := %s,
+                last_week := %s,
+                side := %s
+                );
+        """)
 
-        justice_ranking = self.__build_justice_ranking( \
-            self.db.df_from_query(
-                f"""
-                select * 
-                from dwh_utils.teams_justice_table(
-                    id_comp := '{id_comp}', 
-                    id_season := '{season}', 
-                    first_week := {first_week},
-                    last_week := {last_week}
-                    );"""),
+        teams_ranking = self.db.df_from_query(teams_query, (id_comp, season, first_week, last_week, side))
+
+        justice_query = sql.SQL("""
+            select * 
+            from dwh_utils.teams_justice_table(
+                id_comp := %s, 
+                id_season := %s,
+                first_week := %s,
+                last_week := %s
+                );
+        """)
+
+        justice_ranking = self.__build_justice_ranking(
+            self.db.df_from_query(justice_query, (id_comp, season, first_week, last_week)),
             side,
             n_sim,
             r

@@ -10,13 +10,16 @@ class PostgresQuerying:
         self.postgres_conn = PostgresConnection(env)
         self.postgres_conn.connect()
 
-    def execute_query_get_cursor(self, query: str) -> Optional[cursor]:
+    def execute_query_get_cursor(self, query: str, params=None) -> Optional[cursor]:
         if not self.postgres_conn.get_conn():
             return None
 
         try:
             cursor = self.postgres_conn.get_cursor()
-            cursor.execute(query)
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
             return cursor
         except Exception as e:
             print(f"Error: {e}")
@@ -26,11 +29,11 @@ class PostgresQuerying:
         with open(path, 'r') as sql_file:
             return self.execute_query_get_cursor(sql_file.read())
 
-    def df_from_query(self, query: str) -> pd.DataFrame:
+    def df_from_query(self, query: str, params=None) -> pd.DataFrame:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
 
-            cursor_instance = self.execute_query_get_cursor(query)
+            cursor_instance = self.execute_query_get_cursor(query, params)
             if cursor_instance:
                 columns = [desc[0] for desc in cursor_instance.description]
                 df = pd.DataFrame(cursor_instance.fetchall(), columns=columns)

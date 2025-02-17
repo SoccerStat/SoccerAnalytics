@@ -1,5 +1,7 @@
 import pandas as pd
 
+from psycopg2 import sql
+
 from postgres.PostgresQuerying import PostgresQuerying
 
 class TeamsOpposition:
@@ -17,35 +19,43 @@ class TeamsOpposition:
         self.db.execute_sql_file("sql/rankings/sub_functions.sql")
         self.db.execute_sql_file("sql/oppositions/team_x_teams.sql")
 
-        return self.db.df_from_query(
-            f"""select * 
+        query = sql.SQL("""
+            select * 
             from dwh_utils.teams_oppositions(
-                team := '{team}',
-                id_comp := '{id_comp}',
-                id_season := '{id_season.replace('-', '_')}',
-                side := '{side}'
+                team := %s,
+                id_comp := %s,
+                id_season := %s,
+                side := %s
                 ) as "to"
-            where "to"."Matches" != 0;""")
+            where "to"."Matches" != 0;
+        """)
+
+        return self.db.df_from_query(query, (team, id_comp, id_season.replace('-', '_'), side))
 
     def build_matrix(
         self,
         stat: str,
-        id_comp: str = 'all',
-        season: str = 'all'
+        id_comp: str,
+        season: str,
+        side: str
     ) -> list:
+
+        season = season.replace('-', '_')
+
+        season_schema = f"dwh_{season}"
 
         self.db.execute_sql_file("sql/oppositions/team_x_teams.sql")
 
-        cursor_instance = self.db.execute_query_get_cursor(
-            f"""select c.complete_name as "Club"
-            from club_championship cc
-            join club c
-            on cc.id_club = c.id
-            where {f"id_championship = '{id_comp}'" if id_comp != "all" else "true"}
-            and {f"season = '{season}'" if season != "all" else "true"}
-            group by c.complete_name
-            ;"""
-        )
+        query = sql.SQL("""
+            select c.name as "Club"
+                from {}.team t
+                join dwh_upper.club c
+                on t.club = c.id
+                where t.competition = %s
+                group by c.name;
+        """).format(sql.Identifier(season_schema))
+
+        cursor_instance = self.db.execute_query_get_cursor(query, (id_comp,))
 
         if cursor_instance:
             teams = [row[0] for row in cursor_instance.fetchall()]
@@ -53,17 +63,23 @@ class TeamsOpposition:
             df = pd.DataFrame(index=teams, columns=teams)
 
             for team in teams:
-                cursor_oppositions = self.db.execute_query_get_cursor(
-                    f"""select "Team", "Opponent", "{stat}"
+                team_query = sql.SQL("""
+                    select "Team", "Opponent", {stat}
                     from dwh_utils.teams_oppositions(
-                        team := '{team.replace("'", "''")}',
-                        id_comp := '{id_comp}',
-                        id_season := '{season}'
-                        );""")
+                        team := %s,
+                        id_comp := %s,
+                        id_season := %s,
+                        side := %s
+                    );
+                """).format(stat=sql.Identifier(stat))
+
+                cursor_oppositions = self.db.execute_query_get_cursor(team_query,
+                    (team, id_comp, season, side)
+                )
 
                 data = cursor_oppositions.fetchall()
                 cursor_oppositions.close()
-                
+
                 for stats in data:
                     df.loc[stats[0], stats[1]] = stats[2]
 
