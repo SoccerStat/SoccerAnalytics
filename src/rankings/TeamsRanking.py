@@ -108,7 +108,7 @@ class TeamsRanking:
         teams_ranking = self.db.df_from_query( \
             f"""
             select *
-            from teams_ranking(
+            from dwh_utils.teams_ranking(
                 id_comp := '{id_comp}',
                 id_season := '{season}',
                 first_week := {first_week},
@@ -120,7 +120,7 @@ class TeamsRanking:
             self.db.df_from_query(
                 f"""
                 select * 
-                from teams_justice_table(
+                from dwh_utils.teams_justice_table(
                     id_comp := '{id_comp}', 
                     id_season := '{season}', 
                     first_week := {first_week},

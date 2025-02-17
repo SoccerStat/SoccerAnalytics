@@ -22,7 +22,7 @@ class PlayersRanking:
 
         return self.db.df_from_query(
             f"""select * 
-            from players_rankings(
+            from dwh_utils.players_rankings(
                 id_comp := '{id_comp}', 
                 id_season := '{season}', 
                 first_week := {first_week}, 

@@ -1,6 +1,4 @@
-drop function if exists public.teams_justice_table;
-
-create or replace function public.teams_justice_table(
+create or replace function dwh_utils.teams_justice_table(
 	in id_comp varchar(100),
 	in id_season varchar(20),
 	in first_week int,

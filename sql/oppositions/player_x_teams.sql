@@ -1,10 +1,8 @@
-drop function if exists public.players_oppositions;
-
-create or replace function public.players_oppositions(
+create or replace function dwh_utils.players_oppositions(
     in player varchar(100),
     in id_comp varchar(20),
     in id_season varchar(20),
-	in side ranking_type
+	in side dwh_utils.ranking_type
 )
 returns table(
 	"Player" varchar(100),
@@ -156,21 +154,21 @@ begin
                 p.name as Player,
                 c.name as Opponent,
 
-                set_bigint_stat(sum(home_win + home_draw + home_lose), sum(away_win + away_draw + away_lose), ''' || side || ''') as Matches,
-                set_bigint_stat(sum(home_win), sum(away_win), ''' || side || ''') as Wins,
-                set_bigint_stat(sum(home_draw), sum(away_draw), ''' || side || ''') as Draws,
-                set_bigint_stat(sum(home_lose), sum(away_lose), ''' || side || ''') as Loses,
+                dwh_utils.set_bigint_stat(sum(home_win + home_draw + home_lose), sum(away_win + away_draw + away_lose), ''' || side || ''') as Matches,
+                dwh_utils.set_bigint_stat(sum(home_win), sum(away_win), ''' || side || ''') as Wins,
+                dwh_utils.set_bigint_stat(sum(home_draw), sum(away_draw), ''' || side || ''') as Draws,
+                dwh_utils.set_bigint_stat(sum(home_lose), sum(away_lose), ''' || side || ''') as Loses,
 
-                set_bigint_stat(sum(home_goals), sum(away_goals), ''' || side || ''') as Goals,
-                set_bigint_stat(sum(home_assists), sum(away_assists), ''' || side || ''') as Assists,
+                dwh_utils.set_bigint_stat(sum(home_goals), sum(away_goals), ''' || side || ''') as Goals,
+                dwh_utils.set_bigint_stat(sum(home_assists), sum(away_assists), ''' || side || ''') as Assists,
                 
-                set_bigint_stat(sum(home_minutes), sum(away_minutes), ''' || side || ''') as Minutes,
+                dwh_utils.set_bigint_stat(sum(home_minutes), sum(away_minutes), ''' || side || ''') as Minutes,
                 
-                set_bigint_stat(sum(home_shots), sum(away_shots), ''' || side || ''') as Shots,
-                set_bigint_stat(sum(home_on_target), sum(away_on_target), ''' || side || ''') as "Shots on Target",
-                set_bigint_stat(sum(home_y_cards), sum(away_y_cards), ''' || side || ''') as "Yellow Cards",
-                set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), ''' || side || ''') as "Incl. 2 Yellow Cards",
-                set_bigint_stat(sum(home_r_cards), sum(away_r_cards), ''' || side || ''') as "Red Cards"
+                dwh_utils.set_bigint_stat(sum(home_shots), sum(away_shots), ''' || side || ''') as Shots,
+                dwh_utils.set_bigint_stat(sum(home_on_target), sum(away_on_target), ''' || side || ''') as "Shots on Target",
+                dwh_utils.set_bigint_stat(sum(home_y_cards), sum(away_y_cards), ''' || side || ''') as "Yellow Cards",
+                dwh_utils.set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), ''' || side || ''') as "Incl. 2 Yellow Cards",
+                dwh_utils.set_bigint_stat(sum(home_r_cards), sum(away_r_cards), ''' || side || ''') as "Red Cards"
             
             from unionised u
             join dwh_upper.player p

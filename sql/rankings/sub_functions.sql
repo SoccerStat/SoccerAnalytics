@@ -1,21 +1,22 @@
-drop function if exists check_parameters;
-drop function if exists set_bigint_stat;
-drop function if exists set_numeric_stat;
-drop function if exists get_last_opponent;
-drop type if exists ranking_type CASCADE;
-drop type if exists team_ranking CASCADE;
-drop type if exists player_ranking CASCADE;
+drop function if exists dwh_utils.check_parameters;
+drop function if exists dwh_utils.set_bigint_stat;
+drop function if exists dwh_utils.set_numeric_stat;
+drop function if exists dwh_utils.get_last_opponent;
+drop type if exists dwh_utils.ranking_type CASCADE;
+drop type if exists dwh_utils.team_ranking CASCADE;
+drop type if exists dwh_utils.player_ranking CASCADE;
 
-create type public.ranking_type as enum ('home', 'away', 'both');
-create type public.team_ranking as enum ('Points', 'Wins', 'Draws', 'Loses', 'Goals For', 'Goals Against', 'Goals Diff', 'xG', 'Yellow Cards', 'Red Cards', 'Fouls');
-create type public.player_ranking as enum ('scorer', 'assist');
 
-create or replace function public.check_parameters(
+create type dwh_utils.ranking_type as enum ('home', 'away', 'both');
+create type dwh_utils.team_ranking as enum ('Points', 'Wins', 'Draws', 'Loses', 'Goals For', 'Goals Against', 'Goals Diff', 'xG', 'Yellow Cards', 'Red Cards', 'Fouls');
+create type dwh_utils.player_ranking as enum ('scorer', 'assist');
+
+create or replace function dwh_utils.check_parameters(
 	in id_comp varchar(100),
 	in id_season varchar(20),
 	in first_week int,
 	in last_week int,
-	in side ranking_type
+	in side dwh_utils.ranking_type
 )
 returns void as
 $$
@@ -40,10 +41,10 @@ $$
 language plpgsql;
 
 
-create or replace function public.set_bigint_stat(
+create or replace function dwh_utils.set_bigint_stat(
 	in home_stat bigint,
 	in away_stat bigint,
-	in side ranking_type
+	in side dwh_utils.ranking_type
 )
 returns bigint as 
 $$
@@ -60,10 +61,10 @@ $$
 language plpgsql;
 
 
-create or replace function public.set_numeric_stat(
+create or replace function dwh_utils.set_numeric_stat(
 	in home_stat numeric,
 	in away_stat numeric,
-	in side ranking_type
+	in side dwh_utils.ranking_type
 )
 returns numeric as
 $$
@@ -83,7 +84,7 @@ language plpgsql;
 /*
  * TODO: A revoir // Ajouter paramètres first_week, last_week pour choper le dernier adversaire de la période sélectionnée
  */
-create or replace function public.get_last_opponent(
+create or replace function dwh_utils.get_last_opponent(
 	in id_club varchar(20),
 	in id_season varchar(20)
 )

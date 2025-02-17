@@ -15,11 +15,12 @@ class PlayersOpposition:
         side: str = "both"
     ) -> pd.DataFrame:
 
+        self.db.execute_sql_file("sql/rankings/sub_functions.sql")
         self.db.execute_sql_file("sql/oppositions/player_x_teams.sql")
 
         return self.db.df_from_query(
             f"""select * 
-            from players_oppositions(
+            from dwh_utils.players_oppositions(
                 player := '{player.replace("'", "''")}',
                 id_comp := '{id_comp}',
                 id_season := '{season.replace('-', '_')}',
@@ -72,7 +73,7 @@ class PlayersOpposition:
             for player in players:
                 cursor_oppositions = self.db.execute_query_get_cursor(
                     f"""select "Player", "Opponent", "{stat}"
-                    from players_oppositions(
+                    from dwh_utils.players_oppositions(
                         player := '{player.replace("'", "''")}',
                         id_comp := '{id_comp}',
                         id_season := '{season.replace('-', '_')}'

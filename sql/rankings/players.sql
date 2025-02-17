@@ -2,14 +2,13 @@
  * (plus tard) Nombre de points rapportés à l'équipe en marquant
  * 
  * */
-drop function if exists players_rankings;
 
-create or replace function players_rankings(
+create or replace function dwh_utils.players_rankings(
 	in id_comp varchar(100),
 	in id_season varchar(20),
 	in first_week int,
 	in last_week int,
-	in side ranking_type
+	in side dwh_utils.ranking_type
 )
 returns table(
 	--"Ranking" bigint,
@@ -50,7 +49,7 @@ DECLARE
     season_schema text;
 	query text;
 begin
-	PERFORM check_parameters(id_comp, id_season, first_week, last_week, side);
+	PERFORM dwh_utils.check_parameters(id_comp, id_season, first_week, last_week, side);
 
 	season_schema = 'dwh_' || id_season;
 	
@@ -299,37 +298,37 @@ begin
 				pn.Nationalities,
 
 				case
-					when set_bigint_stat(sum(home_gk), sum(away_gk), ''' || side || ''') > 0 then true
+					when dwh_utils.set_bigint_stat(sum(home_gk), sum(away_gk), ''' || side || ''') > 0 then true
 					else false
 				end as GK,
 				
 				string_agg(distinct c.name, '', '') as Club,
 
-				set_bigint_stat(sum(home_match), sum(away_match), ''' || side || ''') as Matches,
+				dwh_utils.set_bigint_stat(sum(home_match), sum(away_match), ''' || side || ''') as Matches,
 
-				set_bigint_stat(sum(home_win), sum(away_win), ''' || side || ''') as Wins,
-				set_bigint_stat(sum(home_draw), sum(away_draw), ''' || side || ''') as Draws,
-				set_bigint_stat(sum(home_lose), sum(away_lose), ''' || side || ''') as Loses,
+				dwh_utils.set_bigint_stat(sum(home_win), sum(away_win), ''' || side || ''') as Wins,
+				dwh_utils.set_bigint_stat(sum(home_draw), sum(away_draw), ''' || side || ''') as Draws,
+				dwh_utils.set_bigint_stat(sum(home_lose), sum(away_lose), ''' || side || ''') as Loses,
 				
-				set_bigint_stat(sum(home_goals), sum(away_goals), ''' || side || ''') as Goals,
-				set_bigint_stat(sum(home_pens_made), sum(away_pens_made), ''' || side || ''') as Penalties,
-				set_bigint_stat(sum(home_assists), sum(away_assists), ''' || side || ''') as Assists,
+				dwh_utils.set_bigint_stat(sum(home_goals), sum(away_goals), ''' || side || ''') as Goals,
+				dwh_utils.set_bigint_stat(sum(home_pens_made), sum(away_pens_made), ''' || side || ''') as Penalties,
+				dwh_utils.set_bigint_stat(sum(home_assists), sum(away_assists), ''' || side || ''') as Assists,
 
-				set_numeric_stat(sum(home_xg)::numeric, sum(away_xg)::numeric, ''' || side || ''') as xG,
+				dwh_utils.set_numeric_stat(sum(home_xg)::numeric, sum(away_xg)::numeric, ''' || side || ''') as xG,
 
-				set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), ''' || side || ''') as "Clean Sheets",
+				dwh_utils.set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), ''' || side || ''') as "Clean Sheets",
 				
-				set_bigint_stat(sum(home_cards_yellow), sum(away_cards_yellow), ''' || side || ''') as "Yellow Cards",
-				set_bigint_stat(sum(home_cards_red), sum(away_cards_red), ''' || side || ''') as "Red Cards",
-				set_bigint_stat(sum(home_cards_yellow_red), sum(away_cards_yellow_red), ''' || side || ''') as "Incl. 2 Yellow Cards",
+				dwh_utils.set_bigint_stat(sum(home_cards_yellow), sum(away_cards_yellow), ''' || side || ''') as "Yellow Cards",
+				dwh_utils.set_bigint_stat(sum(home_cards_red), sum(away_cards_red), ''' || side || ''') as "Red Cards",
+				dwh_utils.set_bigint_stat(sum(home_cards_yellow_red), sum(away_cards_yellow_red), ''' || side || ''') as "Incl. 2 Yellow Cards",
 				
-				set_bigint_stat(sum(home_minutes), sum(away_minutes), ''' || side || ''') as Minutes,
+				dwh_utils.set_bigint_stat(sum(home_minutes), sum(away_minutes), ''' || side || ''') as Minutes,
 
-				set_bigint_stat(sum(home_captain), sum(away_captain), ''' || side || ''') as Captain,
+				dwh_utils.set_bigint_stat(sum(home_captain), sum(away_captain), ''' || side || ''') as Captain,
 
-				set_bigint_stat(sum(home_started), sum(away_started), ''' || side || ''') as Started,
-				set_bigint_stat(sum(home_sub_in), sum(away_sub_in), ''' || side || ''') as "Sub In",
-				set_bigint_stat(sum(home_sub_out), sum(away_sub_out), ''' || side || ''') as "Sub Out"
+				dwh_utils.set_bigint_stat(sum(home_started), sum(away_started), ''' || side || ''') as Started,
+				dwh_utils.set_bigint_stat(sum(home_sub_in), sum(away_sub_in), ''' || side || ''') as "Sub In",
+				dwh_utils.set_bigint_stat(sum(home_sub_out), sum(away_sub_out), ''' || side || ''') as "Sub Out"
 				
 			from (
 				select *
