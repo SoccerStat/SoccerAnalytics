@@ -19,6 +19,12 @@ class PostgresConnection:
     def get_cursor(self) -> psycopg2.extensions.cursor:
         return self.conn.cursor()
 
+    def commit(self):
+        return self.conn.commit()
+
+    def rollback(self):
+        return self.conn.rollback()
+
     def connect(self) -> None:
         try:
             self.conn = psycopg2.connect(

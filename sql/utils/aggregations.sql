@@ -1,44 +1,6 @@
-drop function if exists dwh_utils.check_parameters;
 drop function if exists dwh_utils.set_bigint_stat;
 drop function if exists dwh_utils.set_numeric_stat;
 drop function if exists dwh_utils.get_last_opponent;
-drop type if exists dwh_utils.ranking_type CASCADE;
-drop type if exists dwh_utils.team_ranking CASCADE;
-drop type if exists dwh_utils.player_ranking CASCADE;
-
-
-create type dwh_utils.ranking_type as enum ('home', 'away', 'both');
-create type dwh_utils.team_ranking as enum ('Points', 'Wins', 'Draws', 'Loses', 'Goals For', 'Goals Against', 'Goals Diff', 'xG', 'Yellow Cards', 'Red Cards', 'Fouls');
-create type dwh_utils.player_ranking as enum ('scorer', 'assist');
-
-create or replace function dwh_utils.check_parameters(
-	in id_comp varchar(100),
-	in id_season varchar(20),
-	in first_week int,
-	in last_week int,
-	in side dwh_utils.ranking_type
-)
-returns void as
-$$
-begin
-    /*if which not in ('scorer', 'assist') then
-		raise exception 'Invalid value for the type of player ranking. Valid values for "which" parameter are scorer, assist.';
-	end if;*/
-	if id_comp not in (select id from dwh_upper.championship) then
-		raise exception 'Invalid value for id_comp. Valid values are ligue_1, premier_league, serie_a, la_liga, fussball_bundesliga';
-	end if;
-	if id_season  !~ '^\d{4}_(\d{4})$' or (substring(id_season, 1, 4)::int + 1)::text != substring(id_season, 6, 4) then 
-		raise exception 'Wrong format of season. It should be like "2022_2023".';
-	end if;
-	if first_week > last_week then
-		raise exception 'Choose first_week as being lower than last_week';
-	end if;
-	if side not in ('home', 'away', 'both') then
-        raise exception 'Invalid value for ranking_type. Valid values are: home, away, both';
-    end if;
-end;
-$$
-language plpgsql;
 
 
 create or replace function dwh_utils.set_bigint_stat(
