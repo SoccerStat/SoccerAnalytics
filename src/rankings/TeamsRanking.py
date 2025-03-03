@@ -100,7 +100,8 @@ class TeamsRanking:
         last_week: int = 100,
         side: str = 'both',
         n_sim: int = 1000000,
-        r: int = 2
+        r: int = 2,
+        justice_ranking: bool = True
     ) -> pd.DataFrame:
 
         self.db.execute_sql_file(f"{self.utils_sql_path}/schemas.sql")
@@ -108,16 +109,17 @@ class TeamsRanking:
         self.db.execute_sql_file(f"{self.utils_sql_path}/checks.sql")
         self.db.execute_sql_file(f"{self.utils_sql_path}/aggregations.sql")
 
-        teams_ranking_tmp_table = self.db.read_sql_file(f"{self.utils_sql_path}/tmp_table.sql")
+        teams_ranking_tmp_table = self.db.read_sql_file(f"{self.utils_sql_path}/tmp_tables.sql")
         self.db.execute_query(teams_ranking_tmp_table)
 
         teams_ranking_template = self.db.read_sql_file(
             f"{self.ranking_sql_path}/template_raw_data_by_season.sql"
         )
 
-        justice_ranking_template = self.db.read_sql_file(
-            f"{self.ranking_sql_path}/template_xp_by_season.sql"
-        )
+        if justice_ranking:
+            justice_ranking_template = self.db.read_sql_file(
+                f"{self.ranking_sql_path}/template_xp_by_season.sql"
+            )
 
         all_season_schemas_query = sql.SQL("""select * from dwh_utils.get_season_schemas();""")
         all_season_schemas = self.db.df_from_query(all_season_schemas_query).iloc[:, 0].tolist()
@@ -134,14 +136,15 @@ class TeamsRanking:
                     )
                 )
 
-                self.db.execute_query(
-                    justice_ranking_template.format(
-                        season=season,
-                        id_comp=id_comp,
-                        first_week=first_week,
-                        last_week=last_week
+                if justice_ranking:
+                    self.db.execute_query(
+                        justice_ranking_template.format(
+                            season=season,
+                            id_comp=id_comp,
+                            first_week=first_week,
+                            last_week=last_week
+                        )
                     )
-                )
 
         self.db.execute_sql_file(f"{self.ranking_sql_path}/teams.sql")
         seasons_teams_ranking_query = sql.SQL("""
@@ -154,20 +157,20 @@ class TeamsRanking:
 
         teams_ranking = self.db.df_from_query(seasons_teams_ranking_query, (side, r))
 
-        seasons_justice_ranking_query = sql.SQL("""
-            select *
-            from tmp_justice_ranking;
-        """)
+        if justice_ranking:
+            seasons_justice_ranking_query = sql.SQL("""
+                select *
+                from tmp_justice_ranking;
+            """)
 
-        justice_ranking = self.__build_justice_ranking(
-            self.db.df_from_query(seasons_justice_ranking_query),
-            side,
-            n_sim,
-            r
-        )
+            justice_ranking = self.__build_justice_ranking(
+                self.db.df_from_query(seasons_justice_ranking_query),
+                side,
+                n_sim,
+                r
+            )
 
-        if not justice_ranking.empty:
-            return self.__merge_rankings(teams_ranking, justice_ranking, r)
+            return self.__merge_rankings(teams_ranking, justice_ranking, r)            
 
         return teams_ranking
 

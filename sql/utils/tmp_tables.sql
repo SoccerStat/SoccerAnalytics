@@ -1,3 +1,4 @@
+drop table if exists tmp_ranking;
 create temp table tmp_ranking (
     season varchar(20),
     home_match int,
@@ -41,6 +42,7 @@ create temp table tmp_ranking (
     away_lose int
 );
 
+drop table if exists tmp_justice_ranking;
 create temp table tmp_justice_ranking(
     match varchar(20),
     "Club" varchar(100),
