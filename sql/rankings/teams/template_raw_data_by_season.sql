@@ -166,7 +166,7 @@ away_team as (
 	left join dwh_{season}.team_stats ts_home
 	on a.id = ts_home.match and a.home_team = ts_home.team
 )
-insert into tmp_ranking
+insert into tmp_teams_ranking
 select *
 from home_team
 union all

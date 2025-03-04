@@ -95,7 +95,7 @@ class TeamsRanking:
     def build_ranking(
         self,
         id_comp: str,
-        seasons: list,
+        seasons: list[str],
         first_week: int = 1,
         last_week: int = 100,
         side: str = 'both',
@@ -108,6 +108,8 @@ class TeamsRanking:
         self.db.execute_sql_file(f"{self.utils_sql_path}/types.sql")
         self.db.execute_sql_file(f"{self.utils_sql_path}/checks.sql")
         self.db.execute_sql_file(f"{self.utils_sql_path}/aggregations.sql")
+
+        # TODO: perform checks
 
         teams_ranking_tmp_table = self.db.read_sql_file(f"{self.utils_sql_path}/tmp_tables.sql")
         self.db.execute_query(teams_ranking_tmp_table)

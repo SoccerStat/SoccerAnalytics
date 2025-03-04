@@ -30,7 +30,6 @@ returns table(
 )
 as $$
 DECLARE
-    season_schema text;
 	query text;
 begin
 	PERFORM dwh_utils.check_side(side);
@@ -74,7 +73,7 @@ begin
 				dwh_utils.set_bigint_stat(sum(home_shots), sum(away_shots), ''' || side || ''') as Shots,
 				dwh_utils.set_bigint_stat(sum(home_shots_ot), sum(away_shots_ot), ''' || side || ''') as "Shots on Target"
 				
-			from pg_temp.tmp_ranking as "stats"
+			from pg_temp.tmp_teams_ranking as "stats"
 			join (select id, name from dwh_upper.club) as c
 			on team = competition || ''_'' || c.id
 			group by Club --, "Last Opponent"
