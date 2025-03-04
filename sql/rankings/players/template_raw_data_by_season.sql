@@ -181,7 +181,7 @@ away_stats as (
 		0 as home_cards_red,
 		pms.nb_cards_red + pms.nb_cards_second_yellow as away_cards_red,
 		0 as home_cards_yellow_red,
-		pms.nb_cards_yellow as away_cards_yellow_red,
+		pms.nb_cards_second_yellow as away_cards_yellow_red,
 
 		0 as home_win,
 		case
