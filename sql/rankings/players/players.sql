@@ -102,7 +102,8 @@ begin
 				end as GK,
 				
 				case
-					when grouping(c.name) = 1 then array_agg(distinct c.name)
+					when count(distinct c.name) > 1 and grouping(c.name) = 1 
+					then array_agg(distinct c.name)
 					else array[c.name]
 				end as Clubs,
 
@@ -141,6 +142,7 @@ begin
 				(stats.player, pn.Nationalities, c.name),
 				(stats.player, pn.Nationalities)
 			)
+			having grouping(c.name) = 0 OR count(distinct c.name) > 1
 		)
 		select 
 			p.name as Player,
