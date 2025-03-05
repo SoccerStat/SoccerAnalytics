@@ -142,7 +142,7 @@ home_stats as (
 	on h.id = ts_away.match
 	join (select * from dwh_{season}.compo where played_home) as c
 	on h.id = c.match and pms.player = c.player
-	left join (select match, team, player_in, player_out from dwh_{season}.event e join dwh_{season}.sub_event se on e.id = se.id where e.played_home) as e
+	left join (select e.match, team, player_in, player_out from dwh_{season}.event e join dwh_{season}.sub_event se on e.id = se.id and e.match = se.match where e.played_home) as e
 	on h.id = e.match and (e.player_in = c.player or e.player_out = c.player)
 ),
 away_stats as (
@@ -229,7 +229,7 @@ away_stats as (
 	on a.id = ts_home.match
 	join (select * from dwh_{season}.compo where not played_home) c
 	on a.id = c.match and pms.player = c.player
-	left join (select match, team, player_in, player_out from dwh_{season}.event e join dwh_{season}.sub_event se on e.id = se.id where not e.played_home) as e
+	left join (select e.match, team, player_in, player_out from dwh_{season}.event e join dwh_{season}.sub_event se on e.id = se.id and e.match = se.match where not e.played_home) as e
 	on a.id = e.match and (e.player_in = c.player or e.player_out = c.player)
 )
 insert into tmp_players_ranking

@@ -11,7 +11,7 @@ returns table(
 	"Footed" varchar(20),
 	"Nationalities" varchar[],
 	"GK" bool,
-	"Club" varchar[],
+	"Clubs" varchar[],
 	"Matches" bigint,
 	"Wins" bigint,
 	"Draws" bigint,
@@ -101,7 +101,10 @@ begin
 					else false
 				end as GK,
 				
-				array_agg(distinct c.name) as Club,
+				case
+					when grouping(c.name) = 1 then array_agg(distinct c.name)
+					else array[c.name]
+				end as Clubs,
 
 				dwh_utils.set_bigint_stat(sum(home_match), sum(away_match), ''' || side || ''') as Matches,
 
@@ -134,7 +137,10 @@ begin
 			on team = competition || ''_'' || c.id
 			join players_nationalities pn
 			on stats.player = pn.player
-			group by stats.player, pn.Nationalities
+			group by grouping sets(
+				(stats.player, pn.Nationalities, c.name),
+				(stats.player, pn.Nationalities)
+			)
 		)
 		select 
 			p.name as Player,
@@ -150,7 +156,7 @@ begin
 
 			ps.GK,
 
-			ps.Club,
+			ps.Clubs,
 
 			ps.Matches,
 
