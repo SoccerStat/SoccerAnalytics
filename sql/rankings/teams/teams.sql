@@ -1,5 +1,5 @@
-create or replace function dwh_utils.teams_ranking(
-	in side dwh_utils.ranking_type,
+create or replace function analytics.teams_ranking(
+	in side analytics.ranking_type,
 	in r int
 )
 returns table(
@@ -32,7 +32,7 @@ as $$
 DECLARE
 	query text;
 begin
-	PERFORM dwh_utils.check_side(side);
+	PERFORM analytics.check_side(side);
 
     ----,--get_last_opponent(c.id, id_season) as "Last Opponent"
 
@@ -46,35 +46,35 @@ begin
 				sum(home_score) as home_score,
 				sum(away_score) as away_score,
 				
-				dwh_utils.set_bigint_stat(sum(home_match), sum(away_match), ''' || side || ''') as Matches,
+				analytics.set_bigint_stat(sum(home_match), sum(away_match), ''' || side || ''') as Matches,
 				
-				dwh_utils.set_bigint_stat(sum(home_points), sum(away_points), ''' || side || ''') as Points,
+				analytics.set_bigint_stat(sum(home_points), sum(away_points), ''' || side || ''') as Points,
 				
-				dwh_utils.set_bigint_stat(sum(home_win), sum(away_win), ''' || side || ''') as Wins,
-				dwh_utils.set_bigint_stat(sum(home_draw), sum(away_draw), ''' || side || ''') as Draws,
-				dwh_utils.set_bigint_stat(sum(home_lose), sum(away_lose), ''' || side || ''') as Loses,
+				analytics.set_bigint_stat(sum(home_win), sum(away_win), ''' || side || ''') as Wins,
+				analytics.set_bigint_stat(sum(home_draw), sum(away_draw), ''' || side || ''') as Draws,
+				analytics.set_bigint_stat(sum(home_lose), sum(away_lose), ''' || side || ''') as Loses,
 				
-				dwh_utils.set_bigint_stat(sum(home_goal_for), sum(away_goal_for), ''' || side || ''') as "Goals For",
-				dwh_utils.set_bigint_stat(sum(home_goal_against), sum(away_goal_against), ''' || side || ''') as "Goals Against",
-				dwh_utils.set_bigint_stat(sum(home_goal_for - home_goal_against), sum(away_goal_for - away_goal_against), ''' || side || ''') as "Goals Diff",
+				analytics.set_bigint_stat(sum(home_goal_for), sum(away_goal_for), ''' || side || ''') as "Goals For",
+				analytics.set_bigint_stat(sum(home_goal_against), sum(away_goal_against), ''' || side || ''') as "Goals Against",
+				analytics.set_bigint_stat(sum(home_goal_for - home_goal_against), sum(away_goal_for - away_goal_against), ''' || side || ''') as "Goals Diff",
 
-				dwh_utils.set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), ''' || side || ''') as "Clean Sheets",
+				analytics.set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), ''' || side || ''') as "Clean Sheets",
 				
-				dwh_utils.set_numeric_stat(sum(home_xg_for)::numeric, sum(away_xg_for)::numeric, ''' || side || ''') as "xG For",
+				analytics.set_numeric_stat(sum(home_xg_for)::numeric, sum(away_xg_for)::numeric, ''' || side || ''') as "xG For",
 
-				dwh_utils.set_numeric_stat(sum(home_xg_against)::numeric, sum(away_xg_against)::numeric, ''' || side || ''') as "xG Against",
+				analytics.set_numeric_stat(sum(home_xg_against)::numeric, sum(away_xg_against)::numeric, ''' || side || ''') as "xG Against",
 
-				dwh_utils.set_bigint_stat(sum(home_y_cards), sum(away_y_card), ''' || side || ''') as "Yellow Cards",
-				dwh_utils.set_bigint_stat(sum(home_r_cards), sum(away_r_cards), ''' || side || ''') as "Red Cards",
-				dwh_utils.set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), ''' || side || ''') as "Incl. 2 Yellow Cards",
+				analytics.set_bigint_stat(sum(home_y_cards), sum(away_y_card), ''' || side || ''') as "Yellow Cards",
+				analytics.set_bigint_stat(sum(home_r_cards), sum(away_r_cards), ''' || side || ''') as "Red Cards",
+				analytics.set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), ''' || side || ''') as "Incl. 2 Yellow Cards",
 				
-				dwh_utils.set_bigint_stat(sum(home_fouls), sum(away_fouls), ''' || side || ''') as Fouls,
+				analytics.set_bigint_stat(sum(home_fouls), sum(away_fouls), ''' || side || ''') as Fouls,
 
-				dwh_utils.set_bigint_stat(sum(home_shots), sum(away_shots), ''' || side || ''') as Shots,
-				dwh_utils.set_bigint_stat(sum(home_shots_ot), sum(away_shots_ot), ''' || side || ''') as "Shots on Target"
+				analytics.set_bigint_stat(sum(home_shots), sum(away_shots), ''' || side || ''') as Shots,
+				analytics.set_bigint_stat(sum(home_shots_ot), sum(away_shots_ot), ''' || side || ''') as "Shots on Target"
 				
 			from pg_temp.tmp_teams_ranking as "stats"
-			join (select id, name from dwh_upper.club) as c
+			join (select id, name from upper.club) as c
 			on team = competition || ''_'' || c.id
 			group by Club --, "Last Opponent"
 		)
@@ -126,7 +126,6 @@ begin
 
 			--ts."Last Opponent"
 		from teams_stats ts;
-		;
 	';
 
 	RETURN QUERY EXECUTE query USING side, r;

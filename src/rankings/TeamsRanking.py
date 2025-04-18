@@ -5,6 +5,8 @@ from psycopg2 import sql
 from postgres.PostgresQuerying import PostgresQuerying
 
 class TeamsRanking:
+    """
+    """
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
         self.ranking_sql_path = "sql/rankings/teams"
@@ -16,8 +18,8 @@ class TeamsRanking:
         n_sim: int,
         r: int) -> pd.DataFrame:
 
-        def xG_per_shot(shots: pd.Series, xg: pd.Series, n: int):
-            return np.random.binomial(shots, xg/shots, size=(n,))
+        def xG_per_shot(shots: pd.Series, xg: pd.Series, n_sim: int):
+            return np.random.binomial(shots, xg/shots, size=(n_sim,))
 
         def simulate_by_side(played_home: bool):
             team = teams.loc[teams['played_home'] == played_home, ['shots', 'xg']]
@@ -41,7 +43,6 @@ class TeamsRanking:
 
         return teams[['played_home', 'Club', 'xP']]
 
-
     def __build_justice_ranking(
         self,
         team_stats: pd.DataFrame,
@@ -57,13 +58,19 @@ class TeamsRanking:
         side_filter = 'played_home | not played_home'
 
         if not team_stats.empty:
+            valid_matches = team_stats[
+                (team_stats['xg'].notna()) & (team_stats['shots'].notna())
+            ]['match'].unique()
             return \
                 pd.concat(
-                    [self.__simulate_matches(
-                        team_stats.loc[team_stats['match'] == id_match].copy(),
-                        n_sim,
-                        r
-                    ) for id_match in team_stats['match'].unique()]
+                    [
+                        self.__simulate_matches(
+                            team_stats.loc[team_stats['match'] == id_match].copy(),
+                            n_sim,
+                            r
+                        )
+                        for id_match in valid_matches
+                    ]
                 ) \
                     .query(side_filter)[['Club', 'xP']] \
                         .groupby('Club') \
@@ -103,6 +110,9 @@ class TeamsRanking:
         r: int = 2,
         justice_ranking: bool = True
     ) -> pd.DataFrame:
+        """
+        """
+        seasons_to_analyse = [season.replace('-', '_') for season in seasons]
 
         self.db.execute_sql_file(f"{self.utils_sql_path}/schemas.sql")
         self.db.execute_sql_file(f"{self.utils_sql_path}/types.sql")
@@ -110,6 +120,13 @@ class TeamsRanking:
         self.db.execute_sql_file(f"{self.utils_sql_path}/aggregations.sql")
 
         # TODO: perform checks
+        self.db.execute_query(
+            f"""
+            SELECT analytics.check_id_comp('{id_comp}');
+            SELECT analytics.check_weeks('{first_week}', '{last_week}');
+            SELECT analytics.check_side('{side}');
+            """
+        )
 
         teams_ranking_tmp_table = self.db.read_sql_file(f"{self.utils_sql_path}/tmp_tables.sql")
         self.db.execute_query(teams_ranking_tmp_table)
@@ -123,12 +140,12 @@ class TeamsRanking:
                 f"{self.ranking_sql_path}/template_xp_by_season.sql"
             )
 
-        all_season_schemas_query = sql.SQL("""select * from dwh_utils.get_season_schemas();""")
+        all_season_schemas_query = sql.SQL("""select * from analytics.get_season_schemas();""")
         all_season_schemas = self.db.df_from_query(all_season_schemas_query).iloc[:, 0].tolist()
 
         for season_schema in all_season_schemas:
-            season = season_schema[4:]
-            if seasons == [] or season in seasons:
+            season = season_schema[7:]
+            if seasons_to_analyse == [] or season in seasons_to_analyse:
                 self.db.execute_query(
                     teams_ranking_template.format(
                         season=season,
@@ -151,7 +168,7 @@ class TeamsRanking:
         self.db.execute_sql_file(f"{self.ranking_sql_path}/teams.sql")
         seasons_teams_ranking_query = sql.SQL("""
             select *
-            from dwh_utils.teams_ranking(
+            from analytics.teams_ranking(
                 side := %s,
                 r := %s
                 );
@@ -172,7 +189,7 @@ class TeamsRanking:
                 r
             )
 
-            return self.__merge_rankings(teams_ranking, justice_ranking, r)            
+            return self.__merge_rankings(teams_ranking, justice_ranking, r)
 
         return teams_ranking
 
@@ -195,7 +212,7 @@ class TeamsRanking:
 
     #     teams_query = sql.SQL("""
     #         select *
-    #         from dwh_utils.teams_ranking_by_season(
+    #         from analytics.teams_ranking_by_season(
     #             id_comp := %s,
     #             season_shema := %s,
     #             first_week := %s,
@@ -212,7 +229,7 @@ class TeamsRanking:
 
     #     # justice_query = sql.SQL("""
     #     #     select *
-    #     #     from dwh_utils.teams_justice_table(
+    #     #     from analytics.teams_justice_table(
     #     #         id_comp := %s,
     #     #         season_schema := %s,
     #     #         first_week := %s,

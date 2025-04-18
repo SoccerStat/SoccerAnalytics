@@ -1,17 +1,17 @@
-drop function if exists dwh_utils.check_id_comp;
-drop function if exists dwh_utils.check_id_season;
-drop function if exists dwh_utils.check_weeks;
-drop function if exists dwh_utils.check_side;
+drop function if exists analytics.check_id_comp;
+drop function if exists analytics.check_id_season;
+drop function if exists analytics.check_weeks;
+drop function if exists analytics.check_side;
 
 
-create or replace function dwh_utils.check_id_comp(
+create or replace function analytics.check_id_comp(
 	in id_comp varchar(100)
 )
 returns void as
 $$
 begin
-	if id_comp not in (select id from dwh_upper.championship)
-	and id_comp not in (select id from dwh_upper.continental_cup)
+	if id_comp not in (select id from upper.championship)
+	and id_comp not in (select id from upper.continental_cup)
 	then
 		raise exception 'Invalid value for id_comp.';
 	end if;
@@ -19,7 +19,7 @@ end;
 $$
 language plpgsql;
 
--- create or replace function dwh_utils.check_id_season(
+-- create or replace function analytics.check_id_season(
 -- 	in id_season varchar(20)
 -- )
 -- returns void as
@@ -32,7 +32,7 @@ language plpgsql;
 -- $$
 -- language plpgsql;
 
-create or replace function dwh_utils.check_weeks(
+create or replace function analytics.check_weeks(
 	in first_week int,
 	in last_week int
 )
@@ -46,8 +46,8 @@ end;
 $$
 language plpgsql;
 
-create or replace function dwh_utils.check_side(
-	in side dwh_utils.ranking_type
+create or replace function analytics.check_side(
+	in side analytics.ranking_type
 )
 returns void as
 $$

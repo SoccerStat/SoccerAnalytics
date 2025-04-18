@@ -1,6 +1,6 @@
 with selected_match as (
 	select id, home_team, away_team, attendance, competition
-	from dwh_{season}.match 
+	from season_{season}.match 
 	where 
 		competition = '{id_comp}' and 
 		length(week) <= 2 and 
@@ -81,9 +81,9 @@ home_team as (
 		end as home_lose,
 		0 as away_lose
 	from selected_match as h
-	left join dwh_{season}.team_stats ts 
+	left join season_{season}.team_stats ts 
 	on h.id = ts.match and h.home_team = ts.team
-	left join dwh_{season}.team_stats ts_away
+	left join season_{season}.team_stats ts_away
 	on h.id = ts_away.match and h.away_team = ts_away.team
 ),
 away_team as (
@@ -161,9 +161,9 @@ away_team as (
 			when ts.score < ts_home.score then 1 else 0
 		end as away_lose
 	from selected_match as a
-	left join dwh_{season}.team_stats ts 
+	left join season_{season}.team_stats ts 
 	on a.away_team = ts.team and a.id = ts.match
-	left join dwh_{season}.team_stats ts_home
+	left join season_{season}.team_stats ts_home
 	on a.id = ts_home.match and a.home_team = ts_home.team
 )
 insert into tmp_teams_ranking
