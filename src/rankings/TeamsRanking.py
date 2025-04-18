@@ -38,8 +38,8 @@ class TeamsRanking:
         def sum_and_round(xp):
             return round(np.mean(xp), r)
 
-        teams.loc[teams['played_home'] == True, 'xP'] = sum_and_round(home_xp)
-        teams.loc[teams['played_home'] == False, 'xP'] = sum_and_round(away_xp)
+        teams.loc[teams['played_home'], 'xP'] = sum_and_round(home_xp)
+        teams.loc[~teams['played_home'], 'xP'] = sum_and_round(away_xp)
 
         return teams[['played_home', 'Club', 'xP']]
 
@@ -119,7 +119,6 @@ class TeamsRanking:
         self.db.execute_sql_file(f"{self.utils_sql_path}/checks.sql")
         self.db.execute_sql_file(f"{self.utils_sql_path}/aggregations.sql")
 
-        # TODO: perform checks
         self.db.execute_query(
             f"""
             SELECT analytics.check_id_comp('{id_comp}');
@@ -135,7 +134,7 @@ class TeamsRanking:
             f"{self.ranking_sql_path}/template_raw_data_by_season.sql"
         )
 
-        if justice_ranking:
+        if justice_ranking and seasons_to_analyse:
             justice_ranking_template = self.db.read_sql_file(
                 f"{self.ranking_sql_path}/template_xp_by_season.sql"
             )
@@ -155,7 +154,7 @@ class TeamsRanking:
                     )
                 )
 
-                if justice_ranking:
+                if justice_ranking and seasons_to_analyse:
                     self.db.execute_query(
                         justice_ranking_template.format(
                             season=season,
@@ -176,7 +175,7 @@ class TeamsRanking:
 
         teams_ranking = self.db.df_from_query(seasons_teams_ranking_query, (side, r))
 
-        if justice_ranking:
+        if justice_ranking and seasons_to_analyse:
             seasons_justice_ranking_query = sql.SQL("""
                 select *
                 from tmp_justice_ranking;

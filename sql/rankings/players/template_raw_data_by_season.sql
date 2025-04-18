@@ -19,14 +19,14 @@
 				when e.player_out = c.player then 1
 				else 0
 			end as sub_out
-		from (select * from dwh_{season}.compo where played_home) as c
+		from (select * from season_{season}.compo where played_home) as c
 		join selected_match m
 		on c.match = m.id
 		join player_main_stats pms
 		on c.id_match = pms.match and pms.player = c.player
-		left join (select id, match from dwh_{season}.event where played_home) as e
+		left join (select id, match from season_{season}.event where played_home) as e
 		on m.id = e.match
-		left join dwh_{season}.sub_event se
+		left join season_{season}.sub_event se
 		on c.player = se.player_out
 	),
 	*/
@@ -43,7 +43,7 @@
 
 with selected_match as (
 	select id, home_team, away_team, competition
-	from dwh_{season}.match
+	from season_{season}.match
 	where 
 		competition = '{id_comp}'
 		and length(week) <= 2 
@@ -134,15 +134,15 @@ home_stats as (
 		end as home_sub_out,
 		0 as away_sub_out
 	from selected_match as h
-	join (select * from dwh_{season}.player_main_stats where played_home) as pms
+	join (select * from season_{season}.player_main_stats where played_home) as pms
 	on pms.match = h.id
-	join (select match, team, captain, score from dwh_{season}.team_stats where played_home) as ts 
+	join (select match, team, captain, score from season_{season}.team_stats where played_home) as ts 
 	on h.id = ts.match and ts.team = h.home_team
-	join (select match, team, captain, score from dwh_{season}.team_stats where not played_home) as ts_away
+	join (select match, team, captain, score from season_{season}.team_stats where not played_home) as ts_away
 	on h.id = ts_away.match
-	join (select * from dwh_{season}.compo where played_home) as c
+	join (select * from season_{season}.compo where played_home) as c
 	on h.id = c.match and pms.player = c.player
-	left join (select e.match, team, player_in, player_out from dwh_{season}.event e join dwh_{season}.sub_event se on e.id = se.id and e.match = se.match where e.played_home) as e
+	left join (select e.match, team, player_in, player_out from season_{season}.event e join season_{season}.sub_event se on e.id = se.id and e.match = se.match where e.played_home) as e
 	on h.id = e.match and (e.player_in = c.player or e.player_out = c.player)
 ),
 away_stats as (
@@ -221,15 +221,15 @@ away_stats as (
 			when e.player_out = c.player then 1 else 0
 		end as away_sub_out
 	from selected_match as a
-	join (select * from dwh_{season}.player_main_stats where not played_home) as pms
+	join (select * from season_{season}.player_main_stats where not played_home) as pms
 	on pms.match = a.id
-	join (select match, team, captain, score from dwh_{season}.team_stats where not played_home) as ts 
+	join (select match, team, captain, score from season_{season}.team_stats where not played_home) as ts 
 	on a.id = ts.match and ts.team = a.away_team
-	join (select match, team, captain, score from dwh_{season}.team_stats where played_home) as ts_home
+	join (select match, team, captain, score from season_{season}.team_stats where played_home) as ts_home
 	on a.id = ts_home.match
-	join (select * from dwh_{season}.compo where not played_home) c
+	join (select * from season_{season}.compo where not played_home) c
 	on a.id = c.match and pms.player = c.player
-	left join (select e.match, team, player_in, player_out from dwh_{season}.event e join dwh_{season}.sub_event se on e.id = se.id and e.match = se.match where not e.played_home) as e
+	left join (select e.match, team, player_in, player_out from season_{season}.event e join season_{season}.sub_event se on e.id = se.id and e.match = se.match where not e.played_home) as e
 	on a.id = e.match and (e.player_in = c.player or e.player_out = c.player)
 )
 insert into tmp_players_ranking

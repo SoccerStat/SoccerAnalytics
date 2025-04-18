@@ -1,5 +1,5 @@
-create or replace function dwh_utils.players_rankings(
-	in side dwh_utils.ranking_type,
+create or replace function analytics.players_rankings(
+	in side analytics.ranking_type,
 	in r int
 )
 returns table(
@@ -32,7 +32,8 @@ returns table(
 	"Captain" bigint,
 	"Started" bigint,
 	"Sub In" bigint,
-	"Sub Out" bigint--,
+	"Sub Out" bigint,
+	"Granularity" varchar(100)--,
 	--"Last Opponent" varchar(100)
 	--Attendance numeric,
 )
@@ -88,7 +89,7 @@ begin
 			select
 				player,
 				array_agg(distinct country) as Nationalities
-			from dwh_upper.player_nationality pn
+			from upper.player_nationality pn
 			group by player
 		),
 		players_stats as (
@@ -97,7 +98,7 @@ begin
 				pn.Nationalities,
 
 				case
-					when dwh_utils.set_bigint_stat(sum(home_gk), sum(away_gk), ''' || side || ''') > 0 then true
+					when analytics.set_bigint_stat(sum(home_gk), sum(away_gk), ''' || side || ''') > 0 then true
 					else false
 				end as GK,
 				
@@ -107,34 +108,34 @@ begin
 					else array[c.name]
 				end as Clubs,
 
-				dwh_utils.set_bigint_stat(sum(home_match), sum(away_match), ''' || side || ''') as Matches,
+				analytics.set_bigint_stat(sum(home_match), sum(away_match), ''' || side || ''') as Matches,
 
-				dwh_utils.set_bigint_stat(sum(home_win), sum(away_win), ''' || side || ''') as Wins,
-				dwh_utils.set_bigint_stat(sum(home_draw), sum(away_draw), ''' || side || ''') as Draws,
-				dwh_utils.set_bigint_stat(sum(home_lose), sum(away_lose), ''' || side || ''') as Loses,
+				analytics.set_bigint_stat(sum(home_win), sum(away_win), ''' || side || ''') as Wins,
+				analytics.set_bigint_stat(sum(home_draw), sum(away_draw), ''' || side || ''') as Draws,
+				analytics.set_bigint_stat(sum(home_lose), sum(away_lose), ''' || side || ''') as Loses,
 				
-				dwh_utils.set_bigint_stat(sum(home_goals), sum(away_goals), ''' || side || ''') as Goals,
-				dwh_utils.set_bigint_stat(sum(home_pens_made), sum(away_pens_made), ''' || side || ''') as Penalties,
-				dwh_utils.set_bigint_stat(sum(home_assists), sum(away_assists), ''' || side || ''') as Assists,
+				analytics.set_bigint_stat(sum(home_goals), sum(away_goals), ''' || side || ''') as Goals,
+				analytics.set_bigint_stat(sum(home_pens_made), sum(away_pens_made), ''' || side || ''') as Penalties,
+				analytics.set_bigint_stat(sum(home_assists), sum(away_assists), ''' || side || ''') as Assists,
 
-				dwh_utils.set_numeric_stat(sum(home_xg)::numeric, sum(away_xg)::numeric, ''' || side || ''') as xG,
+				analytics.set_numeric_stat(sum(home_xg)::numeric, sum(away_xg)::numeric, ''' || side || ''') as xG,
 
-				dwh_utils.set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), ''' || side || ''') as "Clean Sheets",
+				analytics.set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), ''' || side || ''') as "Clean Sheets",
 				
-				dwh_utils.set_bigint_stat(sum(home_cards_yellow), sum(away_cards_yellow), ''' || side || ''') as "Yellow Cards",
-				dwh_utils.set_bigint_stat(sum(home_cards_red), sum(away_cards_red), ''' || side || ''') as "Red Cards",
-				dwh_utils.set_bigint_stat(sum(home_cards_yellow_red), sum(away_cards_yellow_red), ''' || side || ''') as "Incl. 2 Yellow Cards",
+				analytics.set_bigint_stat(sum(home_cards_yellow), sum(away_cards_yellow), ''' || side || ''') as "Yellow Cards",
+				analytics.set_bigint_stat(sum(home_cards_red), sum(away_cards_red), ''' || side || ''') as "Red Cards",
+				analytics.set_bigint_stat(sum(home_cards_yellow_red), sum(away_cards_yellow_red), ''' || side || ''') as "Incl. 2 Yellow Cards",
 				
-				dwh_utils.set_bigint_stat(sum(home_minutes), sum(away_minutes), ''' || side || ''') as Minutes,
+				analytics.set_bigint_stat(sum(home_minutes), sum(away_minutes), ''' || side || ''') as Minutes,
 
-				dwh_utils.set_bigint_stat(sum(home_captain), sum(away_captain), ''' || side || ''') as Captain,
+				analytics.set_bigint_stat(sum(home_captain), sum(away_captain), ''' || side || ''') as Captain,
 
-				dwh_utils.set_bigint_stat(sum(home_started), sum(away_started), ''' || side || ''') as Started,
-				dwh_utils.set_bigint_stat(sum(home_sub_in), sum(away_sub_in), ''' || side || ''') as "Sub In",
-				dwh_utils.set_bigint_stat(sum(home_sub_out), sum(away_sub_out), ''' || side || ''') as "Sub Out"
+				analytics.set_bigint_stat(sum(home_started), sum(away_started), ''' || side || ''') as Started,
+				analytics.set_bigint_stat(sum(home_sub_in), sum(away_sub_in), ''' || side || ''') as "Sub In",
+				analytics.set_bigint_stat(sum(home_sub_out), sum(away_sub_out), ''' || side || ''') as "Sub Out"
 				
 			from tmp_players_ranking as "stats"
-			join (select id, name from dwh_upper.club) as c 
+			join (select id, name from upper.club) as c 
 			on team = competition || ''_'' || c.id
 			join players_nationalities pn
 			on stats.player = pn.player
@@ -192,9 +193,14 @@ begin
 
 			ps.Started,
 			ps."Sub In",
-			ps."Sub Out"
+			ps."Sub Out",
+
+			case
+				when array_length(ps.Clubs, 1) > 1 then ''Total''
+				else ''Club''
+			end::varchar as Granularity
 		from players_stats ps
-		join dwh_upper.player p
+		join upper.player p
 		on ps.player = p.id
 		'
 	);
