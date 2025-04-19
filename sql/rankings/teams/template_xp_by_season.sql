@@ -8,8 +8,11 @@ select
 from season_{season}.team_stats ts 
 join season_{season}.match m on m.id = ts.match 
 join upper.club c on ts.team = m.competition || '_' || c.id
-where
-    m.competition = '{id_comp}' and 
-    length(m.week) <= 2 and
-    cast(m.week as int) >= '{first_week}' and
-    cast(m.week as int) <= '{last_week}';
+where 
+    competition = '{id_comp}' 
+    and (
+        cast(week as int) between '{first_week}' and '{last_week}' 
+        and length(week) <= 2
+        or m.competition not in (select c.id from upper.championship c)
+    )
+    and m.date between '{first_date}' and '{last_date}';;

@@ -1,18 +1,14 @@
-with selected_match as (
+with selected_matches as (
 	select id, home_team, away_team, attendance, competition
-	from season_{season}.match 
-	where 
-		competition = '{id_comp}' and 
-		length(week) <= 2 and 
-		cast(week as int) between '{first_week}' and '{last_week}'
+	from analytics.selected_matches('{season}', '{id_comp}', '{first_week}', '{last_week}', '{first_date}', '{last_date}')
 ),
 home_team as (
 	select
 		'{season}' as season,
+		h.competition,
+
 		1 as home_match,
 		0 as away_match,
-
-		h.competition,
 
 		ts.score as home_score,
 		0 as away_score,
@@ -80,7 +76,7 @@ home_team as (
 			when ts.score < ts_away.score then 1 else 0
 		end as home_lose,
 		0 as away_lose
-	from selected_match as h
+	from selected_matches as h
 	left join season_{season}.team_stats ts 
 	on h.id = ts.match and h.home_team = ts.team
 	left join season_{season}.team_stats ts_away
@@ -89,10 +85,10 @@ home_team as (
 away_team as (
 	select
 		'{season}' as season,
+		a.competition,
+
 		0 as home_match,
 		1 as away_match,
-
-		a.competition,
 
 		0 as home_score,
 		ts.score as away_score,
@@ -160,7 +156,7 @@ away_team as (
 		case
 			when ts.score < ts_home.score then 1 else 0
 		end as away_lose
-	from selected_match as a
+	from selected_matches as a
 	left join season_{season}.team_stats ts 
 	on a.away_team = ts.team and a.id = ts.match
 	left join season_{season}.team_stats ts_home

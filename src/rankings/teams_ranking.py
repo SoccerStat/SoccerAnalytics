@@ -12,6 +12,12 @@ class TeamsRanking:
         self.ranking_sql_path = "sql/rankings/teams"
         self.utils_sql_path = "sql/utils"
 
+        self.db.execute_sql_file(f"{self.utils_sql_path}/schemas.sql")
+        self.db.execute_sql_file(f"{self.utils_sql_path}/types.sql")
+        self.db.execute_sql_file(f"{self.utils_sql_path}/checks.sql")
+        self.db.execute_sql_file(f"{self.utils_sql_path}/selected_matches.sql")
+        self.db.execute_sql_file(f"{self.utils_sql_path}/aggregations.sql")
+
     def __simulate_matches(
         self,
         teams: pd.DataFrame,
@@ -105,6 +111,8 @@ class TeamsRanking:
         seasons: list[str],
         first_week: int = 1,
         last_week: int = 100,
+        first_date: str = '1970-01-01',
+        last_date: str = '2099-12-31',
         side: str = 'both',
         n_sim: int = 1000000,
         r: int = 2,
@@ -114,11 +122,6 @@ class TeamsRanking:
         """
         seasons_to_analyse = [season.replace('-', '_') for season in seasons]
 
-        self.db.execute_sql_file(f"{self.utils_sql_path}/schemas.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/types.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/checks.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/aggregations.sql")
-
         self.db.execute_query(
             f"""
             SELECT analytics.check_id_comp('{id_comp}');
@@ -127,7 +130,7 @@ class TeamsRanking:
             """
         )
 
-        teams_ranking_tmp_table = self.db.read_sql_file(f"{self.utils_sql_path}/tmp_tables.sql")
+        teams_ranking_tmp_table = self.db.read_sql_file(f"{self.ranking_sql_path}/tmp_tables.sql")
         self.db.execute_query(teams_ranking_tmp_table)
 
         teams_ranking_template = self.db.read_sql_file(
@@ -150,7 +153,9 @@ class TeamsRanking:
                         season=season,
                         id_comp=id_comp,
                         first_week=first_week,
-                        last_week=last_week
+                        last_week=last_week,
+                        first_date=first_date,
+                        last_date=last_date
                     )
                 )
 
@@ -160,7 +165,9 @@ class TeamsRanking:
                             season=season,
                             id_comp=id_comp,
                             first_week=first_week,
-                            last_week=last_week
+                            last_week=last_week,
+                            first_date=first_date,
+                            last_date=last_date
                         )
                     )
 

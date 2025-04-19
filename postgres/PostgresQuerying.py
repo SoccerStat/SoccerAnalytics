@@ -1,3 +1,4 @@
+import traceback
 import pandas as pd
 import warnings
 from psycopg2.extensions import cursor
@@ -6,11 +7,15 @@ from typing import Optional
 from postgres.PostgresConnection import PostgresConnection
 
 class PostgresQuerying:
+    """
+    """
     def __init__(self, env: str):
         self.postgres_conn = PostgresConnection(env)
         self.postgres_conn.connect()
 
     def execute_query(self, query: str, params=None, return_cursor=False) -> Optional[cursor]:
+        """
+        """
         if not self.postgres_conn.get_conn():
             return None
 
@@ -25,15 +30,20 @@ class PostgresQuerying:
                 return pg_cursor
         except Exception as e:
             print(f"Error: {e}")
+            traceback.print_exc()
             self.postgres_conn.rollback()
 
         return None
 
     def read_sql_file(self, path: str):
+        """
+        """
         with open(path, 'r', encoding='UTF-8') as sql_file:
             return sql_file.read()
 
     def execute_sql_file(self, path: str) -> None:
+        """
+        """
         return self.execute_query(self.read_sql_file(path))
 
     def df_from_query(self, query: str, params=None) -> pd.DataFrame:
