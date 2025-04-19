@@ -1,63 +1,34 @@
-
-	/*with ranked_positions as (
-		SELECT id_player, "position", ROW_NUMBER() OVER (PARTITION BY id_player ORDER BY COUNT(*) DESC) AS "position_rank"
-		FROM player_stats
-		GROUP BY id_player, "position"
-	)*/
-
-	/*
-	home_compo as (
-		select
-			m.id,
-			c.player,
-			c.started,
-			case 
-				when not c.started then 1
-				else 0
-			end as sub_in,
-			case
-				when e.player_out = c.player then 1
-				else 0
-			end as sub_out
-		from (select * from season_{season}.compo where played_home) as c
-		join selected_match m
-		on c.match = m.id
-		join player_main_stats pms
-		on c.id_match = pms.match and pms.player = c.player
-		left join (select id, match from season_{season}.event where played_home) as e
-		on m.id = e.match
-		left join season_{season}.sub_event se
-		on c.player = se.player_out
-	),
-	*/
-
-	/*set_numeric_stat(sum(home_xg_assists)::numeric, sum(away_xg_assists)::numeric, ''' || side || ''') as "xG Assists",*/
-
-	/*
-	ps."xG Assists",
-	case
-		when ps.Matches <> 0 then round(ps."xG Assists" / ps.Matches, 2)
-		else 0.0
-	end as "xG Assists /90",
-	*/
-
-with selected_match as (
-	select id, home_team, away_team, competition
-	from season_{season}.match
-	where 
-		competition = '{id_comp}'
-		and length(week) <= 2 
-		and cast(week as int) between '{first_week}' and '{last_week}'
+with selected_matches as materialized (
+	select m.id, m.home_team, m.away_team, m.competition as id_comp, coalesce(chp.name, c_cup.name) as competition
+	from season_{season}.match m
+	left join upper.championship chp
+	on m.competition = chp.id
+	left join upper.continental_cup c_cup
+	on m.competition = c_cup.id
+	where
+		m.competition = '{id_comp}'
+		and (
+			(
+				chp.id is not null
+				and length(m.week) <= 2 
+				and cast(m.week as int) between '{first_week}' and '{last_week}'
+			)
+			or chp.id is null
+		)
+		and m.date between '{first_date}'::date and '{last_date}'::date
+	-- select id, home_team, away_team, competition
+	-- from analytics.selected_matches('{season}', '{id_comp}', '{first_week}', '{last_week}', '{first_date}', '{last_date}')
 ),
 home_stats as (
 	select
 		'{season}' as season,
+		h.id_comp,
+		h.competition,
+
 		1 as home_match,
 		0 as away_match,
 
 		pms.player,
-
-		h.competition,
 
 		h.home_team as team,
 
@@ -133,7 +104,7 @@ home_stats as (
 			else 0
 		end as home_sub_out,
 		0 as away_sub_out
-	from selected_match as h
+	from selected_matches as h
 	join (select * from season_{season}.player_main_stats where played_home) as pms
 	on pms.match = h.id
 	join (select match, team, captain, score from season_{season}.team_stats where played_home) as ts 
@@ -144,16 +115,43 @@ home_stats as (
 	on h.id = c.match and pms.player = c.player
 	left join (select e.match, team, player_in, player_out from season_{season}.event e join season_{season}.sub_event se on e.id = se.id and e.match = se.match where e.played_home) as e
 	on h.id = e.match and (e.player_in = c.player or e.player_out = c.player)
+)
+insert into tmp_players_ranking
+select *
+from home_stats;
+
+
+with selected_matches as materialized (
+	select m.id, m.home_team, m.away_team, m.competition as id_comp, coalesce(chp.name, c_cup.name) as competition
+	from season_{season}.match m
+	left join upper.championship chp
+	on m.competition = chp.id
+	left join upper.continental_cup c_cup
+	on m.competition = c_cup.id
+	where
+		m.competition = '{id_comp}'
+		and (
+			(
+				chp.id is not null
+				and length(m.week) <= 2 
+				and cast(m.week as int) between '{first_week}' and '{last_week}'
+			)
+			or chp.id is null
+		)
+		and m.date between '{first_date}'::date and '{last_date}'::date
+	-- select id, home_team, away_team, competition
+	-- from analytics.selected_matches('{season}', '{id_comp}', '{first_week}', '{last_week}', '{first_date}', '{last_date}')
 ),
 away_stats as (
 	select
 		'{season}' as season,
+		a.id_comp,
+		a.competition,
+
 		0 as home_match,
 		1 as away_match,
 
 		pms.player,
-
-		a.competition,
 
 		a.away_team as team,
 
@@ -220,7 +218,7 @@ away_stats as (
 		case
 			when e.player_out = c.player then 1 else 0
 		end as away_sub_out
-	from selected_match as a
+	from selected_matches as a
 	join (select * from season_{season}.player_main_stats where not played_home) as pms
 	on pms.match = a.id
 	join (select match, team, captain, score from season_{season}.team_stats where not played_home) as ts 
@@ -234,7 +232,4 @@ away_stats as (
 )
 insert into tmp_players_ranking
 select *
-from home_stats
-union all
-select *
-from away_stats
+from away_stats;

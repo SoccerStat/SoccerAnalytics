@@ -1,6 +1,19 @@
-with selected_matches as (
-	select id, home_team, away_team, attendance, competition
-	from analytics.selected_matches('{season}', '{id_comp}', '{first_week}', '{last_week}', '{first_date}', '{last_date}')
+with selected_matches as materialized (
+	select m.id, m.home_team, m.away_team, m.attendance, m.competition
+	from season_{season}.match m
+	left join upper.championship c
+	on m.competition = c.id
+	where
+		m.competition = '{id_comp}'
+		and (
+			(
+				c.id is not null
+				and length(m.week) <= 2 
+				and cast(m.week as int) between '{first_week}' and '{last_week}'
+			)
+			or c.id is null
+		)
+		and m.date between '{first_date}'::date and '{last_date}'::date
 ),
 home_team as (
 	select
@@ -81,6 +94,28 @@ home_team as (
 	on h.id = ts.match and h.home_team = ts.team
 	left join season_{season}.team_stats ts_away
 	on h.id = ts_away.match and h.away_team = ts_away.team
+)
+insert into tmp_teams_ranking
+select *
+from home_team;
+
+
+with selected_matches as materialized (
+	select m.id, m.home_team, m.away_team, m.attendance, m.competition
+	from season_{season}.match m
+	left join upper.championship c
+	on m.competition = c.id
+	where
+		m.competition = '{id_comp}'
+		and (
+			(
+				c.id is not null
+				and length(m.week) <= 2 
+				and cast(m.week as int) between '{first_week}' and '{last_week}'
+			)
+			or c.id is null
+		)
+		and m.date between '{first_date}'::date and '{last_date}'::date
 ),
 away_team as (
 	select
@@ -163,8 +198,5 @@ away_team as (
 	on a.id = ts_home.match and a.home_team = ts_home.team
 )
 insert into tmp_teams_ranking
-select *
-from home_team
-union all
 select *
 from away_team;

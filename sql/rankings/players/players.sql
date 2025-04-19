@@ -12,6 +12,7 @@ returns table(
 	"Nationalities" varchar[],
 	"GK" bool,
 	"Clubs" varchar[],
+	"Competitions" varchar[],
 	"Matches" bigint,
 	"Wins" bigint,
 	"Draws" bigint,
@@ -32,8 +33,8 @@ returns table(
 	"Captain" bigint,
 	"Started" bigint,
 	"Sub In" bigint,
-	"Sub Out" bigint,
-	"Granularity" varchar(100)--,
+	"Sub Out" bigint
+	-- "Granularity" varchar(100)--,
 	--"Last Opponent" varchar(100)
 	--Attendance numeric,
 )
@@ -41,48 +42,6 @@ as $$
 DECLARE
 	query text;
 begin
-	
-	/*with ranked_positions as (
-		SELECT id_player, "position", ROW_NUMBER() OVER (PARTITION BY id_player ORDER BY COUNT(*) DESC) AS "position_rank"
-		FROM player_stats
-		GROUP BY id_player, "position"
-	)*/
-
-	/*
-	home_compo as (
-		select
-			m.id,
-			c.player,
-			c.started,
-			case 
-				when not c.started then 1
-				else 0
-			end as sub_in,
-			case
-				when e.player_out = c.player then 1
-				else 0
-			end as sub_out
-		from (select * from %I.compo where played_home) as c
-		join selected_match m
-		on c.match = m.id
-		join player_main_stats pms
-		on c.id_match = pms.match and pms.player = c.player
-		left join (select id, match from %I.event where played_home) as e
-		on m.id = e.match
-		left join %I.sub_event se
-		on c.player = se.player_out
-	),
-	*/
-
-	/*set_numeric_stat(sum(home_xg_assists)::numeric, sum(away_xg_assists)::numeric, ''' || side || ''') as "xG Assists",*/
-
-	/*
-	ps."xG Assists",
-	case
-		when ps.Matches <> 0 then round(ps."xG Assists" / ps.Matches, ''' || r || ''')
-		else 0.0
-	end as "xG Assists /90",
-	*/
 
 	query := format(
 		'with players_nationalities as (
@@ -107,6 +66,12 @@ begin
 					then array_agg(distinct c.name)
 					else array[c.name]
 				end as Clubs,
+
+				case
+					when count(distinct stats.competition) > 1 and grouping(stats.competition) = 1
+					then array_agg(distinct stats.competition)
+					else array[stats.competition]
+				end as Competitions,
 
 				analytics.set_bigint_stat(sum(home_match), sum(away_match), ''' || side || ''') as Matches,
 
@@ -133,17 +98,20 @@ begin
 				analytics.set_bigint_stat(sum(home_started), sum(away_started), ''' || side || ''') as Started,
 				analytics.set_bigint_stat(sum(home_sub_in), sum(away_sub_in), ''' || side || ''') as "Sub In",
 				analytics.set_bigint_stat(sum(home_sub_out), sum(away_sub_out), ''' || side || ''') as "Sub Out"
-				
-			from tmp_players_ranking as "stats"
+	
+			from tmp_players_ranking as stats
 			join (select id, name from upper.club) as c 
-			on team = competition || ''_'' || c.id
+			on team = id_comp || ''_'' || c.id
 			join players_nationalities pn
 			on stats.player = pn.player
-			group by grouping sets(
-				(stats.player, pn.Nationalities, c.name),
-				(stats.player, pn.Nationalities)
+			group by
+				(stats.player, pn.Nationalities),
+				cube(c.name, stats.competition)
+			having (
+				grouping(c.name) = 0 OR count(distinct c.name) > 1
+			) and (
+				grouping(stats.competition) = 0 OR count(distinct stats.competition) > 1
 			)
-			having grouping(c.name) = 0 OR count(distinct c.name) > 1
 		)
 		select 
 			p.name as Player,
@@ -160,6 +128,8 @@ begin
 			ps.GK,
 
 			ps.Clubs,
+
+			ps.Competitions,
 
 			ps.Matches,
 
@@ -193,15 +163,11 @@ begin
 
 			ps.Started,
 			ps."Sub In",
-			ps."Sub Out",
+			ps."Sub Out"
 
-			case
-				when array_length(ps.Clubs, 1) > 1 then ''Total''
-				else ''Club''
-			end::varchar as Granularity
 		from players_stats ps
 		join upper.player p
-		on ps.player = p.id
+		on ps.player = p.id;
 		'
 	);
 	

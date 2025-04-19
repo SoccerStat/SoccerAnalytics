@@ -14,7 +14,7 @@ class PlayersRanking:
         self.db.execute_sql_file(f"{self.utils_sql_path}/schemas.sql")
         self.db.execute_sql_file(f"{self.utils_sql_path}/types.sql")
         self.db.execute_sql_file(f"{self.utils_sql_path}/checks.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/selected_matches.sql")
+        # self.db.execute_sql_file(f"{self.utils_sql_path}/selected_matches.sql")
         self.db.execute_sql_file(f"{self.utils_sql_path}/aggregations.sql")
 
     def build_ranking(

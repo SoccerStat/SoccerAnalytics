@@ -21,12 +21,17 @@ begin
         '
         select m.id, m.home_team, m.away_team, m.attendance, m.competition
         from season_' || season || '.match m
+        left join upper.championship c
+        on m.competition = c.id
         where
             competition = ''' || id_comp || '''
             and (
-                cast(week as int) between ''' || first_week || ''' and ''' || last_week || '''
-                and length(week) <= 2
-                or m.competition not in (select c.id from upper.championship c)
+                (
+                    c.id is not null
+                    and cast(week as int) between ''' || first_week || ''' and ''' || last_week || '''
+                    and length(week) <= 2
+                )
+                or c.id is null
             )
             and m.date between ''' || first_date || ''' and ''' || last_date || ''';
         '
