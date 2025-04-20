@@ -1,7 +1,7 @@
 import pandas as pd
 from psycopg2 import sql
 
-from postgres.PostgresQuerying import PostgresQuerying
+from postgres.postgres_querying import PostgresQuerying
 
 class PlayersRanking:
     """
@@ -35,6 +35,7 @@ class PlayersRanking:
         self.db.execute_query(
             f"""
             SELECT analytics.check_weeks('{first_week}', '{last_week}');
+            SELECT analytics.check_dates('{first_date}', '{last_date}');
             SELECT analytics.check_side('{side}');
             """
         )

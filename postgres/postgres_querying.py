@@ -1,20 +1,20 @@
 import traceback
-import pandas as pd
+from typing import Optional
 import warnings
 from psycopg2.extensions import cursor
-from typing import Optional
+import pandas as pd
 
-from postgres.PostgresConnection import PostgresConnection
+from postgres.postgres_connection import PostgresConnection
 
 class PostgresQuerying:
-    """
+    """All about querying the database
     """
     def __init__(self, env: str):
         self.postgres_conn = PostgresConnection(env)
         self.postgres_conn.connect()
 
     def execute_query(self, query: str, params=None, return_cursor=False) -> Optional[cursor]:
-        """
+        """Execute a query with or without parameters
         """
         if not self.postgres_conn.get_conn():
             return None
@@ -36,17 +36,19 @@ class PostgresQuerying:
         return None
 
     def read_sql_file(self, path: str):
-        """
+        """Read a SQL file
         """
         with open(path, 'r', encoding='UTF-8') as sql_file:
             return sql_file.read()
 
     def execute_sql_file(self, path: str) -> None:
-        """
+        """Execute a query stored in a file
         """
         return self.execute_query(self.read_sql_file(path))
 
     def df_from_query(self, query: str, params=None) -> pd.DataFrame:
+        """Convert the result of a query into a pandas DataFrame
+        """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
 
@@ -60,4 +62,6 @@ class PostgresQuerying:
                 return pd.DataFrame() #pd.read_sql_query(query, self.postgres_conn.get_conn())
 
     def close(self) -> None:
+        """Close the connection to Postgres
+        """
         self.postgres_conn.close()

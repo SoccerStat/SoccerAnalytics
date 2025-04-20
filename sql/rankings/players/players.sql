@@ -33,8 +33,9 @@ returns table(
 	"Captain" bigint,
 	"Started" bigint,
 	"Sub In" bigint,
-	"Sub Out" bigint
-	-- "Granularity" varchar(100)--,
+	"Sub Out" bigint,
+	"Granularity Club" text,
+	"Granularity Competition" text--,
 	--"Last Opponent" varchar(100)
 	--Attendance numeric,
 )
@@ -42,6 +43,15 @@ as $$
 DECLARE
 	query text;
 begin
+/* 
+Granularity Club
+Si liste complète: 'TCC' (Tous Clubs Confondus)
+Sinon : 'Club'
+
+Granularity_competition
+Si liste complète : 'TCC' (Toutes Compétitions Confondues)
+Sinon : 'Competition'
+*/
 
 	query := format(
 		'with players_nationalities as (
@@ -97,7 +107,19 @@ begin
 
 				analytics.set_bigint_stat(sum(home_started), sum(away_started), ''' || side || ''') as Started,
 				analytics.set_bigint_stat(sum(home_sub_in), sum(away_sub_in), ''' || side || ''') as "Sub In",
-				analytics.set_bigint_stat(sum(home_sub_out), sum(away_sub_out), ''' || side || ''') as "Sub Out"
+				analytics.set_bigint_stat(sum(home_sub_out), sum(away_sub_out), ''' || side || ''') as "Sub Out",
+
+				case
+					when count(distinct c.name) > 1 and grouping(c.name) = 1 
+					then ''TCC''
+					else ''Club''
+				end as "Granularity Club",
+
+				case
+					when count(distinct stats.competition) > 1 and grouping(stats.competition) = 1
+					then ''TCC''
+					else ''Competition''
+				end as "Granularity Competition"
 	
 			from tmp_players_ranking as stats
 			join (select id, name from upper.club) as c 
@@ -163,7 +185,10 @@ begin
 
 			ps.Started,
 			ps."Sub In",
-			ps."Sub Out"
+			ps."Sub Out",
+
+			ps."Granularity Club",
+			ps."Granularity Competition"
 
 		from players_stats ps
 		join upper.player p

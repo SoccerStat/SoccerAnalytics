@@ -46,6 +46,35 @@ end;
 $$
 language plpgsql;
 
+create or replace function analytics.check_dates(
+	in first_date varchar(20),
+	in last_date varchar(20)
+)
+returns void as
+$$
+declare
+	d1 date;
+	d2 date;
+begin
+	begin
+        d1 := TO_DATE(first_date, 'YYYY-MM-DD');
+    exception when others then
+        raise exception 'Invalid first_date format. Use YYYY-MM-DD.';
+    end;
+
+	begin
+        d2 := TO_DATE(last_date, 'YYYY-MM-DD');
+    exception when others then
+        raise exception 'Invalid last_date format. Use YYYY-MM-DD.';
+    end;
+
+	if d1 > d2 then
+		raise exception 'Choose first_date as being lower than last_date.';
+	end if;
+end;
+$$
+language plpgsql;
+
 create or replace function analytics.check_side(
 	in side analytics.ranking_type
 )

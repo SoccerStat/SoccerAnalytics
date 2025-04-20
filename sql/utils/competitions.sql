@@ -6,6 +6,7 @@ begin
     return query 
 	SELECT id as Competition
     from upper.competition
+    where kind in ('championship', 'continental_cup')
     ;
 end;
 $$

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from psycopg2 import sql
 
-from postgres.PostgresQuerying import PostgresQuerying
+from postgres.postgres_querying import PostgresQuerying
 
 class TeamsRanking:
     """
@@ -126,6 +126,7 @@ class TeamsRanking:
             f"""
             SELECT analytics.check_id_comp('{id_comp}');
             SELECT analytics.check_weeks('{first_week}', '{last_week}');
+            SELECT analytics.check_dates('{first_date}', '{last_date}');
             SELECT analytics.check_side('{side}');
             """
         )
