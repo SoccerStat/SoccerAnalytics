@@ -1,7 +1,7 @@
 import pandas as pd
 from psycopg2 import sql
 
-from postgres.postgres_querying import PostgresQuerying
+from src.postgres.postgres_querying import PostgresQuerying
 
 class PlayersRanking:
     """

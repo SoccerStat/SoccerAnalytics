@@ -2,14 +2,14 @@ import pandas as pd
 
 from psycopg2 import sql
 
-from postgres.postgres_querying import PostgresQuerying
+from src.postgres.postgres_querying import PostgresQuerying
 
 class TeamsOpposition:
     """
     """
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
-        self.ranking_sql_path = "sql/oppositions/team_x_teams"
+        self.opposition_sql_path = "sql/oppositions/team_x_teams"
         self.utils_sql_path = "sql/utils"
 
         self.db.execute_sql_file(f"{self.utils_sql_path}/schemas.sql")
@@ -30,19 +30,17 @@ class TeamsOpposition:
         """
         seasons_to_analyse = [season.replace('-', '_') for season in seasons]
 
-        self.db.execute_sql_file(f"{self.ranking_sql_path}/team_x_teams.sql")
-
         self.db.execute_query(
             f"""
             SELECT analytics.check_side('{side}');
             """
         )
 
-        players_ranking_tmp_table = self.db.read_sql_file(f"{self.ranking_sql_path}/tmp_tables.sql")
-        self.db.execute_query(players_ranking_tmp_table)
+        teams_opposition_tmp_table = self.db.read_sql_file(f"{self.opposition_sql_path}/tmp_tables.sql")
+        self.db.execute_query(teams_opposition_tmp_table)
 
         teams_opposition_template = self.db.read_sql_file(
-            f"{self.ranking_sql_path}/template_raw_data_by_season.sql"
+            f"{self.opposition_sql_path}/template_raw_data_by_season.sql"
         )
 
         all_season_schemas_query = sql.SQL("""select * from analytics.get_season_schemas();""")
@@ -69,18 +67,18 @@ class TeamsOpposition:
                             )
                         )
 
-        self.db.execute_sql_file(f"{self.ranking_sql_path}/team_x_teams.sql")
+        self.db.execute_sql_file(f"{self.opposition_sql_path}/team_x_teams.sql")
 
         query = sql.SQL("""
             select * 
             from analytics.teams_oppositions(
                 team := %s,
                 side := %s
-                ) as "to"
+            ) as "to"
             where "to"."Matches" != 0;
         """)
 
-        return self.db.df_from_query(query, (team, side))
+        return self.db.df_from_query(query, (team.replace("'", "''"), side))
 
     def build_matrix(
         self,
@@ -96,7 +94,7 @@ class TeamsOpposition:
 
         season_schema = f"season_{season}"
 
-        self.db.execute_sql_file(f"{self.ranking_sql_path}/team_x_teams.sql")
+        self.db.execute_sql_file(f"{self.opposition_sql_path}/team_x_teams.sql")
 
         query = sql.SQL("""
             select c.name as "Club"

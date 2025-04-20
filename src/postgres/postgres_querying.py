@@ -4,7 +4,7 @@ import warnings
 from psycopg2.extensions import cursor
 import pandas as pd
 
-from postgres.postgres_connection import PostgresConnection
+from src.postgres.postgres_connection import PostgresConnection
 
 class PostgresQuerying:
     """All about querying the database
