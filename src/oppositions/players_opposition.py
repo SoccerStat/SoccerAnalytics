@@ -1,7 +1,7 @@
 import pandas as pd
 from psycopg2 import sql
 
-from postgres.PostgresQuerying import PostgresQuerying
+from postgres.postgres_querying import PostgresQuerying
 #from src.oppositions.Oppositions import Oppositions
 
 class PlayersOpposition:
@@ -21,7 +21,7 @@ class PlayersOpposition:
 
         query = sql.SQL("""
             select * 
-            from dwh_utils.players_oppositions(%s, %s, %s, %s) as "po"
+            from analytics.players_oppositions(%s, %s, %s, %s) as "po"
             where "po"."Matches" != 0;
         """)
 
@@ -37,13 +37,13 @@ class PlayersOpposition:
 
         season = season.replace('-', '_')
 
-        season_schema = f"dwh_{season}"
+        season_schema = f"season_{season}"
 
         self.db.execute_sql_file("sql/oppositions/player_x_teams.sql")
 
         query = sql.SQL("""
             select p.name as "Player"
-            from dwh_upper.player p
+            from upper.player p
             join {}.team_player tp
             on tp.player = p.id
             join {}.team t
@@ -57,7 +57,7 @@ class PlayersOpposition:
         teams_query = sql.SQL("""
             select c.name as "Club"
             from {}.team t
-            join dwh_upper.club c
+            join upper.club c
             on t.id = t.competition || '_' || c.id
             where t.competition = %s
             group by c.name;
@@ -77,7 +77,7 @@ class PlayersOpposition:
             for player in players:
                 player_query = sql.SQL("""
                     select "Player", "Opponent", {}
-                    from dwh_utils.players_oppositions(%s, %s, %s, %s);
+                    from analytics.players_oppositions(%s, %s, %s, %s);
                 """).format(sql.Identifier(stat))
 
                 cursor_oppositions = self.db.execute_query_get_cursor(player_query,

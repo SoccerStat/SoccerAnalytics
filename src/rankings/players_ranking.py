@@ -28,7 +28,7 @@ class PlayersRanking:
         side: str = 'both',
         r: int = 2
     ) -> pd.DataFrame:
-        """
+        """Build the players ranking
         """
         seasons_to_analyse = [season.replace('-', '_') for season in seasons]
 
