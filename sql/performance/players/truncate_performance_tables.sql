@@ -1,0 +1,1 @@
+TRUNCATE TABLE analytics.staging_players_performance;

@@ -1,5 +1,5 @@
 drop function if exists analytics.check_id_comp;
-drop function if exists analytics.check_id_season;
+drop function if exists analytics.check_season;
 drop function if exists analytics.check_weeks;
 drop function if exists analytics.check_side;
 
@@ -19,18 +19,18 @@ end;
 $$
 language plpgsql;
 
--- create or replace function analytics.check_id_season(
--- 	in id_season varchar(20)
--- )
--- returns void as
--- $$
--- begin
--- 	if id_season  !~ '^\d{4}_(\d{4})$' or (substring(id_season, 1, 4)::int + 1)::text != substring(id_season, 6, 4) then 
--- 		raise exception 'Wrong format of season. It should be like "2022_2023".';
--- 	end if;
--- end;
--- $$
--- language plpgsql;
+create or replace function analytics.check_season(
+	in season varchar(20)
+)
+returns void as
+$$
+begin
+	if season  !~ '^\d{4}_(\d{4})$' or (substring(season, 1, 4)::int + 1)::text != substring(season, 6, 4) then 
+		raise exception 'Wrong format of season. It should be like "2022_2023".';
+	end if;
+end;
+$$
+language plpgsql;
 
 create or replace function analytics.check_weeks(
 	in first_week int,

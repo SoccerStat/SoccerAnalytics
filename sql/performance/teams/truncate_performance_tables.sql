@@ -1,0 +1,2 @@
+TRUNCATE TABLE analytics.staging_teams_performance;
+TRUNCATE TABLE analytics.staging_teams_expected_performance;
