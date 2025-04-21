@@ -6,7 +6,7 @@ drop function if exists analytics.get_last_opponent;
 create or replace function analytics.set_bigint_stat(
 	in home_stat bigint,
 	in away_stat bigint,
-	in side analytics.ranking_type
+	in side analytics.side
 )
 returns bigint as 
 $$
@@ -26,7 +26,7 @@ language plpgsql;
 create or replace function analytics.set_numeric_stat(
 	in home_stat numeric,
 	in away_stat numeric,
-	in side analytics.ranking_type
+	in side analytics.side
 )
 returns numeric as
 $$

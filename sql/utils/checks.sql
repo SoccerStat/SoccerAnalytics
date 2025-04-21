@@ -76,13 +76,13 @@ $$
 language plpgsql;
 
 create or replace function analytics.check_side(
-	in side analytics.ranking_type
+	in side analytics.side
 )
 returns void as
 $$
 begin
 	if side not in ('home', 'away', 'both') then
-        raise exception 'Invalid value for ranking_type. Valid values are: home, away, both.';
+        raise exception 'Invalid value for side. Valid values are: home, away, both.';
     end if;
 end;
 $$

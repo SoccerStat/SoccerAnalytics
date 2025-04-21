@@ -2,6 +2,7 @@ import traceback
 from typing import Optional
 import warnings
 from psycopg2.extensions import cursor
+from psycopg2 import OperationalError, DatabaseError
 import pandas as pd
 
 from src.postgres.postgres_connection import PostgresConnection
@@ -26,12 +27,22 @@ class PostgresQuerying:
             else:
                 pg_cursor.execute(query)
             self.postgres_conn.commit()
+
             if return_cursor:
                 return pg_cursor
+        except OperationalError as oe:
+            print(f"Operational Error: {oe}")
+            traceback.print_exc()
+            self.postgres_conn.rollback()  # Annule toutes les modifications sur une erreur de connexion
+        except DatabaseError as de:
+            print(f"Database Error: {de}")
+            traceback.print_exc()
+            self.postgres_conn.rollback()  # Annule toutes les modifications en cas d'erreur de base de données
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"General Error: {e}")
             traceback.print_exc()
             self.postgres_conn.rollback()
+
 
         return None
 

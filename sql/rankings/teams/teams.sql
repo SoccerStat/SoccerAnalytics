@@ -1,5 +1,11 @@
 create or replace function analytics.teams_ranking(
-	in side analytics.ranking_type,
+	in seasons varchar[],
+	in id_comp varchar(20),
+	in first_week int,
+	in last_week int,
+	in first_date varchar(20),
+	in last_date varchar(20),
+	in side analytics.side,
 	in r int
 )
 returns table(
@@ -73,9 +79,23 @@ begin
 				analytics.set_bigint_stat(sum(home_shots), sum(away_shots), ''' || side || ''') as Shots,
 				analytics.set_bigint_stat(sum(home_shots_ot), sum(away_shots_ot), ''' || side || ''') as "Shots on Target"
 				
-			from pg_temp.tmp_teams_ranking as "stats"
+			from analytics.staging_teams_performance as "stats"
 			join (select id, name from upper.club) as c
-			on team = competition || ''_'' || c.id
+			on stats.id_team = stats.id_comp || ''_'' || c.id
+			left join upper.championship chp
+			on stats.id_comp = chp.id
+			where stats.season = any($1)
+			and stats.id_comp = ''' || id_comp || '''
+			and (
+				(
+					chp.id is not null
+					and length(stats.week) <= 2 
+					and cast(stats.week as int) between ''' || first_week || ''' and ''' || last_week || '''
+				)
+				or chp.id is null
+			)
+			and stats.date between ''' || first_date || '''::date and ''' || last_date || '''::date
+
 			group by Club --, "Last Opponent"
 		)
 
@@ -128,7 +148,7 @@ begin
 		from teams_stats ts;
 	';
 
-	RETURN QUERY EXECUTE query USING side, r;
+	RETURN QUERY EXECUTE query USING seasons, id_comp, first_week, last_week, first_date, last_date, side, r;
 		
 end;
 $$ language plpgsql;

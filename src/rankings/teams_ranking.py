@@ -3,6 +3,7 @@ import pandas as pd
 from psycopg2 import sql
 
 from src.postgres.postgres_querying import PostgresQuerying
+from src.utils.data_loader import DataLoader
 
 class TeamsRanking:
     """
@@ -10,13 +11,7 @@ class TeamsRanking:
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
         self.ranking_sql_path = "sql/rankings/teams"
-        self.utils_sql_path = "sql/utils"
-
-        self.db.execute_sql_file(f"{self.utils_sql_path}/schemas.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/types.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/checks.sql")
-        # self.db.execute_sql_file(f"{self.utils_sql_path}/selected_matches.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/aggregations.sql")
+        self.data_loader = DataLoader(postgres_to_dataframe)
 
     def __simulate_matches(
         self,
@@ -120,77 +115,90 @@ class TeamsRanking:
     ) -> pd.DataFrame:
         """
         """
-        seasons_to_analyse = [season.replace('-', '_') for season in seasons]
-
         self.db.execute_query(
             f"""
-            SELECT analytics.check_id_comp('{id_comp}');
+            SELECT analytics.check_comp('{id_comp}');
             SELECT analytics.check_weeks('{first_week}', '{last_week}');
             SELECT analytics.check_dates('{first_date}', '{last_date}');
             SELECT analytics.check_side('{side}');
             """
         )
 
-        teams_ranking_tmp_table = self.db.read_sql_file(f"{self.ranking_sql_path}/tmp_tables.sql")
-        self.db.execute_query(teams_ranking_tmp_table)
+        # teams_ranking_tmp_table = self.db.read_sql_file(f"{self.ranking_sql_path}/tmp_tables.sql")
+        # self.db.execute_query(teams_ranking_tmp_table)
 
-        teams_ranking_template = self.db.read_sql_file(
-            f"{self.ranking_sql_path}/template_raw_data_by_season.sql"
-        )
+        # teams_ranking_template = self.db.read_sql_file(
+        #     f"{self.ranking_sql_path}/template_raw_data_by_season.sql"
+        # )
 
-        if justice_ranking and seasons_to_analyse:
-            justice_ranking_template = self.db.read_sql_file(
-                f"{self.ranking_sql_path}/template_xp_by_season.sql"
-            )
+        # if justice_ranking:
+        #     justice_ranking_template = self.db.read_sql_file(
+        #         f"{self.ranking_sql_path}/template_xp_by_season.sql"
+        #     )
 
-        all_season_schemas_query = sql.SQL("""select * from analytics.get_season_schemas();""")
-        all_season_schemas = self.db.df_from_query(all_season_schemas_query).iloc[:, 0].tolist()
+        # for season in seasons:
+        #     # if seasons_to_analyse == [] or season in seasons_to_analyse:
+        #     self.db.execute_query(
+        #         f"""
+        #         SELECT analytics.check_season('{season}');
+        #         """
+        #     )
+        #     self.db.execute_query(
+        #         teams_ranking_template.format(
+        #             season=season,
+        #             comp=comp,
+        #             first_week=first_week,
+        #             last_week=last_week,
+        #             first_date=first_date,
+        #             last_date=last_date
+        #         )
+        #     )
 
-        for season_schema in all_season_schemas:
-            season = season_schema[7:]
-            if seasons_to_analyse == [] or season in seasons_to_analyse:
-                self.db.execute_query(
-                    teams_ranking_template.format(
-                        season=season,
-                        id_comp=id_comp,
-                        first_week=first_week,
-                        last_week=last_week,
-                        first_date=first_date,
-                        last_date=last_date
-                    )
-                )
-
-                if justice_ranking and seasons_to_analyse:
-                    self.db.execute_query(
-                        justice_ranking_template.format(
-                            season=season,
-                            id_comp=id_comp,
-                            first_week=first_week,
-                            last_week=last_week,
-                            first_date=first_date,
-                            last_date=last_date
-                        )
-                    )
+        #     if justice_ranking:
+        #         self.db.execute_query(
+        #             justice_ranking_template.format(
+        #                 season=season,
+        #                 comp=comp,
+        #                 first_week=first_week,
+        #                 last_week=last_week,
+        #                 first_date=first_date,
+        #                 last_date=last_date
+        #             )
+        #         )
 
         self.db.execute_sql_file(f"{self.ranking_sql_path}/teams.sql")
         seasons_teams_ranking_query = sql.SQL("""
             select *
             from analytics.teams_ranking(
+                seasons := %s,
+                id_comp := %s,
+                first_week := %s,
+                last_week := %s,
+                first_date := %s,
+                last_date := %s,
                 side := %s,
                 r := %s
-                );
+            );
         """)
 
-        teams_ranking = self.db.df_from_query(seasons_teams_ranking_query, (side, r))
+        teams_ranking = self.db.df_from_query(
+            seasons_teams_ranking_query,
+            (seasons, id_comp, first_week, last_week, first_date, last_date, side, r)
+        )
 
-        if justice_ranking and seasons_to_analyse:
+        if justice_ranking:
             seasons_justice_ranking_query = sql.SQL("""
                 select *
-                from tmp_justice_ranking;
+                from analytics.staging_teams_performance
+                where season = any(%s)
+                and id_comp = %s;
             """)
 
             justice_ranking = self.__build_justice_ranking(
-                self.db.df_from_query(seasons_justice_ranking_query),
+                self.db.df_from_query(
+                    seasons_justice_ranking_query,
+                    (seasons, id_comp)
+                ),
                 side,
                 n_sim,
                 r
@@ -202,7 +210,7 @@ class TeamsRanking:
 
     # def build_ranking_by_season(
     #     self,
-    #     id_comp: str,
+    #     comp: str,
     #     season_schema: str,
     #     first_week: int = 1,
     #     last_week: int = 100,
@@ -220,7 +228,7 @@ class TeamsRanking:
     #     teams_query = sql.SQL("""
     #         select *
     #         from analytics.teams_ranking_by_season(
-    #             id_comp := %s,
+    #             comp := %s,
     #             season_shema := %s,
     #             first_week := %s,
     #             last_week := %s,
@@ -231,13 +239,13 @@ class TeamsRanking:
 
     #     teams_ranking = self.db.df_from_query(
     #         teams_query,
-    #         (id_comp, season_schema, first_week, last_week, side, r)
+    #         (comp, season_schema, first_week, last_week, side, r)
     #     )
 
     #     # justice_query = sql.SQL("""
     #     #     select *
     #     #     from analytics.teams_justice_table(
-    #     #         id_comp := %s,
+    #     #         comp := %s,
     #     #         season_schema := %s,
     #     #         first_week := %s,
     #     #         last_week := %s
@@ -245,7 +253,7 @@ class TeamsRanking:
     #     # """)
 
     #     # justice_ranking = self.__build_justice_ranking(
-    #     #     self.db.df_from_query(justice_query, (id_comp, season_schema, first_week, last_week)),
+    #     #     self.db.df_from_query(justice_query, (comp, season_schema, first_week, last_week)),
     #     #     side,
     #     #     n_sim,
     #     #     r

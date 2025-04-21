@@ -1,6 +1,6 @@
 create or replace function analytics.selected_matches(
         in season varchar(20),
-        in id_comp varchar(100),
+        in comp varchar(100),
         in first_week int default 1,
         in last_week int default 100,
         in first_date date default '1970-01-01',
@@ -24,7 +24,7 @@ begin
         left join upper.championship c
         on m.competition = c.id
         where
-            competition = ''' || id_comp || '''
+            competition = ''' || comp || '''
             and (
                 (
                     c.id is not null
@@ -36,7 +36,7 @@ begin
             and m.date between ''' || first_date || ''' and ''' || last_date || ''';
         '
     );
-    RETURN QUERY EXECUTE query USING season, id_comp, first_week, last_week, first_date, last_date;
+    RETURN QUERY EXECUTE query USING season, comp, first_week, last_week, first_date, last_date;
 end;
 $$
 language plpgsql;
