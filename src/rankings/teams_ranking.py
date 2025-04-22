@@ -55,8 +55,8 @@ class TeamsRanking:
             side_filter = 'played_home'
         elif side == 'away':
             side_filter = 'not played_home'
-        #elif side == 'both':
-        side_filter = 'played_home | not played_home'
+        else:
+            side_filter = 'played_home | not played_home'
 
         if not team_stats.empty:
             valid_matches = team_stats[
@@ -113,7 +113,7 @@ class TeamsRanking:
         r: int = 2,
         justice_ranking: bool = True
     ) -> pd.DataFrame:
-        """
+        """Build classic teams ranking, and optionally add the expected performance.
         """
         self.db.execute_query(
             f"""
@@ -189,7 +189,7 @@ class TeamsRanking:
         if justice_ranking:
             seasons_justice_ranking_query = sql.SQL("""
                 select *
-                from analytics.staging_teams_performance
+                from analytics.staging_teams_expected_performance
                 where season = any(%s)
                 and id_comp = %s;
             """)

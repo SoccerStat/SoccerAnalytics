@@ -17,8 +17,10 @@ home_team as (
 	select
 		'{season}' as season,
 		h.id_comp,
+		h.id as id_match,
 		home_team as id_team,
 		away_team as id_opponent,
+		true as played_home,
 
 		1 as home_match,
 		0 as away_match,
@@ -117,8 +119,10 @@ away_team as (
 	select
 		'{season}' as season,
 		a.id_comp,
+		a.id as id_match,
 		away_team as id_team,
 		home_team as id_opponent,
+		false as played_home,
 
 		0 as home_match,
 		1 as away_match,

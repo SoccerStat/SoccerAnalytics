@@ -2,6 +2,7 @@ import pandas as pd
 from psycopg2 import sql
 
 from src.postgres.postgres_querying import PostgresQuerying
+from src.utils.data_loader import DataLoader
 
 class PlayersRanking:
     """
@@ -9,13 +10,7 @@ class PlayersRanking:
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
         self.ranking_sql_path = "sql/rankings/players"
-        self.utils_sql_path = "sql/utils"
-
-        self.db.execute_sql_file(f"{self.utils_sql_path}/schemas.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/types.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/checks.sql")
-        # self.db.execute_sql_file(f"{self.utils_sql_path}/selected_matches.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/aggregations.sql")
+        self.data_loader = DataLoader(postgres_to_dataframe)
 
     def build_ranking(
         self,
@@ -47,33 +42,32 @@ class PlayersRanking:
             f"{self.ranking_sql_path}/template_raw_data_by_season.sql"
         )
 
-        all_season_schemas_query = sql.SQL("""select * from analytics.get_season_schemas();""")
-        all_season_schemas = self.db.df_from_query(all_season_schemas_query).iloc[:, 0].tolist()
+        all_seasons = self.data_loader.get_seasons()
+        all_comps = self.data_loader.get_competition_ids()
 
-        all_comps_query = sql.SQL("""select * from analytics.get_competitions();""")
-        all_comps = self.db.df_from_query(all_comps_query).iloc[:, 0].tolist()
+        for season in all_seasons:
+            self.db.execute_query(
+                f"""
+                SELECT analytics.check_season('{season}');
+                """
+            )
+            for comp in all_comps:
+                self.db.execute_query(
+                    f"""
+                    SELECT analytics.check_comp('{comp}');
+                    """
+                )
 
-        for season_schema in all_season_schemas:
-            season = season_schema[7:]
-            if seasons_to_analyse == [] or season in seasons_to_analyse:
-                for comp in all_comps:
-                    if comps == [] or comp in comps:
-                        self.db.execute_query(
-                            f"""
-                            SELECT analytics.check_id_comp('{comp}');
-                            """
-                        )
-
-                        self.db.execute_query(
-                            players_ranking_template.format(
-                                season=season,
-                                id_comp=comp,
-                                first_week=first_week,
-                                last_week=last_week,
-                                first_date=first_date,
-                                last_date=last_date
-                            )
-                        )
+                self.db.execute_query(
+                    players_ranking_template.format(
+                        season=season,
+                        comp=comp,
+                        first_week=first_week,
+                        last_week=last_week,
+                        first_date=first_date,
+                        last_date=last_date
+                    )
+                )
 
         self.db.execute_sql_file(f"{self.ranking_sql_path}/players.sql")
 
