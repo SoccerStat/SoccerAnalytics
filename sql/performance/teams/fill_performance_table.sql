@@ -9,14 +9,21 @@ with selected_matches as materialized (
 		m.round,
 		m.leg,
 		m.attendance,
-		m.competition as id_comp
+		m.competition as id_comp,
+		coalesce(chp.name, c_cup.name) as competition
 	from season_{season}.match m
+	left join upper.championship chp
+	on m.competition = chp.id
+	left join upper.continental_cup c_cup
+	on m.competition = c_cup.id
 	where m.competition = '{id_comp}'
 ),
 home_team as (
 	select
 		'{season}' as season,
 		h.id_comp,
+		h.competition,
+
 		h.id as id_match,
 		home_team as id_team,
 		away_team as id_opponent,
@@ -116,14 +123,21 @@ with selected_matches as materialized (
 		m.round,
 		m.leg,
 		m.attendance,
-		m.competition as id_comp
+		m.competition as id_comp,
+		coalesce(chp.name, c_cup.name) as competition
 	from season_{season}.match m
+	left join upper.championship chp
+	on m.competition = chp.id
+	left join upper.continental_cup c_cup
+	on m.competition = c_cup.id
 	where m.competition = '{id_comp}'
 ),
 away_team as (
 	select
 		'{season}' as season,
 		a.id_comp,
+		a.competition,
+
 		a.id as id_match,
 		away_team as id_team,
 		home_team as id_opponent,

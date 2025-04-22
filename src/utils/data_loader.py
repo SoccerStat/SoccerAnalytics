@@ -13,6 +13,7 @@ class DataLoader:
         self.db.execute_sql_file(f"{self.utils_sql_path}/types.sql")
         self.db.execute_sql_file(f"{self.utils_sql_path}/checks.sql")
         self.db.execute_sql_file(f"{self.utils_sql_path}/aggregations.sql")
+        self.db.execute_sql_file(f"{self.utils_sql_path}/competitions.sql")
 
     def get_seasons(self):
         """Get all the season schemas.
@@ -25,4 +26,10 @@ class DataLoader:
         """Get the interesting competitions (domestic cups excluded).
         """
         all_comps_query = sql.SQL("""select * from analytics.get_competition_ids();""")
+        return self.db.df_from_query(all_comps_query).iloc[:, 0].tolist()
+
+    def get_competition_names(self):
+        """Get the interesting competitions (domestic cups excluded).
+        """
+        all_comps_query = sql.SQL("""select * from analytics.get_competition_names();""")
         return self.db.df_from_query(all_comps_query).iloc[:, 0].tolist()

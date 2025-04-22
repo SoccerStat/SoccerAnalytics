@@ -102,7 +102,7 @@ class TeamsRanking:
 
     def build_ranking(
         self,
-        id_comp: str,
+        comp: str,
         seasons: list[str],
         first_week: int = 1,
         last_week: int = 100,
@@ -117,7 +117,7 @@ class TeamsRanking:
         """
         self.db.execute_query(
             f"""
-            SELECT analytics.check_comp('{id_comp}');
+            SELECT analytics.check_comp('{comp}');
             SELECT analytics.check_weeks('{first_week}', '{last_week}');
             SELECT analytics.check_dates('{first_date}', '{last_date}');
             SELECT analytics.check_side('{side}');
@@ -171,7 +171,7 @@ class TeamsRanking:
             select *
             from analytics.teams_ranking(
                 seasons := %s,
-                id_comp := %s,
+                comp := %s,
                 first_week := %s,
                 last_week := %s,
                 first_date := %s,
@@ -183,7 +183,7 @@ class TeamsRanking:
 
         teams_ranking = self.db.df_from_query(
             seasons_teams_ranking_query,
-            (seasons, id_comp, first_week, last_week, first_date, last_date, side, r)
+            (seasons, comp, first_week, last_week, first_date, last_date, side, r)
         )
 
         if justice_ranking:
@@ -191,13 +191,13 @@ class TeamsRanking:
                 select *
                 from analytics.staging_teams_expected_performance
                 where season = any(%s)
-                and id_comp = %s;
+                and comp = %s;
             """)
 
             justice_ranking = self.__build_justice_ranking(
                 self.db.df_from_query(
                     seasons_justice_ranking_query,
-                    (seasons, id_comp)
+                    (seasons, comp)
                 ),
                 side,
                 n_sim,

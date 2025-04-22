@@ -1,19 +1,19 @@
-drop function if exists analytics.check_id_comp;
+drop function if exists analytics.check_comp;
 drop function if exists analytics.check_season;
 drop function if exists analytics.check_weeks;
 drop function if exists analytics.check_side;
 
 
-create or replace function analytics.check_id_comp(
-	in id_comp varchar(100)
+create or replace function analytics.check_comp(
+	in comp varchar(100)
 )
 returns void as
 $$
 begin
-	if id_comp not in (select id from upper.championship)
-	and id_comp not in (select id from upper.continental_cup)
+	if comp not in (select name from upper.championship)
+	and comp not in (select name from upper.continental_cup)
 	then
-		raise exception 'Invalid value for id_comp.';
+		raise exception 'Invalid value for comp.';
 	end if;
 end;
 $$
