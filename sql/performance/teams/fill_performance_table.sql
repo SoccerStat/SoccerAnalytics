@@ -47,15 +47,20 @@ home_team as (
 		end as home_lose,
 		0 as away_lose,
 		
-		ts.score as home_goal_for,
-		0 as away_goal_for,
-		ts_away.score as home_goal_against,
-		0 as away_goal_against,
+		ts.score as home_goals_for,
+		0 as away_goals_for,
+		ts_away.score as home_goals_against,
+		0 as away_goals_against,
 
-		ts.nb_shots_total as home_shots,
-		0 as away_shots,
-		ts.nb_shots_on_target as home_shots_ot,
-		0 as away_shots_ot,
+		ts.nb_shots_total as home_shots_for,
+		0 as away_shots_for,
+		ts.nb_shots_on_target as home_shots_ot_for,
+		0 as away_shots_ot_for,
+
+		ts_away.nb_shots_total as home_shots_against,
+		0 as away_shots_against,
+		ts_away.nb_shots_on_target as home_shots_ot_against,
+		0 as away_shots_ot_against,
 
 		case
 			when ts_away.score = 0 then 1 else 0
@@ -63,7 +68,7 @@ home_team as (
 		0 as away_clean_sheet,
 
 		ts.nb_cards_yellow as home_y_cards,
-		0 as away_y_card,
+		0 as away_y_cards,
 		ts.nb_cards_second_yellow as home_yr_cards,
 		0 as away_yr_cards,
 		ts.nb_cards_red as home_r_cards,
@@ -150,22 +155,27 @@ away_team as (
 			when ts.score < ts_home.score then 1 else 0
 		end as away_lose,
 
-		0 as home_goal_for,
-		ts.score as away_goal_for,
-		0 as home_goal_against,
-		ts_home.score as away_goal_against,
+		0 as home_goals_for,
+		ts.score as away_goals_for,
+		0 as home_goals_against,
+		ts_home.score as away_goals_against,
 
-		0 as home_shots,
-		ts.nb_shots_total as away_shots,
-		0 as home_shots_ot,
-		ts.nb_shots_on_target as away_shots_ot,
+		0 as home_shots_for,
+		ts.nb_shots_total as away_shots_for,
+		0 as home_shots_ot_for,
+		ts.nb_shots_on_target as away_shots_ot_for,
+
+		0 as home_shots_against,
+		ts_home.nb_shots_total as away_shots_against,
+		0 as home_shots_ot_against,
+		ts_home.nb_shots_on_target as away_shots_ot_against,
 
 		0 as home_clean_sheet,
 		case
 			when ts_home.score = 0 then 1 else 0
 		end as away_clean_sheet,
 
-		0 as home_y_card,
+		0 as home_y_cards,
 		ts.nb_cards_yellow as away_y_cards,
 		0 as home_yr_cards,
 		ts.nb_cards_second_yellow as away_yr_cards,

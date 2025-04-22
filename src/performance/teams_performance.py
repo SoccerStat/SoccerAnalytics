@@ -16,11 +16,11 @@ class TeamsPerformance(BasePerformance):
         self.db.execute_sql_file(f"{self.performance_sql_path}/truncate_performance_tables.sql")
 
         teams_ranking_template = self.db.read_sql_file(
-            f"{self.ranking_sql_path}/template_raw_data_by_season.sql"
+            f"{self.performance_sql_path}/fill_performance_table.sql"
         )
 
         justice_ranking_template = self.db.read_sql_file(
-            f"{self.ranking_sql_path}/template_xp_by_season.sql"
+            f"{self.performance_sql_path}/fill_expected_performance_table.sql"
         )
 
         # teams_opposition_template = self.db.read_sql_file(
