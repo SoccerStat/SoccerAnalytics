@@ -25,7 +25,6 @@ class PlayersRanking:
     ) -> pd.DataFrame:
         """Build the players ranking
         """
-        seasons_to_analyse = [season.replace('-', '_') for season in seasons]
 
         self.db.execute_query(
             f"""
@@ -35,48 +34,40 @@ class PlayersRanking:
             """
         )
 
-        players_ranking_tmp_table = self.db.read_sql_file(f"{self.ranking_sql_path}/tmp_tables.sql")
-        self.db.execute_query(players_ranking_tmp_table)
-
-        players_ranking_template = self.db.read_sql_file(
-            f"{self.ranking_sql_path}/template_raw_data_by_season.sql"
-        )
-
-        all_seasons = self.data_loader.get_seasons()
-        all_comps = self.data_loader.get_competition_ids()
-
-        for season in all_seasons:
+        for season in seasons:
             self.db.execute_query(
                 f"""
                 SELECT analytics.check_season('{season}');
                 """
             )
-            for comp in all_comps:
-                self.db.execute_query(
-                    f"""
-                    SELECT analytics.check_comp('{comp}');
-                    """
-                )
 
-                self.db.execute_query(
-                    players_ranking_template.format(
-                        season=season,
-                        comp=comp,
-                        first_week=first_week,
-                        last_week=last_week,
-                        first_date=first_date,
-                        last_date=last_date
-                    )
-                )
+        for comp in comps:
+            self.db.execute_query(
+                f"""
+                SELECT analytics.check_comp('{comp}');
+                """
+            )
 
         self.db.execute_sql_file(f"{self.ranking_sql_path}/players.sql")
+
+        seasons = seasons if seasons else self.data_loader.get_seasons()
+        comps = comps if comps else self.data_loader.get_competition_names()
 
         query = sql.SQL("""
             select * 
             from analytics.players_rankings(
+                seasons := %s,
+                comps := %s,
+                first_week := %s,
+                last_week := %s,
+                first_date := %s,
+                last_date := %s,
                 side := %s,
                 r := %s
             );
         """) #.set_index('Ranking')
 
-        return self.db.df_from_query(query, (side, r))
+        return self.db.df_from_query(
+            query,
+            (seasons, comps, first_week, last_week, first_date, last_date, side, r)
+        )

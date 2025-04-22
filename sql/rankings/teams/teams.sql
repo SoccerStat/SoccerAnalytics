@@ -1,6 +1,6 @@
 create or replace function analytics.teams_ranking(
 	in seasons varchar[],
-	in id_comp varchar(20),
+	in comp varchar(20),
 	in first_week int,
 	in last_week int,
 	in first_date varchar(20),
@@ -30,8 +30,10 @@ returns table(
 	"Red Cards" bigint,
 	"Incl. 2 Yellow Cards" bigint,
 	"Fouls" bigint,
-	"Shots" bigint,
-	"Shots on Target" bigint--,
+	"Shots For" bigint,
+	"Shots on Target For" bigint,
+	"Shots Against" bigint,
+	"Shots on Target Against" bigint--,
 	--"Last Opponent" varchar(100)
 )
 as $$
@@ -60,9 +62,9 @@ begin
 				analytics.set_bigint_stat(sum(home_draw), sum(away_draw), ''' || side || ''') as Draws,
 				analytics.set_bigint_stat(sum(home_lose), sum(away_lose), ''' || side || ''') as Loses,
 				
-				analytics.set_bigint_stat(sum(home_goal_for), sum(away_goal_for), ''' || side || ''') as "Goals For",
-				analytics.set_bigint_stat(sum(home_goal_against), sum(away_goal_against), ''' || side || ''') as "Goals Against",
-				analytics.set_bigint_stat(sum(home_goal_for - home_goal_against), sum(away_goal_for - away_goal_against), ''' || side || ''') as "Goals Diff",
+				analytics.set_bigint_stat(sum(home_goals_for), sum(away_goals_for), ''' || side || ''') as "Goals For",
+				analytics.set_bigint_stat(sum(home_goals_against), sum(away_goals_against), ''' || side || ''') as "Goals Against",
+				analytics.set_bigint_stat(sum(home_goals_for - home_goals_against), sum(away_goals_for - away_goals_against), ''' || side || ''') as "Goals Diff",
 
 				analytics.set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), ''' || side || ''') as "Clean Sheets",
 				
@@ -70,14 +72,17 @@ begin
 
 				analytics.set_numeric_stat(sum(home_xg_against)::numeric, sum(away_xg_against)::numeric, ''' || side || ''') as "xG Against",
 
-				analytics.set_bigint_stat(sum(home_y_cards), sum(away_y_card), ''' || side || ''') as "Yellow Cards",
+				analytics.set_bigint_stat(sum(home_y_cards), sum(away_y_cards), ''' || side || ''') as "Yellow Cards",
 				analytics.set_bigint_stat(sum(home_r_cards), sum(away_r_cards), ''' || side || ''') as "Red Cards",
 				analytics.set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), ''' || side || ''') as "Incl. 2 Yellow Cards",
 				
 				analytics.set_bigint_stat(sum(home_fouls), sum(away_fouls), ''' || side || ''') as Fouls,
 
-				analytics.set_bigint_stat(sum(home_shots), sum(away_shots), ''' || side || ''') as Shots,
-				analytics.set_bigint_stat(sum(home_shots_ot), sum(away_shots_ot), ''' || side || ''') as "Shots on Target"
+				analytics.set_bigint_stat(sum(home_shots_for), sum(away_shots_for), ''' || side || ''') as "Shots For",
+				analytics.set_bigint_stat(sum(home_shots_ot_for), sum(away_shots_ot_for), ''' || side || ''') as "Shots on Target For",
+
+				analytics.set_bigint_stat(sum(home_shots_against), sum(away_shots_against), ''' || side || ''') as "Shots Against",
+				analytics.set_bigint_stat(sum(home_shots_ot_against), sum(away_shots_ot_against), ''' || side || ''') as "Shots on Target Against"
 				
 			from analytics.staging_teams_performance as "stats"
 			join (select id, name from upper.club) as c
@@ -85,7 +90,7 @@ begin
 			left join upper.championship chp
 			on stats.id_comp = chp.id
 			where stats.season = any($1)
-			and stats.id_comp = ''' || id_comp || '''
+			and stats.competition = ''' || comp || '''
 			and (
 				(
 					chp.id is not null
@@ -141,14 +146,17 @@ begin
 			ts."Incl. 2 Yellow Cards",
 			ts.Fouls,
 
-			ts.Shots,
-			ts."Shots on Target"--,
+			ts."Shots For",
+			ts."Shots on Target For",
+			
+			ts."Shots Against",
+			ts."Shots on Target Against"--,
 
 			--ts."Last Opponent"
 		from teams_stats ts;
 	';
 
-	RETURN QUERY EXECUTE query USING seasons, id_comp, first_week, last_week, first_date, last_date, side, r;
+	RETURN QUERY EXECUTE query USING seasons;
 		
 end;
 $$ language plpgsql;

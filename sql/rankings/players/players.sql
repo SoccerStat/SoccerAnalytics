@@ -1,5 +1,11 @@
 create or replace function analytics.players_rankings(
-	in side analytics.ranking_type,
+	in seasons varchar[],
+	in comps varchar[],
+	in first_week int,
+	in last_week int,
+	in first_date varchar(20),
+	in last_date varchar(20),
+	in side analytics.side,
 	in r int
 )
 returns table(
@@ -63,7 +69,7 @@ Sinon : 'Competition'
 		),
 		players_stats as (
 			select
-				stats.player,
+				stats.id_player,
 				pn.Nationalities,
 
 				case
@@ -121,13 +127,26 @@ Sinon : 'Competition'
 					else ''Competition''
 				end as "Granularity Competition"
 	
-			from tmp_players_ranking as stats
-			join (select id, name from upper.club) as c 
-			on team = id_comp || ''_'' || c.id
+			from analytics.staging_players_performance as "stats"
+			join (select id, name from upper.club) as c
+			on stats.id_team = stats.id_comp || ''_'' || c.id
 			join players_nationalities pn
-			on stats.player = pn.player
+			on stats.id_player = pn.player
+			left join upper.championship chp
+			on stats.id_comp = chp.id
+			where stats.season = any($1)
+			and stats.competition = any($2)
+			and (
+				(
+					chp.id is not null
+					and length(stats.week) <= 2 
+					and cast(stats.week as int) between ''' || first_week || ''' and ''' || last_week || '''
+				)
+				or chp.id is null
+			)
+			and stats.date between ''' || first_date || '''::date and ''' || last_date || '''::date
 			group by
-				(stats.player, pn.Nationalities),
+				(stats.id_player, pn.Nationalities),
 				cube(c.name, stats.competition)
 			having (
 				grouping(c.name) = 0 OR count(distinct c.name) > 1
@@ -192,10 +211,10 @@ Sinon : 'Competition'
 
 		from players_stats ps
 		join upper.player p
-		on ps.player = p.id;
+		on ps.id_player = p.id;
 		'
 	);
 	
-	RETURN QUERY EXECUTE query USING side, r;
+	RETURN QUERY EXECUTE query USING seasons, comps;
 end;
 $$ language plpgsql;

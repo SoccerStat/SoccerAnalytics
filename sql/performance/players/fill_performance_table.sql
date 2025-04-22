@@ -3,6 +3,11 @@ with selected_matches as materialized (
 		m.id,
 		m.home_team,
 		m.away_team,
+		m.date,
+		m.time,
+		m.week,
+		m.round,
+		m.leg,
 		m.competition as id_comp,
 		coalesce(chp.name, c_cup.name) as competition
 	from season_{season}.match m
@@ -24,6 +29,12 @@ home_stats as (
 
 		1 as home_match,
 		0 as away_match,
+
+		h.date,
+		h.time,
+		h.week,
+		h.round,
+		h.leg,
 
 		case
 			when ts.score > ts_away.score then 1 
@@ -119,6 +130,11 @@ with selected_matches as materialized (
 		m.id,
 		m.home_team,
 		m.away_team,
+		m.date,
+		m.time,
+		m.week,
+		m.round,
+		m.leg,
 		m.competition as id_comp,
 		coalesce(chp.name, c_cup.name) as competition
 	from season_{season}.match m
@@ -140,6 +156,12 @@ away_stats as (
 
 		0 as home_match,
 		1 as away_match,
+
+		a.date,
+		a.time,
+		a.week,
+		a.round,
+		a.leg,
 
 		0 as home_win,
 		case

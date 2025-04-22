@@ -124,47 +124,14 @@ class TeamsRanking:
             """
         )
 
-        # teams_ranking_tmp_table = self.db.read_sql_file(f"{self.ranking_sql_path}/tmp_tables.sql")
-        # self.db.execute_query(teams_ranking_tmp_table)
+        for season in seasons:
+            self.db.execute_query(
+                f"""
+                SELECT analytics.check_season('{season}');
+                """
+            )
 
-        # teams_ranking_template = self.db.read_sql_file(
-        #     f"{self.ranking_sql_path}/template_raw_data_by_season.sql"
-        # )
-
-        # if justice_ranking:
-        #     justice_ranking_template = self.db.read_sql_file(
-        #         f"{self.ranking_sql_path}/template_xp_by_season.sql"
-        #     )
-
-        # for season in seasons:
-        #     # if seasons_to_analyse == [] or season in seasons_to_analyse:
-        #     self.db.execute_query(
-        #         f"""
-        #         SELECT analytics.check_season('{season}');
-        #         """
-        #     )
-        #     self.db.execute_query(
-        #         teams_ranking_template.format(
-        #             season=season,
-        #             comp=comp,
-        #             first_week=first_week,
-        #             last_week=last_week,
-        #             first_date=first_date,
-        #             last_date=last_date
-        #         )
-        #     )
-
-        #     if justice_ranking:
-        #         self.db.execute_query(
-        #             justice_ranking_template.format(
-        #                 season=season,
-        #                 comp=comp,
-        #                 first_week=first_week,
-        #                 last_week=last_week,
-        #                 first_date=first_date,
-        #                 last_date=last_date
-        #             )
-        #         )
+        seasons = seasons if seasons else self.data_loader.get_seasons()
 
         self.db.execute_sql_file(f"{self.ranking_sql_path}/teams.sql")
         seasons_teams_ranking_query = sql.SQL("""
