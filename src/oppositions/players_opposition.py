@@ -2,18 +2,13 @@ import pandas as pd
 from psycopg2 import sql
 
 from src.postgres.postgres_querying import PostgresQuerying
-#from src.oppositions.Oppositions import Oppositions
+from src.utils.data_loader import DataLoader
 
 class PlayersOpposition:
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
         self.opposition_sql_path = "sql/oppositions/player_x_teams"
-        self.utils_sql_path = "sql/utils"
-
-        self.db.execute_sql_file(f"{self.utils_sql_path}/schemas.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/types.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/checks.sql")
-        self.db.execute_sql_file(f"{self.utils_sql_path}/aggregations.sql")
+        self.data_loader = DataLoader(postgres_to_dataframe)
 
     def build_oppositions(
         self,
@@ -22,9 +17,10 @@ class PlayersOpposition:
         seasons: list[str],
         side: str = "both"
     ) -> pd.DataFrame:
+        """Build Oppositions table between a player and teams he played against.
         """
-        """
-        seasons_to_analyse = [season.replace('-', '_') for season in seasons]
+
+        seasons = [season.replace('-', '_') for season in seasons]
 
         self.db.execute_query(
             f"""
@@ -32,36 +28,34 @@ class PlayersOpposition:
             """
         )
 
-        players_opposition_tmp_table = self.db.read_sql_file(f"{self.opposition_sql_path}/tmp_tables.sql")
+        players_opposition_tmp_table = self.db.read_sql_file(
+            f"{self.opposition_sql_path}/tmp_tables.sql"
+        )
         self.db.execute_query(players_opposition_tmp_table)
 
         players_opposition_template = self.db.read_sql_file(
             f"{self.opposition_sql_path}/template_raw_data_by_season.sql"
         )
 
-        all_season_schemas_query = sql.SQL("""select * from analytics.get_season_schemas();""")
-        all_season_schemas = self.db.df_from_query(all_season_schemas_query).iloc[:, 0].tolist()
+        for season in seasons:
+            self.db.execute_query(
+                f"""
+                SELECT analytics.check_season('{season}');
+                """
+            )
+            for comp in comps:
+                self.db.execute_query(
+                    f"""
+                    SELECT analytics.check_comp('{comp}');
+                    """
+                )
 
-        all_comps_query = sql.SQL("""select * from analytics.get_competitions();""")
-        all_comps = self.db.df_from_query(all_comps_query).iloc[:, 0].tolist()
-
-        for season_schema in all_season_schemas:
-            season = season_schema[7:]
-            if seasons_to_analyse == [] or season in seasons_to_analyse:
-                for comp in all_comps:
-                    if comps == [] or comp in comps:
-                        self.db.execute_query(
-                            f"""
-                            SELECT analytics.check_id_comp('{comp}');
-                            """
-                        )
-
-                        self.db.execute_query(
-                            players_opposition_template.format(
-                                season=season,
-                                id_comp=comp
-                            )
-                        )
+                self.db.execute_query(
+                    players_opposition_template.format(
+                        season=season,
+                        comp=comp
+                    )
+                )
 
         self.db.execute_sql_file(f"{self.opposition_sql_path}/player_x_teams.sql")
 
@@ -79,7 +73,7 @@ class PlayersOpposition:
     def build_matrix(
         self,
         stat: str,
-        id_comp: str,
+        comp: str,
         season: str,
         side: str
     ) -> pd.DataFrame:
@@ -88,7 +82,7 @@ class PlayersOpposition:
 
         season_schema = f"season_{season}"
 
-        self.db.execute_sql_file("sql/oppositions/player_x_teams.sql")
+        self.db.execute_sql_file(f"{self.opposition_sql_path}/player_x_teams.sql")
 
         query = sql.SQL("""
             select p.name as "Player"
@@ -101,7 +95,7 @@ class PlayersOpposition:
             group by p.name;
         """).format(sql.Identifier(season_schema), sql.Identifier(season_schema))
 
-        cursor_players = self.db.execute_query_get_cursor(query, (id_comp,))
+        cursor_players = self.db.execute_query(query, (comp,), return_cursor=True)
 
         teams_query = sql.SQL("""
             select c.name as "Club"
@@ -112,7 +106,7 @@ class PlayersOpposition:
             group by c.name;
         """).format(sql.Identifier(season_schema))
 
-        cursor_teams = self.db.execute_query_get_cursor(teams_query, (id_comp,))
+        cursor_teams = self.db.execute_query(teams_query, (comp,), return_cursor=True)
 
         if cursor_players and cursor_teams:
             players = [row[0] for row in cursor_players.fetchall()]
@@ -126,11 +120,13 @@ class PlayersOpposition:
             for player in players:
                 player_query = sql.SQL("""
                     select "Player", "Opponent", {}
-                    from analytics.players_oppositions(%s, %s, %s, %s);
+                    from analytics.players_oppositions(%s, %s);
                 """).format(sql.Identifier(stat))
 
-                cursor_oppositions = self.db.execute_query_get_cursor(player_query,
-                    (player.replace("'", "''"), id_comp, season, side)
+                cursor_oppositions = self.db.execute_query(
+                    player_query,
+                    (player.replace("'", "''"), side),
+                    return_cursor=True
                 )
 
                 data = cursor_oppositions.fetchall()

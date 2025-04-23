@@ -26,6 +26,8 @@ class PlayersRanking:
         """Build the players ranking
         """
 
+        seasons = [season.replace('-', '_') for season in seasons]
+
         self.db.execute_query(
             f"""
             SELECT analytics.check_weeks('{first_week}', '{last_week}');

@@ -115,6 +115,9 @@ class TeamsRanking:
     ) -> pd.DataFrame:
         """Build classic teams ranking, and optionally add the expected performance.
         """
+
+        seasons = [season.replace('-', '_') for season in seasons]
+
         self.db.execute_query(
             f"""
             SELECT analytics.check_comp('{comp}');
