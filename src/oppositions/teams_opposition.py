@@ -13,6 +13,8 @@ class TeamsOpposition:
         self.opposition_sql_path = "sql/oppositions/teams_x_teams"
         self.data_loader = DataLoader(postgres_to_dataframe)
 
+        self.db.execute_sql_file(f"{self.opposition_sql_path}/team_x_teams.sql")
+
     def build_oppositions(
         self,
         team: str,
@@ -45,8 +47,6 @@ class TeamsOpposition:
                 """
             )
 
-        self.db.execute_sql_file(f"{self.opposition_sql_path}/team_x_teams.sql")
-
         seasons = seasons if seasons else self.data_loader.get_seasons()
         comps = comps if comps else self.data_loader.get_competition_names()
 
@@ -69,56 +69,96 @@ class TeamsOpposition:
     def build_matrix(
         self,
         stat: str,
-        comp: str,
-        season: str,
+        seasons: list[str],
+        comps: list[str],
         side: str
     ) -> list:
         """
         """
 
-        season = season.replace('-', '_')
+        seasons = [season.replace('-', '_') for season in seasons]
+        seasons = seasons if seasons else self.data_loader.get_seasons()
+        comps = comps if comps else self.data_loader.get_competition_names()
 
-        season_schema = f"season_{season}"
+        self.db.execute_query(
+            f"""
+            SELECT analytics.check_side('{side}');
+            """
+        )
 
-        self.db.execute_sql_file(f"{self.opposition_sql_path}/team_x_teams.sql")
+        for season in seasons:
+            self.db.execute_query(
+                f"""
+                SELECT analytics.check_season('{season}');
+                """
+            )
 
-        query = sql.SQL("""
-            select c.name as "Club"
-                from {}.team t
-                join upper.club c
-                on t.club = c.id
-                where t.competition = %s
-                group by c.name;
-        """).format(sql.Identifier(season_schema))
+        for comp in comps:
+            self.db.execute_query(
+                f"""
+                SELECT analytics.check_comp('{comp}');
+                """
+            )
 
-        cursor_instance = self.db.execute_query(query, (comp,), return_cursor=True)
+        all_teams = []
+        for season in seasons:
+            for comp in comps:
+                query = sql.SQL("""
+                    select c.name as "Club"
+                        from {}.team t
+                        join upper.club c
+                        on t.club = c.id
+                        left join upper.championship chp
+                        on t.competition = chp.id
+                        left join upper.continental_cup c_cup
+                        on t.competition = c_cup.id
+                        where %s in (chp.name, c_cup.name)
+                        group by c.name;
+                """).format(sql.Identifier(f"season_{season}"))
 
-        if cursor_instance:
-            teams = [row[0] for row in cursor_instance.fetchall()]
-            cursor_instance.close()
-            df = pd.DataFrame(index=teams, columns=teams)
+                cursor_instance = self.db.execute_query(query, (comp,), return_cursor=True)
+                if cursor_instance:
+                    all_teams = [row[0] for row in cursor_instance.fetchall() if row[0] not in all_teams]
+                    cursor_instance.close()
 
-            for team in teams:
-                team_query = sql.SQL("""
-                    select "Team", "Opponent", {stat}
-                    from analytics.teams_oppositions(
-                        team := %s,
-                        side := %s
-                    );
-                """).format(stat=sql.Identifier(stat))
+        df = pd.DataFrame(index=all_teams, columns=all_teams)
 
-                cursor_oppositions = self.db.execute_query(
-                    team_query,
-                    (team, side),
-                    return_cursor=True
-                )
+        for team in all_teams:
+            team_query = sql.SQL("""
+                select "Team", "Opponent", {stat}
+                from analytics.teams_oppositions(
+                    seasons := %s,
+                    comps := %s,
+                    team := %s,
+                    side := %s
+                );
+            """).format(stat=sql.Identifier(stat))
 
-                data = cursor_oppositions.fetchall()
-                cursor_oppositions.close()
+            cursor_oppositions = self.db.execute_query(
+                team_query,
+                (seasons, comps, team, side),
+                return_cursor=True
+            )
 
-                for stats in data:
-                    df.loc[stats[0], stats[1]] = stats[2]
+            data = cursor_oppositions.fetchall()
+            cursor_oppositions.close()
 
-            return df
+            for stats in data:
+                df.loc[stats[0], stats[1]] = stats[2]
 
-        return pd.DataFrame()
+        return df
+
+
+    def build_matrix_wrapper(
+        self,
+        stat: str,
+        seasons: tuple[str],
+        comps: tuple[str],
+        side: str
+    ):
+        return self.build_matrix(
+            stat=stat,
+            seasons=list(seasons),
+            comps=list(comps),
+            side=side
+        )

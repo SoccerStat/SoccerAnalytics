@@ -12,6 +12,7 @@ class TeamsRanking:
         self.db = postgres_to_dataframe
         self.ranking_sql_path = "sql/rankings/teams"
         self.data_loader = DataLoader(postgres_to_dataframe)
+        self.db.execute_sql_file(f"{self.ranking_sql_path}/teams.sql")
 
     def __simulate_matches(
         self,
@@ -117,6 +118,7 @@ class TeamsRanking:
         """
 
         seasons = [season.replace('-', '_') for season in seasons]
+        seasons = seasons if seasons else self.data_loader.get_seasons()
 
         self.db.execute_query(
             f"""
@@ -134,9 +136,6 @@ class TeamsRanking:
                 """
             )
 
-        seasons = seasons if seasons else self.data_loader.get_seasons()
-
-        self.db.execute_sql_file(f"{self.ranking_sql_path}/teams.sql")
         seasons_teams_ranking_query = sql.SQL("""
             select *
             from analytics.teams_ranking(
@@ -177,60 +176,3 @@ class TeamsRanking:
             return self.__merge_rankings(teams_ranking, justice_ranking, r)
 
         return teams_ranking
-
-    # def build_ranking_by_season(
-    #     self,
-    #     comp: str,
-    #     season_schema: str,
-    #     first_week: int = 1,
-    #     last_week: int = 100,
-    #     side: str = 'both',
-    #     n_sim: int = 1000000,
-    #     r: int = 2
-    # ) -> pd.DataFrame:
-
-    #     self.db.execute_sql_file("sql/utils/schemas.sql")
-    #     self.db.execute_sql_file("sql/utils/types.sql")
-    #     self.db.execute_sql_file("sql/utils/checks.sql")
-    #     self.db.execute_sql_file("sql/utils/aggregations.sql")
-    #     self.db.execute_sql_file("sql/rankings/teams/teams_by_season.sql")
-
-    #     teams_query = sql.SQL("""
-    #         select *
-    #         from analytics.teams_ranking_by_season(
-    #             comp := %s,
-    #             season_shema := %s,
-    #             first_week := %s,
-    #             last_week := %s,
-    #             side := %s,
-    #             r := %s
-    #             );
-    #     """)
-
-    #     teams_ranking = self.db.df_from_query(
-    #         teams_query,
-    #         (comp, season_schema, first_week, last_week, side, r)
-    #     )
-
-    #     # justice_query = sql.SQL("""
-    #     #     select *
-    #     #     from analytics.teams_justice_table(
-    #     #         comp := %s,
-    #     #         season_schema := %s,
-    #     #         first_week := %s,
-    #     #         last_week := %s
-    #     #         );
-    #     # """)
-
-    #     # justice_ranking = self.__build_justice_ranking(
-    #     #     self.db.df_from_query(justice_query, (comp, season_schema, first_week, last_week)),
-    #     #     side,
-    #     #     n_sim,
-    #     #     r
-    #     # )
-    #     justice_ranking = pd.DataFrame()
-
-    #     if not justice_ranking.empty:
-    #         return self.__merge_rankings(teams_ranking, justice_ranking, r)
-
-    #     return teams_ranking

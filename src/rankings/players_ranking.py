@@ -11,6 +11,7 @@ class PlayersRanking:
         self.db = postgres_to_dataframe
         self.ranking_sql_path = "sql/rankings/players"
         self.data_loader = DataLoader(postgres_to_dataframe)
+        self.db.execute_sql_file(f"{self.ranking_sql_path}/players.sql")
 
     def build_ranking(
         self,
@@ -27,6 +28,8 @@ class PlayersRanking:
         """
 
         seasons = [season.replace('-', '_') for season in seasons]
+        seasons = seasons if seasons else self.data_loader.get_seasons()
+        comps = comps if comps else self.data_loader.get_competition_names()
 
         self.db.execute_query(
             f"""
@@ -49,11 +52,6 @@ class PlayersRanking:
                 SELECT analytics.check_comp('{comp}');
                 """
             )
-
-        self.db.execute_sql_file(f"{self.ranking_sql_path}/players.sql")
-
-        seasons = seasons if seasons else self.data_loader.get_seasons()
-        comps = comps if comps else self.data_loader.get_competition_names()
 
         query = sql.SQL("""
             select * 
