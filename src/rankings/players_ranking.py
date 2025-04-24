@@ -1,3 +1,4 @@
+from datetime import datetime
 import pandas as pd
 from psycopg2 import sql
 
@@ -15,8 +16,8 @@ class PlayersRanking:
 
     def build_ranking(
         self,
-        comps: list[str],
         seasons: list[str],
+        comps: list[str],
         first_week: int = 1,
         last_week: int = 100,
         first_date: str = '1970-01-01',
@@ -70,4 +71,25 @@ class PlayersRanking:
         return self.db.df_from_query(
             query,
             (seasons, comps, first_week, last_week, first_date, last_date, side, r)
+        )
+
+    def build_ranking_wrapper(
+        self,
+        seasons: tuple[str],
+        comps: tuple[str],
+        first_week: int,
+        last_week: int,
+        first_date: datetime,
+        last_date: datetime,
+        side: str
+    ):
+        return self.build_ranking(
+            seasons=list(seasons),
+            comps=list(comps),
+            first_week=first_week,
+            last_week=last_week,
+            first_date=first_date.strftime('%Y-%m-%d'),
+            last_date=last_date.strftime('%Y-%m-%d'),
+            side=side,
+            r=2
         )

@@ -103,9 +103,9 @@ Sinon : 'Competition'
 
 				analytics.set_bigint_stat(sum(home_clean_sheet), sum(away_clean_sheet), ''' || side || ''') as "Clean Sheets",
 				
-				analytics.set_bigint_stat(sum(home_cards_yellow), sum(away_cards_yellow), ''' || side || ''') as "Yellow Cards",
-				analytics.set_bigint_stat(sum(home_cards_red), sum(away_cards_red), ''' || side || ''') as "Red Cards",
-				analytics.set_bigint_stat(sum(home_cards_yellow_red), sum(away_cards_yellow_red), ''' || side || ''') as "Incl. 2 Yellow Cards",
+				analytics.set_bigint_stat(sum(home_y_cards), sum(home_y_cards), ''' || side || ''') as "Yellow Cards",
+				analytics.set_bigint_stat(sum(home_r_cards), sum(home_r_cards), ''' || side || ''') as "Red Cards",
+				analytics.set_bigint_stat(sum(home_yr_cards), sum(home_yr_cards), ''' || side || ''') as "Incl. 2 Yellow Cards",
 				
 				analytics.set_bigint_stat(sum(home_minutes), sum(away_minutes), ''' || side || ''') as Minutes,
 

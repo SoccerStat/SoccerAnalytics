@@ -1,3 +1,4 @@
+from datetime import datetime
 import numpy as np
 import pandas as pd
 from psycopg2 import sql
@@ -103,8 +104,8 @@ class TeamsRanking:
 
     def build_ranking(
         self,
-        comp: str,
         seasons: list[str],
+        comp: str,
         first_week: int = 1,
         last_week: int = 100,
         first_date: str = '1970-01-01',
@@ -176,3 +177,27 @@ class TeamsRanking:
             return self.__merge_rankings(teams_ranking, justice_ranking, r)
 
         return teams_ranking
+
+    def build_ranking_wrapper(
+        self,
+        seasons: tuple[str],
+        comp: str,
+        first_week: int,
+        last_week: int,
+        first_date: datetime,
+        last_date: datetime,
+        side: str,
+        justice_ranking: bool
+    ):
+        return self.build_ranking(
+            seasons=list(seasons),
+            comp=comp,
+            first_week=first_week,
+            last_week=last_week,
+            first_date=first_date.strftime('%Y-%m-%d'),
+            last_date=last_date.strftime('%Y-%m-%d'),
+            side=side,
+            n_sim=1000000,
+            r=2,
+            justice_ranking=justice_ranking
+        )
