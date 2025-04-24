@@ -18,8 +18,8 @@ class TeamsOpposition:
     def build_oppositions(
         self,
         team: str,
-        comps: list[str],
         seasons: list[str],
+        comps: list[str],
         side: str = 'both'
     ) -> pd.DataFrame:
         """Build Oppositions table between a teams and teams it played against.
@@ -65,6 +65,20 @@ class TeamsOpposition:
             (seasons, comps, team.replace("'", "''"), side)
         )
 
+    def build_oppositions_wrapper(
+        self,
+        team: str,
+        seasons: tuple[str],
+        comps: tuple[str],
+        side: str
+    ):
+        return self.build_oppositions(
+            team=team,
+            comps=list(comps),
+            seasons=list(seasons),
+            side=side
+        )
+
     def build_matrix(
         self,
         stat: str,
@@ -72,7 +86,7 @@ class TeamsOpposition:
         comps: list[str],
         side: str
     ) -> pd.DataFrame:
-        """
+        """Build team x team matrix
         """
 
         seasons = [season.replace('-', '_') for season in seasons]
@@ -146,7 +160,6 @@ class TeamsOpposition:
                 df.loc[stats[0], stats[1]] = stats[2]
 
         return df
-
 
     def build_matrix_wrapper(
         self,

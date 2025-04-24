@@ -14,8 +14,8 @@ class PlayersOpposition:
     def build_oppositions(
         self,
         player: str,
-        comps: list[str],
         seasons: list[str],
+        comps: list[str],
         side: str = "both"
     ) -> pd.DataFrame:
         """Build Oppositions table between a player and teams he played against.
@@ -59,6 +59,20 @@ class PlayersOpposition:
         return self.db.df_from_query(
             query,
             (seasons, comps, player.replace("'", "''"), side)
+        )
+
+    def build_oppositions_wrapper(
+        self,
+        player: str,
+        seasons: tuple[str],
+        comps: tuple[str],
+        side=str
+    ):
+        return self.build_oppositions(
+            player=player,
+            seasons=list(seasons),
+            comps=list(comps),
+            side=side
         )
 
     def build_matrix(
@@ -158,7 +172,6 @@ class PlayersOpposition:
                 df.loc[stats[0], stats[1]] = stats[2]
 
         return df
-
 
     def build_matrix_wrapper(
         self,
