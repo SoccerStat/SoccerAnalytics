@@ -1,16 +1,16 @@
 with selected_matches as (
-    select m.id, m.home_team, m.away_team, m.competition as id_comp, coalesce(chp.name, c_cup.name) as competition
+    select m.id, m.home_team, m.away_team, m.competition as comp, coalesce(chp.name, c_cup.name) as competition
     from season_{season}.match m
     left join upper.championship chp
 	on m.competition = chp.id
 	left join upper.continental_cup c_cup
 	on m.competition = c_cup.id
-    where m.competition = '{id_comp}'
+    where m.competition = '{comp}'
 ),
 home_oppositions as (
     select
         '{season}' as season,
-        m.id_comp,
+        m.comp,
         m.competition,
 
         ps.player,
@@ -72,18 +72,18 @@ select *
 from home_oppositions;
 
 with selected_matches as (
-    select m.id, m.home_team, m.away_team, m.competition as id_comp, coalesce(chp.name, c_cup.name) as competition
+    select m.id, m.home_team, m.away_team, m.competition as comp, coalesce(chp.name, c_cup.name) as competition
     from season_{season}.match m
     left join upper.championship chp
 	on m.competition = chp.id
 	left join upper.continental_cup c_cup
 	on m.competition = c_cup.id
-    where m.competition = '{id_comp}'
+    where m.competition = '{comp}'
 ),
 away_oppositions as (
     select
         '{season}' as season,
-        m.id_comp,
+        m.comp,
         m.competition,
 
         ps.player,

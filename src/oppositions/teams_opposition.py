@@ -26,6 +26,8 @@ class TeamsOpposition:
         """
 
         seasons = [season.replace('-', '_') for season in seasons]
+        seasons = seasons if seasons else self.data_loader.get_seasons()
+        comps = comps if comps else self.data_loader.get_competition_names()
 
         self.db.execute_query(
             f"""
@@ -46,9 +48,6 @@ class TeamsOpposition:
                 SELECT analytics.check_comp('{comp}');
                 """
             )
-
-        seasons = seasons if seasons else self.data_loader.get_seasons()
-        comps = comps if comps else self.data_loader.get_competition_names()
 
         query = sql.SQL("""
             select * 
@@ -72,7 +71,7 @@ class TeamsOpposition:
         seasons: list[str],
         comps: list[str],
         side: str
-    ) -> list:
+    ) -> pd.DataFrame:
         """
         """
 
@@ -118,7 +117,7 @@ class TeamsOpposition:
 
                 cursor_instance = self.db.execute_query(query, (comp,), return_cursor=True)
                 if cursor_instance:
-                    all_teams = [row[0] for row in cursor_instance.fetchall() if row[0] not in all_teams]
+                    all_teams += [row[0] for row in cursor_instance.fetchall() if row[0] not in all_teams]
                     cursor_instance.close()
 
         df = pd.DataFrame(index=all_teams, columns=all_teams)

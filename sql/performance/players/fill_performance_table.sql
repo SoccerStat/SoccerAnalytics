@@ -77,6 +77,11 @@ home_stats as (
 		end as home_clean_sheet,
 		0 as away_clean_sheet,
 
+		pms.nb_shots as home_shots,
+		0 as away_shots,
+		pms.nb_shots_on_target as home_shots_ot,
+		0 as away_shots_ot,
+
 		pms.nb_cards_yellow as home_cards_yellow,
 		0 as away_cards_yellow,
 		pms.nb_cards_red + pms.nb_cards_second_yellow as home_cards_red,
@@ -198,6 +203,11 @@ away_stats as (
 		case
 			when ts.score = 0 then 1 else 0
 		end as away_clean_sheet,
+
+		0 as home_shots,
+		pms.nb_shots as away_shots,
+		0 as home_shots_ot,
+		pms.nb_shots_on_target as away_shots_ot,
 
 		0 as home_cards_yellow,
 		pms.nb_cards_yellow as away_cards_yellow,

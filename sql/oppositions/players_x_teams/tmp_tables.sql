@@ -1,7 +1,7 @@
 drop table if exists tmp_players_opposition;
 create temp table tmp_players_opposition (
     season varchar(20),
-    id_comp varchar(100),
+    comp varchar(100),
     competition varchar(100),
 
     player varchar(20),
