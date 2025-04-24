@@ -5,6 +5,7 @@ from psycopg2 import sql
 from src.postgres.postgres_querying import PostgresQuerying
 from src.utils.data_loader import DataLoader
 
+
 class PlayersRanking:
     """
     """
@@ -55,7 +56,7 @@ class PlayersRanking:
             )
 
         query = sql.SQL("""
-            select * 
+            select *
             from analytics.players_rankings(
                 seasons := %s,
                 comps := %s,
@@ -66,7 +67,7 @@ class PlayersRanking:
                 side := %s,
                 r := %s
             );
-        """) #.set_index('Ranking')
+        """)  # .set_index('Ranking')
 
         return self.db.df_from_query(
             query,

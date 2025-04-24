@@ -1,6 +1,7 @@
 from yaml import load, SafeLoader
 import psycopg2
 
+
 class PostgresConnection:
     """All bout connecting to Postgres database
     """

@@ -1,0 +1,31 @@
+[MESSAGES CONTROL]
+# Disable the following messages:
+disable=import-error,
+        line-too-long,
+        missing-module-docstring,
+        missing-class-docstring,
+        missing-function-docstring,
+        too-many-instance-attributes,
+        too-many-public-methods,
+        too-few-public-methods,
+        too-many-arguments,
+        ungrouped-imports,
+        no-name-in-module,
+        wrong-import-order,
+        wrong-import-position,
+        redefined-builtin,
+        invalid-name,
+        dangerous-default-value,
+        bare-except,
+        too-many-nested-blocks,
+        too-many-locals,
+        too-many-branches,
+        super-with-arguments,
+        arguments-differ,
+        fixme,
+        unused-import,
+        signature-differs
+
+[FORMAT]
+# Maximum number of characters on a single line.
+max-line-length=120

@@ -4,6 +4,7 @@ from psycopg2 import sql
 from src.postgres.postgres_querying import PostgresQuerying
 from src.utils.data_loader import DataLoader
 
+
 class PlayersOpposition:
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
@@ -46,7 +47,7 @@ class PlayersOpposition:
             )
 
         query = sql.SQL("""
-            select * 
+            select *
             from analytics.players_oppositions(
                 seasons := %s,
                 comps := %s,

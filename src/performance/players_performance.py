@@ -1,6 +1,7 @@
 from src.performance.base_performance import BasePerformance
 from src.postgres.postgres_querying import PostgresQuerying
 
+
 class PlayersPerformance(BasePerformance):
     """Fill teams performance tables.
     """

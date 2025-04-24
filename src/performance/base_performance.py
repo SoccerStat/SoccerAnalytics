@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from src.postgres.postgres_querying import PostgresQuerying
 from src.utils.data_loader import DataLoader
 
+
 class BasePerformance(ABC):
     """Fill performance tables.
     """

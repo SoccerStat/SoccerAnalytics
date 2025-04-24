@@ -5,6 +5,7 @@ from psycopg2 import sql
 from src.postgres.postgres_querying import PostgresQuerying
 from src.utils.data_loader import DataLoader
 
+
 class TeamsOpposition:
     """
     """
@@ -50,7 +51,7 @@ class TeamsOpposition:
             )
 
         query = sql.SQL("""
-            select * 
+            select *
             from analytics.teams_oppositions(
                 seasons := %s,
                 comps := %s,

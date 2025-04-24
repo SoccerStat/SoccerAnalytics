@@ -6,6 +6,7 @@ from psycopg2 import sql
 from src.postgres.postgres_querying import PostgresQuerying
 from src.utils.data_loader import DataLoader
 
+
 class TeamsRanking:
     """
     """
@@ -19,7 +20,8 @@ class TeamsRanking:
         self,
         teams: pd.DataFrame,
         n_sim: int,
-        r: int) -> pd.DataFrame:
+        r: int
+    ) -> pd.DataFrame:
 
         def xG_per_shot(shots: pd.Series, xg: pd.Series, n_sim: int):
             return np.random.binomial(shots, xg/shots, size=(n_sim,))
@@ -51,7 +53,8 @@ class TeamsRanking:
         team_stats: pd.DataFrame,
         side: str,
         n_sim: int,
-        r: int) -> pd.DataFrame:
+        r: int
+    ) -> pd.DataFrame:
 
         if side == 'home':
             side_filter = 'played_home'
@@ -74,10 +77,7 @@ class TeamsRanking:
                         )
                         for id_match in valid_matches
                     ]
-                ) \
-                    .query(side_filter)[['Club', 'xP']] \
-                        .groupby('Club') \
-                            .sum('xP')
+                ).query(side_filter)[['Club', 'xP']].groupby('Club').sum('xP')
 
         return pd.DataFrame(columns=['Club', 'xP'])
 
@@ -86,7 +86,7 @@ class TeamsRanking:
         teams_ranking: pd.DataFrame,
         justice_ranking: pd.DataFrame,
         r: int = 2
-        ) -> pd.DataFrame:
+    ) -> pd.DataFrame:
 
         merged_ranking = pd.merge(
             teams_ranking,

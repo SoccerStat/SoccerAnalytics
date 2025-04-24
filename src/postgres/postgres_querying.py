@@ -7,6 +7,7 @@ import pandas as pd
 
 from src.postgres.postgres_connection import PostgresConnection
 
+
 class PostgresQuerying:
     """All about querying the database
     """
@@ -43,7 +44,6 @@ class PostgresQuerying:
             traceback.print_exc()
             self.postgres_conn.rollback()
 
-
         return None
 
     def read_sql_file(self, path: str):
@@ -70,7 +70,7 @@ class PostgresQuerying:
                 cursor_instance.close()
                 return df
             else:
-                return pd.DataFrame() #pd.read_sql_query(query, self.postgres_conn.get_conn())
+                return pd.DataFrame()  # pd.read_sql_query(query, self.postgres_conn.get_conn())
 
     def close(self) -> None:
         """Close the connection to Postgres
