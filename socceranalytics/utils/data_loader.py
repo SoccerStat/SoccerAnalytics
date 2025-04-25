@@ -1,6 +1,6 @@
 from psycopg2 import sql
 
-from src.postgres.postgres_querying import PostgresQuerying
+from socceranalytics.postgres.postgres_querying import PostgresQuerying
 
 
 class DataLoader:

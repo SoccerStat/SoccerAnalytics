@@ -1,27 +1,27 @@
-from src.performance.base_performance import BasePerformance
-from src.postgres.postgres_querying import PostgresQuerying
+from socceranalytics.performance.base_performance import BasePerformance
+from socceranalytics.postgres.postgres_querying import PostgresQuerying
+
+from socceranalytics.utils.logging import log
 
 
-class TeamsPerformance(BasePerformance):
+class PlayersPerformance(BasePerformance):
     """Fill teams performance tables.
     """
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
-        super().__init__(postgres_to_dataframe, "teams")
+        super().__init__(postgres_to_dataframe, "players")
 
     def process_performance_table(self):
-        """Truncate and fill the staging_teams_performance and staging_teams_expected_performance
+        """Truncate and fill the staging_players_performance
         tables in the analytics schema.
         Supposed to be ran once a day.
         Used to build rankings and opposition tables.
         """
+        log("\tTruncating the Players' performance tables...")
         self.db.execute_sql_file(f"{self.performance_sql_path}/truncate_performance_tables.sql")
 
+        log("\tFilling the Player' performance table...")
         teams_ranking_template = self.db.read_sql_file(
             f"{self.performance_sql_path}/fill_performance_table.sql"
-        )
-
-        justice_ranking_template = self.db.read_sql_file(
-            f"{self.performance_sql_path}/fill_expected_performance_table.sql"
         )
 
         for season in self.data_loader.get_seasons():
@@ -33,9 +33,9 @@ class TeamsPerformance(BasePerformance):
                     )
                 )
 
-                self.db.execute_query(
-                    justice_ranking_template.format(
-                        season=season,
-                        id_comp=id_comp
-                    )
-                )
+        n_rows_inserted_perf_table = self.db.execute_query(
+            "SELECT count(*) from analytics.staging_players_performance;",
+            return_cursor=True
+        ).fetchone()[0]
+
+        log(f"[PERFORMANCE TABLE] Rows inserted: {n_rows_inserted_perf_table}")

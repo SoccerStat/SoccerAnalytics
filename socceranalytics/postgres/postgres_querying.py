@@ -5,14 +5,16 @@ from psycopg2.extensions import cursor
 from psycopg2 import OperationalError, DatabaseError
 import pandas as pd
 
-from src.postgres.postgres_connection import PostgresConnection
+from socceranalytics.utils.logging import log
+
+from socceranalytics.postgres.postgres_connection import PostgresConnection
 
 
 class PostgresQuerying:
     """All about querying the database
     """
-    def __init__(self, env: str):
-        self.postgres_conn = PostgresConnection(env)
+    def __init__(self):
+        self.postgres_conn = PostgresConnection()
         self.postgres_conn.connect()
 
     def execute_query(self, query: str, params=None, return_cursor=False) -> Optional[cursor]:
@@ -32,15 +34,15 @@ class PostgresQuerying:
             if return_cursor:
                 return pg_cursor
         except OperationalError as oe:
-            print(f"Operational Error: {oe}")
+            log(f"Operational Error: {oe}", exception=True)
             traceback.print_exc()
             self.postgres_conn.rollback()  # Annule toutes les modifications sur une erreur de connexion
         except DatabaseError as de:
-            print(f"Database Error: {de}")
+            log(f"Database Error: {de}", exception=True)
             traceback.print_exc()
             self.postgres_conn.rollback()  # Annule toutes les modifications en cas d'erreur de base de données
         except Exception as e:
-            print(f"General Error: {e}")
+            log(f"General Error: {e}", exception=True)
             traceback.print_exc()
             self.postgres_conn.rollback()
 

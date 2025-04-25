@@ -1,19 +1,19 @@
-from yaml import load, SafeLoader
 import psycopg2
+
+from socceranalytics.utils.logging import log
+
+from socceranalytics.data.paths import Config
 
 
 class PostgresConnection:
     """All bout connecting to Postgres database
     """
-    def __init__(self, env: str):
-        with open(f"conf/{env}.yaml", 'r', encoding='utf-8') as file:
-            conf = load(file, Loader=SafeLoader)['postgres']
-
-        self.host = conf["host"]
-        self.port = conf["port"]
-        self.database = conf["database"]
-        self.username = conf["username"]
-        self.password = conf["password"]
+    def __init__(self):
+        self.host = Config.pg_host
+        self.port = Config.pg_port
+        self.database = Config.pg_database
+        self.username = Config.pg_username
+        self.password = Config.pg_password
         self.conn: psycopg2.extensions.connection = None
 
     def get_conn(self):
@@ -47,13 +47,13 @@ class PostgresConnection:
                 user=self.username,
                 password=self.password
             )
-            print("Connected to PostgreSQL!")
+            log("Connected to PostgreSQL!")
         except psycopg2.Error as e:
-            print(f"Error: Could not connect to PostgreSQL. {e}")
+            log(f"Error: Could not connect to PostgreSQL. {e}", exception=True)
 
     def close(self) -> None:
         """Close the connection
         """
         if self.conn:
             self.conn.close()
-            print("Connection to PostgreSQL closed.")
+            log("Connection to PostgreSQL closed.")

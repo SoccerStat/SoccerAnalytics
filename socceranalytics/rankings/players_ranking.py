@@ -2,8 +2,8 @@ from datetime import datetime
 import pandas as pd
 from psycopg2 import sql
 
-from src.postgres.postgres_querying import PostgresQuerying
-from src.utils.data_loader import DataLoader
+from socceranalytics.postgres.postgres_querying import PostgresQuerying
+from socceranalytics.utils.data_loader import DataLoader
 
 
 class PlayersRanking:

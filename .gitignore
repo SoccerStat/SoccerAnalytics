@@ -3,3 +3,9 @@ conf/
 __pycache__/
 *.ipynb_checkpoints/
 notebooks/
+.vscode/
+.DS_Store
+.pytest_cache/
+.pylintrc
+*.egg-info/
+.coverage

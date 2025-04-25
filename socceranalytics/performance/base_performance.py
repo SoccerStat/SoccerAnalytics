@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from src.postgres.postgres_querying import PostgresQuerying
-from src.utils.data_loader import DataLoader
+from socceranalytics.postgres.postgres_querying import PostgresQuerying
+from socceranalytics.utils.data_loader import DataLoader
 
 
 class BasePerformance(ABC):
