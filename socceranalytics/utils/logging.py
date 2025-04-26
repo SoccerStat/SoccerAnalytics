@@ -55,7 +55,7 @@ def setup_logger(error_level: bool = False, exception: bool = False):
     # Check if the logger has handlers already to avoid adding them multiple times
     if not logger.hasHandlers():
 
-        if Config.ENV != "dev":
+        if Config.ENV != "local":
             path_logging = utils.build_dated_file_path(Config.PATH_LOGGING, "log")
             path_latest_logging = f"{Config.PATH_LOGGING}/latest.log"
             # Ensure the directory exists

@@ -18,6 +18,7 @@ def run(args):
         utils = Utils()
         start_time = utils.get_ti()
 
+        Config.load_env_files(args.env)
         log(f"----- {env} environment -----")
 
         db = PostgresQuerying()
