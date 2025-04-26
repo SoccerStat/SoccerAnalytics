@@ -82,8 +82,16 @@ jobs:
         # Commit et push du changement de version
         git add setup.py
         git commit -m "Update version to $new_version"
+
+          # Supprimer le tag distant s'il existe déjà
+        if git ls-remote --tags origin | grep -q "refs/tags/$tag_version"; then
+          echo "Tag $tag_version already exists. Deleting remote tag..."
+          git push origin :refs/tags/$tag_version
+        fi
+
+        # (Re)Créer le tag local
         git tag "$tag_version"
         
-        # Push les modifications et le tag
+        # Push les modifications et forcer le push du tag
         git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
-        git push --tags
+        git push origin "$tag_version" --force
