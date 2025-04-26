@@ -8,7 +8,7 @@ from socceranalytics.utils.data_loader import DataLoader
 class PlayersOpposition:
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
-        self.opposition_sql_path = "sql/oppositions/players_x_teams"
+        self.opposition_sql_path = "socceranalytics/sql/oppositions/players_x_teams"
         self.data_loader = DataLoader(postgres_to_dataframe)
         self.db.execute_sql_file(f"{self.opposition_sql_path}/player_x_teams.sql")
 
