@@ -7,6 +7,10 @@ setup(
     name="socceranalytics",
     version='1.0.10',  # quote simple !!!
     packages=find_packages(),
+    package_data={
+        "socceranalytics.sql": ["**/*.sql"],
+    },
+    include_package_data=True,
     install_requires=requirements,
     entry_points={
         "console_scripts": [

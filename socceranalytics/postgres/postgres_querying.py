@@ -1,4 +1,5 @@
 import traceback
+import importlib.resources
 from typing import Optional
 import warnings
 from psycopg2.extensions import cursor
@@ -49,18 +50,16 @@ class PostgresQuerying:
 
         return None
 
-    def read_sql_file(self, path: str):
+    def read_sql_file(self, path: str, file: str):
         """Read a SQL file
         """
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        complete_path = os.path.join(script_dir, '..', path).replace("\\", "/")
-        with open(complete_path, 'r', encoding='UTF-8') as sql_file:
+        with importlib.resources.files(path).joinpath(file).open('r', encoding='UTF-8') as sql_file:
             return sql_file.read()
 
-    def execute_sql_file(self, path: str) -> None:
+    def execute_sql_file(self, path: str, file: str) -> None:
         """Execute a query stored in a file
         """
-        return self.execute_query(self.read_sql_file(path))
+        return self.execute_query(self.read_sql_file(path, file))
 
     def df_from_query(self, query: str, params=None) -> pd.DataFrame:
         """Convert the result of a query into a pandas DataFrame

@@ -12,9 +12,9 @@ class TeamsRanking:
     """
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
-        self.ranking_sql_path = "sql/rankings/teams"
+        self.ranking_sql_path = "socceranalytics.sql.rankings.teams"
         self.data_loader = DataLoader(postgres_to_dataframe)
-        self.db.execute_sql_file(f"{self.ranking_sql_path}/teams.sql")
+        self.db.execute_sql_file(self.ranking_sql_path, "teams.sql")
 
     def __simulate_matches(
         self,

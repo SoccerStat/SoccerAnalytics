@@ -16,17 +16,13 @@ class TeamsPerformance(BasePerformance):
         Used to build rankings and opposition tables.
         """
         log("\tTruncating the Teams' performance tables...")
-        self.db.execute_sql_file(f"{self.performance_sql_path}/truncate_performance_tables.sql")
+        self.db.execute_sql_file(self.performance_sql_path, "truncate_performance_tables.sql")
 
         log("\tFilling the Teams' performance table...")
-        teams_ranking_template = self.db.read_sql_file(
-            f"{self.performance_sql_path}/fill_performance_table.sql"
-        )
+        teams_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
 
         log("\tFilling the Teams' expected performance table...")
-        justice_ranking_template = self.db.read_sql_file(
-            f"{self.performance_sql_path}/fill_expected_performance_table.sql"
-        )
+        justice_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
 
         for season in self.data_loader.get_seasons():
             for id_comp in self.data_loader.get_competition_ids():

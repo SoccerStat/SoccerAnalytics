@@ -11,9 +11,9 @@ class BasePerformance(ABC):
         self.db = postgres_to_dataframe
         self.data_loader = DataLoader(postgres_to_dataframe)
 
-        self.performance_sql_path = f"sql/performance/{kind}"
-        self.ranking_sql_path = f"sql/rankings/{kind}"
-        self.opposition_sql_path = f"sql/oppositions/{kind}_x_teams"
+        self.performance_sql_path = f"socceranalytics.sql.performance.{kind}"
+        self.ranking_sql_path = f"socceranalytics.sql.rankings.{kind}"
+        self.opposition_sql_path = f"socceranalytics.sql.oppositions.{kind}_x_teams"
 
     @abstractmethod
     def process_performance_table(self):

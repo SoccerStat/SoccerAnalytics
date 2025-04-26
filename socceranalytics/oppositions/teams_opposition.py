@@ -11,10 +11,10 @@ class TeamsOpposition:
     """
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
-        self.opposition_sql_path = "sql/oppositions/teams_x_teams"
+        self.opposition_sql_path = "socceranalytics.oppositions.teams_x_teams"
         self.data_loader = DataLoader(postgres_to_dataframe)
 
-        self.db.execute_sql_file(f"{self.opposition_sql_path}/team_x_teams.sql")
+        self.db.execute_sql_file(self.opposition_sql_path, "team_x_teams.sql")
 
     def build_oppositions(
         self,
