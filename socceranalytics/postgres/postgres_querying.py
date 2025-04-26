@@ -4,6 +4,7 @@ import warnings
 from psycopg2.extensions import cursor
 from psycopg2 import OperationalError, DatabaseError
 import pandas as pd
+import os
 
 from socceranalytics.utils.logging import log
 
@@ -51,7 +52,9 @@ class PostgresQuerying:
     def read_sql_file(self, path: str):
         """Read a SQL file
         """
-        with open(path, 'r', encoding='UTF-8') as sql_file:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        complete_path = os.path.join(script_dir, '..', path).replace("\\", "/")
+        with open(complete_path, 'r', encoding='UTF-8') as sql_file:
             return sql_file.read()
 
     def execute_sql_file(self, path: str) -> None:

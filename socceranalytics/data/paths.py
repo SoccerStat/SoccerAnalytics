@@ -12,8 +12,8 @@ class Config:
         # ENV
         cls.ENV = env
 
-        if cls.ENV == "dev":
-            with open(f"conf/{env}.yaml", 'r', encoding='utf-8') as file:
+        if cls.ENV == "local":
+            with open(f"../conf/{env}.yaml", 'r', encoding='utf-8') as file:
                 conf = load(file, Loader=SafeLoader)['postgres']
 
                 cls.pg_host = conf["host"]
