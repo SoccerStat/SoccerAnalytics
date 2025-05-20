@@ -15,7 +15,7 @@ class TeamsPerformance(BasePerformance):
         Supposed to be ran once a day.
         Used to build rankings and opposition tables.
         """
-        log("\tTruncating the Teams' performance tables...")
+        log("\tTruncating the Teams' performance table...")
         self.db.execute_sql_file(self.performance_sql_path, "truncate_performance_tables.sql")
 
         log("\tFilling the Teams' performance table...")

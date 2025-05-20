@@ -16,10 +16,10 @@ class PlayersPerformance(BasePerformance):
         Supposed to be ran once a day.
         Used to build rankings and opposition tables.
         """
-        log("\tTruncating the Players' performance tables...")
+        log("\tTruncating the Players' performance table...")
         self.db.execute_sql_file(self.performance_sql_path, "truncate_performance_tables.sql")
 
-        log("\tFilling the Player' performance table...")
+        log("\tFilling the Players' performance table...")
         teams_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
 
         for season in self.data_loader.get_seasons():
