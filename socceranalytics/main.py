@@ -27,7 +27,6 @@ def run(args):
         players_performance = PlayersPerformance(db)
 
         teams_performance.process_performance_table()
-
         players_performance.process_performance_table()
 
         end_time = utils.get_ti()

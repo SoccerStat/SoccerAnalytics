@@ -12,7 +12,7 @@ class TeamsPerformance(BasePerformance):
     def process_performance_table(self):
         """Truncate and fill the staging_teams_performance and staging_teams_expected_performance
         tables in the analytics schema.
-        Supposed to be ran once a day.
+        Supposed to be run once a day.
         Used to build rankings and opposition tables.
         """
         log("\tTruncating the Teams' performance table...")

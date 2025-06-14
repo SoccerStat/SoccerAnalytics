@@ -9,3 +9,4 @@ notebooks/
 .pylintrc
 *.egg-info/
 .coverage
+.idea/
