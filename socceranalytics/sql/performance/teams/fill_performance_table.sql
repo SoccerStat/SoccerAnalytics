@@ -17,8 +17,10 @@ with selected_matches as materialized (
 	left join upper.continental_cup c_cup
 	on m.competition = c_cup.id
 	where m.competition = '{id_comp}'
-	and lower(notes) not like '%match cancelled%'
-	and lower(notes) not like '%awarded%'
+	and (
+	    notes is null
+	    or lower(notes) not like '%match cancelled%'
+	)
 ),
 home_team as (
 	select
@@ -133,6 +135,10 @@ with selected_matches as materialized (
 	left join upper.continental_cup c_cup
 	on m.competition = c_cup.id
 	where m.competition = '{id_comp}'
+	and (
+	    notes is null
+	    or lower(notes) not like '%match cancelled%'
+	)
 ),
 away_team as (
 	select
