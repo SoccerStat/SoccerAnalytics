@@ -36,7 +36,12 @@ home_team as (
 		1 as home_match,
 		0 as away_match,
 		ts.score as home_score,
-		0 as away_score,
+		ts_away.score as away_score,
+
+		ts.penalty_shootout_scored as home_penalty_shootout_scored,
+		ts_away.penalty_shootout_scored as away_penalty_shootout_scored,
+		ts.penalty_shootout_total as home_penalty_shootout_total,
+		ts_away.penalty_shootout_total as away_penalty_shootout_total,
 
 		h.date,
 		h.time,
@@ -153,8 +158,13 @@ away_team as (
 
 		0 as home_match,
 		1 as away_match,
-		0 as home_score,
+		ts_home.score as home_score,
 		ts.score as away_score,
+
+		ts_home.penalty_shootout_scored as home_penalty_shootout_scored,
+		ts.penalty_shootout_scored as away_penalty_shootout_scored,
+		ts_home.penalty_shootout_total as home_penalty_shootout_total,
+		ts.penalty_shootout_total as away_penalty_shootout_total,
 
 		a.date,
 		a.time,
