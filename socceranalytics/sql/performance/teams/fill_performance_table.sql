@@ -109,7 +109,13 @@ home_team as (
 			when ts.xg = ts_away.xg then 1
 			else 0
 		end as home_x_points,
-		0 as away_x_points
+		0 as away_x_points,
+
+		ts.nb_passes_succ as home_passes_succ,
+		0 as away_passes_succ,
+
+		ts.nb_passes_total as home_passes_total,
+		0 as away_passes_total
 	from selected_matches as h
 	left join season_{season}.team_stats ts 
 	on h.id = ts.match and h.home_team = ts.team
@@ -233,7 +239,13 @@ away_team as (
 			when ts.xg > ts_home.xg then 3
 			when ts.xg = ts_home.xg then 1
 			else 0
-		end as away_x_points
+		end as away_x_points,
+
+		0 as home_passes_succ,
+		ts.nb_passes_succ as away_passes_succ,
+
+		0 as home_passes_total,
+		ts.nb_passes_total as away_passes_total
 	from selected_matches as a
 	left join season_{season}.team_stats ts 
 	on a.away_team = ts.team and a.id = ts.match
