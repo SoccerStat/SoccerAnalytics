@@ -81,8 +81,8 @@ create or replace function analytics.check_side(
 returns void as
 $$
 begin
-	if side not in ('home', 'away', 'both') then
-        raise exception 'Invalid value for side. Valid values are: home, away, both.';
+	if side not in ('home', 'away', 'both', 'neutral', 'all') then
+        raise exception 'Invalid value for side. Valid values are: home, away, both, neutral, all.';
     end if;
 end;
 $$
