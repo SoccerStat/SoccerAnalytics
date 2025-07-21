@@ -177,7 +177,7 @@ away_team as (
 		a.week,
 		a.round,
 		a.leg,
-		case when a.round = 'Final' then ts_home.attendance else null::numeric end as att,
+		case when a.round = 'Final' then a.attendance else null::numeric end as att,
 
 		0 as home_win,
 		case
