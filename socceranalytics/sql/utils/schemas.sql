@@ -1,3 +1,5 @@
+drop function if exists analytics.get_season_schemas;
+
 create or replace function analytics.get_season_schemas(
 )
 returns table("Schema" text) as

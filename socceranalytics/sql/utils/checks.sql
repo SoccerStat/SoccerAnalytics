@@ -2,7 +2,7 @@ drop function if exists analytics.check_comp;
 drop function if exists analytics.check_season;
 drop function if exists analytics.check_weeks;
 drop function if exists analytics.check_side;
-
+drop function if exists analytics.check_dates;
 
 create or replace function analytics.check_comp(
 	in comp varchar(100)

@@ -1,3 +1,6 @@
+drop function analytics.get_competition_ids;
+drop function analytics.get_competition_names;
+
 create or replace function analytics.get_competition_ids(
 )
 returns table("Competition" varchar(100)) as
