@@ -51,15 +51,25 @@ home_team as (
 		h.attendance as att,
 
 		case
-			when ts.score > ts_away.score then 1 else 0
+			when ts.penalty_shootout_scored is null and ts.score > ts_away.score
+			then 1
+			when ts.penalty_shootout_scored is not null and ts.penalty_shootout_scored > ts_away.penalty_shootout_scored
+			then 1
+			else 0
 		end as home_win,
 		0 as away_win,
 		case
-			when ts.score = ts_away.score then 1 else 0
+			when ts.penalty_shootout_scored is null and ts.score = ts_away.score
+			then 1
+			else 0
 		end as home_draw,
 		0 as away_draw,
 		case
-			when ts.score < ts_away.score then 1 else 0
+			when ts.penalty_shootout_scored is null and ts.score < ts_away.score
+			then 1
+			when ts.penalty_shootout_scored is not null and ts.penalty_shootout_scored < ts_away.penalty_shootout_scored
+			then 1
+			else 0
 		end as home_lose,
 		0 as away_lose,
 		
@@ -181,16 +191,25 @@ away_team as (
 
 		0 as home_win,
 		case
-			when ts.score > ts_home.score then 1 else 0
+			when ts.penalty_shootout_scored is null and ts.score > ts_home.score
+			then 1
+			when ts.penalty_shootout_scored is not null and ts.penalty_shootout_scored > ts_home.penalty_shootout_scored
+			then 1
+			else 0
 		end as away_win,
 		0 as home_draw,
 		case
-			when ts.score = ts_home.score then 1 else 0
-		end as away_draw,
-
-		0 as home_lose,
+			when ts.penalty_shootout_scored is null and ts.score = ts_home.score
+			then 1
+			else 0
+		end as home_draw,
+		0 as away_lose,
 		case
-			when ts.score < ts_home.score then 1 else 0
+			when ts.penalty_shootout_scored is null and ts.score < ts_home.score
+			then 1
+			when ts.penalty_shootout_scored is not null and ts.penalty_shootout_scored < ts_home.penalty_shootout_scored
+			then 1
+			else 0
 		end as away_lose,
 
 		0 as home_goals_for,
