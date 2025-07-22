@@ -7,6 +7,7 @@ with selected_matches as materialized (
 		m.time,
 		m.week,
 		m.round,
+		m.extra_time,
 		m.leg,
 		m.attendance,
 		m.competition as id_comp,
@@ -47,6 +48,7 @@ home_team as (
 		h.time,
 		h.week,
 		h.round,
+		h.extra_time,
 		h.leg,
 		h.attendance as att,
 
@@ -147,6 +149,7 @@ with selected_matches as materialized (
 		m.week,
 		m.round,
 		m.leg,
+		m.extra_time,
 		m.attendance,
 		m.competition as id_comp,
 		coalesce(chp.name, c_cup.name) as competition
@@ -187,6 +190,7 @@ away_team as (
 		a.week,
 		a.round,
 		a.leg,
+		a.extra_time,
 		case when a.round = 'Final' then a.attendance else null::numeric end as att,
 
 		0 as home_win,
