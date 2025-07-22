@@ -48,8 +48,8 @@ home_team as (
 		h.time,
 		h.week,
 		h.round,
-		h.extra_time,
 		h.leg,
+		h.extra_time,
 		h.attendance as att,
 
 		case
