@@ -1,5 +1,6 @@
 import argparse
 
+from socceranalytics.all_items.all_teams import AllTeams
 from socceranalytics.performance.teams_performance import TeamsPerformance
 from socceranalytics.performance.players_performance import PlayersPerformance
 

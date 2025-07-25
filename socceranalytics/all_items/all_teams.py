@@ -1,5 +1,5 @@
-from socceranalytics.performance.base_performance import BasePerformance
 from socceranalytics.postgres.postgres_querying import PostgresQuerying
+from socceranalytics.utils.data_loader import DataLoader
 
 from socceranalytics.utils.logging import log
 
