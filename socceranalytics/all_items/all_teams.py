@@ -15,7 +15,7 @@ class AllTeams:
         """Get all teams we may have that have participated in any competition at any season.
         """
         log("\tTruncating the Teams' table...")
-        self.db.execute_sql_file(self.sql_path, "truncate_all_teams_tables.sql")
+        self.db.execute_sql_file(self.sql_path, "truncate_all_teams_table.sql")
 
         log("\tFilling the Teams' table...")
         teams_ranking_template = self.db.read_sql_file(self.sql_path, "fill_all_teams_table.sql")
