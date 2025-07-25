@@ -1,0 +1,1 @@
+TRUNCATE TABLE analytics.all_teams;

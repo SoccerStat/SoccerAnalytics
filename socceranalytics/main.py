@@ -24,9 +24,12 @@ def run(args):
         db = PostgresQuerying()
 
         teams_performance = TeamsPerformance(db)
-        players_performance = PlayersPerformance(db)
-
         teams_performance.process_performance_table()
+
+        all_teams = AllTeams(db)
+        all_teams.process_all_teams_table()
+
+        players_performance = PlayersPerformance(db)
         players_performance.process_performance_table()
 
         end_time = utils.get_ti()
