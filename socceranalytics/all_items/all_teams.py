@@ -11,7 +11,7 @@ class AllTeams:
         self.data_loader = DataLoader(postgres_to_dataframe)
         self.sql_path = f"socceranalytics.sql.all_items.teams"
 
-    def process_all_teams(self):
+    def process_all_teams_table(self):
         """Get all teams we may have that have participated in any competition at any season.
         """
         log("\tTruncating the Teams' table...")
