@@ -22,7 +22,7 @@ class TeamsPerformance(BasePerformance):
         teams_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
 
         log("\tFilling the Teams' expected performance table...")
-        justice_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
+        expected_performance_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
 
         for season in self.data_loader.get_seasons():
             for id_comp in self.data_loader.get_competition_ids():
@@ -34,7 +34,7 @@ class TeamsPerformance(BasePerformance):
                 )
 
                 self.db.execute_query(
-                    justice_ranking_template.format(
+                    expected_performance_ranking_template.format(
                         season=season,
                         id_comp=id_comp
                     )

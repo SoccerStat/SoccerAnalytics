@@ -48,7 +48,7 @@ class TeamsRanking:
 
         return teams[['played_home', 'Club', 'xP']]
 
-    def __build_justice_ranking(
+    def __build_expected_performance_ranking(
         self,
         team_stats: pd.DataFrame,
         side: str,
@@ -84,13 +84,13 @@ class TeamsRanking:
     def __merge_rankings(
         self,
         teams_ranking: pd.DataFrame,
-        justice_ranking: pd.DataFrame,
+        expected_performance_ranking: pd.DataFrame,
         r: int = 2
     ) -> pd.DataFrame:
 
         merged_ranking = pd.merge(
             teams_ranking,
-            justice_ranking,
+            expected_performance_ranking,
             left_on='Club',
             right_on='Club')
 
@@ -113,7 +113,7 @@ class TeamsRanking:
         side: str = 'both',
         n_sim: int = 1000000,
         r: int = 2,
-        justice_ranking: bool = True
+        expected_performance_ranking: bool = True
     ) -> pd.DataFrame:
         """Build classic teams ranking, and optionally add the expected performance.
         """
@@ -156,17 +156,17 @@ class TeamsRanking:
             (seasons, comp, first_week, last_week, first_date, last_date, side, r)
         )
 
-        if justice_ranking:
-            seasons_justice_ranking_query = sql.SQL("""
+        if expected_performance_ranking:
+            seasons_expected_performance_ranking_query = sql.SQL("""
                 select *
                 from analytics.staging_teams_expected_performance
                 where season = any(%s)
                 and comp = %s;
             """)
 
-            justice_ranking = self.__build_justice_ranking(
+            expected_performance_ranking = self.__build_expected_performance_ranking(
                 self.db.df_from_query(
-                    seasons_justice_ranking_query,
+                    seasons_expected_performance_ranking_query,
                     (seasons, comp)
                 ),
                 side,
@@ -174,7 +174,7 @@ class TeamsRanking:
                 r
             )
 
-            return self.__merge_rankings(teams_ranking, justice_ranking, r)
+            return self.__merge_rankings(teams_ranking, expected_performance_ranking, r)
 
         return teams_ranking
 
@@ -187,7 +187,7 @@ class TeamsRanking:
         first_date: datetime,
         last_date: datetime,
         side: str,
-        justice_ranking: bool
+        expected_performance_ranking: bool
     ):
         return self.build_ranking(
             seasons=list(seasons),
@@ -199,5 +199,5 @@ class TeamsRanking:
             side=side,
             n_sim=1000000,
             r=2,
-            justice_ranking=justice_ranking
+            expected_performance_ranking=expected_performance_ranking
         )
