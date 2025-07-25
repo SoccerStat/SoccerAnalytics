@@ -4,4 +4,5 @@ FROM analytics.staging_teams_performance stp
 LEFT JOIN UPPER.club c
 ON stp.id_team = stp.id_comp || '_' || c.id
 WHERE id_comp = '{id_comp}'
-AND season = '{season}';
+AND season = '{season}'
+ON CONFLICT DO NOTHING;
