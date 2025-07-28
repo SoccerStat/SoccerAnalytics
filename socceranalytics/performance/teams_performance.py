@@ -31,6 +31,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
             INSERT INTO understat.staging_teams_understat_performance
             ("Match", "Club", "Competition", "Season", "played_home", "xG For", "xG Against")
             VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (Match, played_home) DO NOTHING
         """)
         # expected_performance_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
 
@@ -52,8 +53,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
 
                 if "UEFA" not in name_comp:
                     understat_comp = super().get_understat_comp_from_soccerstat(name_comp)
-                    log(f"{name_comp} - {understat_comp} - {season[7:]} - {season[7:][:4]}", error=True)
-                    xG_by_match = get_teams_xG(understat_comp, name_comp, season[7:])
+                    xG_by_match = get_teams_xG(understat_comp, name_comp, season)
                     for match in xG_by_match:
                         self.db.df_from_query(
                             insert_query,
