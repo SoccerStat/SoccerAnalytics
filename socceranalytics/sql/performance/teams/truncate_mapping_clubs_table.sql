@@ -1,0 +1,1 @@
+TRUNCATE TABLE analytics.mapping_clubs_soccerstat_understat;

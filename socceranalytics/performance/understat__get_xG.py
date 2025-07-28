@@ -3,6 +3,12 @@ from understat import Understat
 import asyncio
 import json
 
+def reprocess_club_name(club):
+    return club.replace(
+        'Parma Calcio 1913',
+        'Parma'
+    )
+
 def get_teams_xG(understat_comp, season):
     async def main():
         async with aiohttp.ClientSession() as session:
@@ -14,8 +20,8 @@ def get_teams_xG(understat_comp, season):
             xG_data = []
             for match in fixtures:
                 match_id = match["id"]
-                home_team = match["h"]["title"]
-                away_team = match["a"]["title"]
+                home_team = reprocess_club_name(match["h"]["title"])
+                away_team = reprocess_club_name(match["a"]["title"])
                 home_xg = match["xG"]["h"]
                 away_xg = match["xG"]["a"]
                 xG_data.append({

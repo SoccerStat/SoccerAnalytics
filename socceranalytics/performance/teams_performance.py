@@ -86,3 +86,17 @@ class TeamsPerformance(BasePerformance, CompHelper):
         log(f"[PERFORMANCE TABLE] Rows inserted: {n_rows_inserted_perf_table}")
         # log(f"[EXPECTED PERFORMANCE TABLE] Rows inserted: {n_rows_inserted_exp_perf_table}")
         log(f"[EXPECTED PERFORMANCE UNDERSTAT TABLE] Rows inserted: {n_rows_inserted_exp_perf_understat_table}")
+
+    def process_mapping_clubs_table(self):
+        log("\tTruncating the mapping clubs table...")
+        self.db.execute_sql_file(self.performance_sql_path, "mapping_clubs_table.sql")
+
+        log("\tFilling the mapping clubs table...")
+        self.db.execute_sql_file(self.performance_sql_path, "fill_mapping_clubs_table.sql")
+
+        n_rows_mapping_clubs_table = self.db.execute_query(
+            "SELECT count(*) from analytics.mapping_clubs_soccerstat_understat;",
+            return_cursor=True
+        ).fetchone()[0]
+
+        log(f"[MAPPING CLUBS TABLE] Rows inserted: {n_rows_mapping_clubs_table}")
