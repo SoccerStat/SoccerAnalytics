@@ -1,9 +1,13 @@
+from psycopg2 import sql
+
 from socceranalytics.performance.base_performance import BasePerformance
+from socceranalytics.performance.understat__get_xG import get_xG
 from socceranalytics.postgres.postgres_querying import PostgresQuerying
+from socceranalytics.utils.comp_helper import CompHelper
 
 from socceranalytics.utils.logging import log
 
-class TeamsPerformance(BasePerformance):
+class TeamsPerformance(BasePerformance, CompHelper):
     """Fill teams performance tables.
     """
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
@@ -39,6 +43,21 @@ class TeamsPerformance(BasePerformance):
                         id_comp=id_comp
                     )
                 )
+
+                understat_comp = super().get_understat_comp_from_soccerstat(id_comp)
+                autumn_season = season[:4]
+                xG_by_match = get_xG(understat_comp, autumn_season)
+                for match in xG_by_match:
+                    insert_query = sql.SQL(
+                        "INSERT INTO analytics.staging_teams_understat_performance"
+                        "VALUES (%s, %s, %s, %s, %s)"
+                    )
+
+                    self.db.df_from_query(
+                        insert_query,
+                        (match["Match"], match["Club"], match["played_home"], match["xG For"], match["xG Against"])
+                    )
+
 
         n_rows_inserted_perf_table = self.db.execute_query(
             "SELECT count(*) from analytics.staging_teams_performance;",
