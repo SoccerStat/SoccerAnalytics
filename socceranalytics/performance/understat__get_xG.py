@@ -30,7 +30,7 @@ def get_teams_xG(understat_comp, season):
                     "Club": away_team,
                     "played_home": False,
                     "xG For": away_xg,
-                    "xg Against": home_xg
+                    "xG Against": home_xg
                 })
             return xG_data
         return None
