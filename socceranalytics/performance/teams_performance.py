@@ -29,8 +29,8 @@ class TeamsPerformance(BasePerformance, CompHelper):
         log("\tFilling the Teams' expected performance table...")
         insert_query = sql.SQL("""
             INSERT INTO understat.staging_teams_understat_performance
-            ("Match", "Club", "Competition", "Season", "played_home", "xG For", "xG Against")
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ("match", "competition", "season", "name_team", "name_opponent", "played_home", "home_xg_for", "away_xg_for", "home_xg_against", "away_xg_against")
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT ("Match", "played_home") DO NOTHING
         """)
         # expected_performance_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
@@ -58,13 +58,16 @@ class TeamsPerformance(BasePerformance, CompHelper):
                         self.db.execute_query(
                             insert_query,
                             (
-                                match["Match"],
-                                match["Club"],
+                                match["match"],
                                 name_comp,
                                 season,
+                                match["name_team"],
+                                match["name_opponent"],
                                 match["played_home"],
-                                match["xG For"],
-                                match["xG Against"]
+                                match["home_xg_for"],
+                                match["away_xg_for"],
+                                match["home_xg_against"],
+                                match["away_xg_against"]
                             )
                         )
 
