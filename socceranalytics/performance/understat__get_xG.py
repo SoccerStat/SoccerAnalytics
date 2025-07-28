@@ -3,12 +3,12 @@ from understat import Understat
 import asyncio
 import json
 
-def get_teams_xG(name_comp, soccerstat_comp, season):
+def get_teams_xG(understat_comp, soccerstat_comp, season):
     async def main():
         async with aiohttp.ClientSession() as session:
             understat = Understat(session)
             fixtures = await understat.get_league_results(
-                name_comp,
+                understat_comp,
                 season[:4]
             )
 
