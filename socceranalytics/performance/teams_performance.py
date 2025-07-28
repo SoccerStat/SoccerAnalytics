@@ -12,6 +12,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
     """
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         super().__init__(postgres_to_dataframe, "teams")
+        CompHelper.__init__(self)
 
     def process_performance_table(self):
         """Truncate and fill the staging_teams_performance and staging_teams_expected_performance

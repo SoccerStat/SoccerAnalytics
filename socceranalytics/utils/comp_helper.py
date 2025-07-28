@@ -8,5 +8,6 @@ class CompHelper:
             "Fußball-Bundesliga": "Bundesliga",
             "Serie A": "Serie_A"
         }
+
     def get_understat_comp_from_soccerstat(self, soccerstat_comp: str):
-        return self.mapping[soccerstat_comp] or None
+        return self.mapping.get(soccerstat_comp)
