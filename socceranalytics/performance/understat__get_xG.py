@@ -3,15 +3,14 @@ from understat import Understat
 import asyncio
 import json
 
-def get_teams_xG(understat_comp, soccerstat_comp, season):
+def get_teams_xG(understat_comp, season):
     async def main():
         async with aiohttp.ClientSession() as session:
             understat = Understat(session)
             fixtures = await understat.get_league_results(
                 understat_comp,
-                season[:4]
+                season
             )
-
             xG_data = []
             for match in fixtures:
                 match_id = match["id"]
@@ -22,8 +21,6 @@ def get_teams_xG(understat_comp, soccerstat_comp, season):
                 xG_data.append({
                     "Match": match_id,
                     "Club": home_team,
-                    "Competition": soccerstat_comp,
-                    "Season": season,
                     "played_home": True,
                     "xG For": home_xg,
                     "xG Against": away_xg
@@ -31,17 +28,12 @@ def get_teams_xG(understat_comp, soccerstat_comp, season):
                 xG_data.append({
                     "Match": match_id,
                     "Club": away_team,
-                    "Competition": soccerstat_comp,
-                    "Season": season,
                     "played_home": False,
                     "xG For": away_xg,
                     "xg Against": home_xg
                 })
-
             return xG_data
-
         return None
-
     return asyncio.run(main())
 
 def get_players_xG(match_id):
