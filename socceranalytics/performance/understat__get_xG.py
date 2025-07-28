@@ -25,18 +25,24 @@ def get_teams_xG(understat_comp, season):
                 home_xg = match["xG"]["h"]
                 away_xg = match["xG"]["a"]
                 xG_data.append({
-                    "Match": match_id,
-                    "Club": home_team,
+                    "match": match_id,
+                    "name_team": home_team,
+                    "name_opponent": away_team,
                     "played_home": True,
-                    "xG For": home_xg,
-                    "xG Against": away_xg
+                    "home_xg_for": home_xg,
+                    "away_xg_for": 0,
+                    "home_xg_against": away_xg,
+                    "away_xg_against": 0
                 })
                 xG_data.append({
-                    "Match": match_id,
-                    "Club": away_team,
+                    "match": match_id,
+                    "name_team": away_team,
+                    "name_opponent": home_team,
                     "played_home": False,
-                    "xG For": away_xg,
-                    "xG Against": home_xg
+                    "home_xg_for": 0,
+                    "away_xg_for": away_xg,
+                    "home_xg_against": 0,
+                    "away_xg_against": home_xg
                 })
             return xG_data
         return None
