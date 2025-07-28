@@ -49,7 +49,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
                     xG_by_match = get_teams_xG(understat_comp, name_comp, season[7:])
                     for match in xG_by_match:
                         insert_query = sql.SQL(
-                            "INSERT INTO analytics.staging_teams_understat_performance"
+                            "INSERT INTO understat.staging_teams_understat_performance"
                             "VALUES (%s, %s, %s, %s, %s, %s, %s)"
                         )
 
