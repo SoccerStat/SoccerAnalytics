@@ -89,7 +89,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
 
     def process_mapping_clubs_table(self):
         log("\tTruncating the mapping clubs table...")
-        self.db.execute_sql_file(self.performance_sql_path, "mapping_clubs_table.sql")
+        self.db.execute_sql_file(self.performance_sql_path, "truncate_mapping_clubs_table.sql")
 
         log("\tFilling the mapping clubs table...")
         self.db.execute_sql_file(self.performance_sql_path, "fill_mapping_clubs_table.sql")
