@@ -51,7 +51,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
                 #     )
                 # )
 
-                if "UEFA" not in name_comp:
+                if ("UEFA" not in name_comp) and (season >= "2014_2015"):
                     understat_comp = super().get_understat_comp_from_soccerstat(name_comp)
                     xG_by_match = get_teams_xG(understat_comp, season[:4])
                     for match in xG_by_match:
@@ -79,7 +79,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
         # ).fetchone()[0]
 
         n_rows_inserted_exp_perf_understat_table = self.db.execute_query(
-            "SELECT count(*) from analytics.staging_teams_understat_performance;",
+            "SELECT count(*) from understat.staging_teams_understat_performance;",
             return_cursor=True
         ).fetchone()[0]
 
