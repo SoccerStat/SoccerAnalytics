@@ -31,7 +31,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
             INSERT INTO understat.staging_teams_understat_performance
             ("Match", "Club", "Competition", "Season", "played_home", "xG For", "xG Against")
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (Match, played_home) DO NOTHING
+            ON CONFLICT ("Match", "played_home") DO NOTHING
         """)
         # expected_performance_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
 
