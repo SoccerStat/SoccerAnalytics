@@ -2,11 +2,11 @@
 class CompHelper:
     def __init__(self):
         self.mapping = {
-            "premier_league": "EPL",
-            "ligue_1": "Ligue_1",
-            "la_liga": "La_liga",
-            "fussball_bundesliga": "Bundesliga",
-            "serie_a": "Serie_A"
+            "Premier League": "EPL",
+            "Ligue 1": "Ligue_1",
+            "La Liga": "La_liga",
+            "Fußball-Bundesliga": "Bundesliga",
+            "Serie A": "Serie_A"
         }
     def get_understat_comp_from_soccerstat(self, soccerstat_comp: str):
         return self.mapping[soccerstat_comp] or None
