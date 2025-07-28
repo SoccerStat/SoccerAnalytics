@@ -48,10 +48,11 @@ class TeamsPerformance(BasePerformance, CompHelper):
                     understat_comp = super().get_understat_comp_from_soccerstat(name_comp)
                     xG_by_match = get_teams_xG(understat_comp, name_comp, season[7:])
                     for match in xG_by_match:
-                        insert_query = sql.SQL(
-                            "INSERT INTO understat.staging_teams_understat_performance"
-                            "VALUES (%s, %s, %s, %s, %s, %s, %s)"
-                        )
+                        insert_query = sql.SQL("""
+                            INSERT INTO understat.staging_teams_understat_performance
+                            ("Match", "Club", "Competition", "Season", "played_home", "xG For", "xG Against")
+                            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        """)
 
                         self.db.df_from_query(
                             insert_query,
