@@ -20,12 +20,14 @@ def get_teams_xG(understat_comp, season):
             xG_data = []
             for match in fixtures:
                 match_id = match["id"]
+                date = match["datetime"][:10]
                 home_team = reprocess_club_name(match["h"]["title"])
                 away_team = reprocess_club_name(match["a"]["title"])
                 home_xg = match["xG"]["h"]
                 away_xg = match["xG"]["a"]
                 xG_data.append({
                     "match": match_id,
+                    "date": date,
                     "name_team": home_team,
                     "name_opponent": away_team,
                     "played_home": True,
@@ -36,6 +38,7 @@ def get_teams_xG(understat_comp, season):
                 })
                 xG_data.append({
                     "match": match_id,
+                    "date": date,
                     "name_team": away_team,
                     "name_opponent": home_team,
                     "played_home": False,
@@ -70,3 +73,5 @@ def get_players_xG(match_id):
         return None
 
     return asyncio.run(main())
+
+print(get_teams_xG("EPL", "2024"))
