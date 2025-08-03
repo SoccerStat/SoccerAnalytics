@@ -3,7 +3,7 @@ aiosignal==1.4.0
 async-timeout==4.0.3
 attrs==25.3.0
 beautifulsoup4==4.11.1
-certifi==2025.7.14
+certifi==2025.4.26
 charset-normalizer==2.1.1
 coverage==7.10.1
 dnspython==2.7.0
