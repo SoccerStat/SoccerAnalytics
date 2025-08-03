@@ -70,5 +70,3 @@ def get_players_xG(match_id):
         return None
 
     return asyncio.run(main())
-
-print(get_teams_xG("EPL", "2024"))
