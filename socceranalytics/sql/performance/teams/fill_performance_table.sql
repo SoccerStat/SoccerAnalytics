@@ -38,6 +38,12 @@ home_team as (
 		0 as away_match,
 		ts.score as home_score,
 		ts_away.score as away_score,
+		case
+		    when h.extra_time
+		    then 120
+		    else 90
+		end as home_minutes,
+		0 as away_minutes,
 
 		ts.penalty_shootout_scored as home_penalty_shootout_scored,
 		ts_away.penalty_shootout_scored as away_penalty_shootout_scored,
@@ -179,6 +185,12 @@ away_team as (
 		1 as away_match,
 		ts_home.score as home_score,
 		ts.score as away_score,
+		0 as home_minutes,
+		case
+		    when a.extra_time
+		    then 120
+		    else 90
+		end as away_minutes,
 
 		ts_home.penalty_shootout_scored as home_penalty_shootout_scored,
 		ts.penalty_shootout_scored as away_penalty_shootout_scored,
