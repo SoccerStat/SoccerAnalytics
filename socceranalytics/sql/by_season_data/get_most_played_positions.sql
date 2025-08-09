@@ -54,6 +54,8 @@ positions_to_keep as (
 	select *
 	from positions_ordered_enriched
 	where case
+	    when rn = 1
+	    then true
 		when cum_freq_pct >= 0.8 and (rn = next_rn or rn = prev_rn or next_rn is null and rn != 1)
 		then cum_freq_pct < 0.8
 		when cum_freq_pct < 0.8 and (rn = next_rn or rn = prev_rn)
