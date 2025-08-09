@@ -30,7 +30,7 @@ most_played_positions as (
 	where rnk <= 2
 )
 UPDATE season_{season}.team_player tp
-SET tp.positions = p.positions
+SET positions = p.positions
 FROM (
     select
         id_team,
