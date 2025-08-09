@@ -35,7 +35,7 @@ FROM (
     select
         id_team,
         id_player,
-        array_agg(distinct positions) as positions
+        array_agg(distinct positions)::varchar[] as positions
     from most_played_positions
     group by id_team, id_player
 ) p
