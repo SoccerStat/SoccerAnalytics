@@ -42,6 +42,7 @@ positions_ordered as (
 positions_ordered_enriched as (
 	select *,
 		cum_freq / total_freq as cum_freq_pct,
+		lag(cum_freq / total_freq) over (partition by id_team, id_player order by freq desc, position asc) as prev_cum_freq_pct,
 		lag(rn) over (partition by id_team, id_player order by freq desc, position asc) as prev_rn,
 		lead(rn) over (partition by id_team, id_player order by freq desc, position asc) as next_rn
 	from positions_ordered
@@ -54,7 +55,7 @@ positions_to_keep as (
 		then cum_freq_pct < 0.8
 		when cum_freq_pct < 0.8 and (rn = next_rn or rn = prev_rn)
 		then false
-		else true
+		else cum_freq_pct < 0.8 or prev_cum_freq_pct < 0.8
 	end
 )
 update season_{season}.team_player tp
