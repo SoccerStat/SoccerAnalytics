@@ -63,7 +63,7 @@ from (
     select
         id_team,
         id_player,
-        array_agg(distinct positions)::varchar[] as positions
+        array_agg(distinct position)::varchar[] as positions
     from positions_to_keep
     group by id_team, id_player
 ) p
