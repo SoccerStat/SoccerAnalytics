@@ -1,6 +1,7 @@
 import argparse
 
 from socceranalytics.all_items.all_teams import AllTeams
+from socceranalytics.by_season_data.fill_position_team_player import TeamPlayer
 from socceranalytics.performance.teams_performance import TeamsPerformance
 from socceranalytics.performance.players_performance import PlayersPerformance
 
@@ -33,6 +34,9 @@ def run(args):
 
         players_performance = PlayersPerformance(db)
         players_performance.process_performance_table()
+
+        team_player = TeamPlayer(db)
+        team_player.update_team_player_table()
 
         end_time = utils.get_ti()
         log(f"--- {end_time - start_time} ---")

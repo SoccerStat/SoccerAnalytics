@@ -20,3 +20,5 @@ class TeamPlayer:
                     season=season,
                 )
             )
+
+        log("\tPositions updated for each season...")
