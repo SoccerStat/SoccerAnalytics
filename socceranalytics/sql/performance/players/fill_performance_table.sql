@@ -27,7 +27,10 @@ home_stats as (
 		h.home_team as id_team,
 		h.away_team as id_opponent,
 
-		string_to_array(pms.position, ',') as home_positios,
+		c.number as home_number,
+		null as away_number,
+
+		string_to_array(pms.position, ',') as home_positions,
 		array[]::varchar[] as away_positions,
 
 		1 as home_match,
@@ -161,6 +164,9 @@ away_stats as (
 		pms.player as id_player,
 		a.away_team as id_team,
 		a.home_team as id_opponent,
+
+		null as home_number,
+        c.number as away_number,
 
 		array[]::varchar[] as home_positions,
 		string_to_array(pms.position, ',') as away_positions,
