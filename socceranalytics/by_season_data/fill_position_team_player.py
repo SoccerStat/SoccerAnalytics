@@ -12,7 +12,7 @@ class TeamPlayer:
 
     def update_team_player_table(self):
         log("\tUpdating the 'Team Player' table of each season...")
-        by_season_query = self.db.read_sql_file(self.sql_path, "get_mos_played_positions.sql")
+        by_season_query = self.db.read_sql_file(self.sql_path, "get_most_played_positions.sql")
 
         for season in self.data_loader.get_seasons():
             self.db.execute_query(
