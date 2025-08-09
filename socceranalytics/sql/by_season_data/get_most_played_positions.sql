@@ -4,7 +4,7 @@ with players_performance as (
         id_player,
         array_cat(home_positions, away_positions) as positions
     from analytics.staging_players_performance
-    where season = '{{ season }}'
+    where season = '{season}'
 ),
 players_positions as (
 	select id_team, id_player, unnest(positions) as positions
@@ -29,7 +29,7 @@ most_played_positions as (
 	) ppe
 	where rnk <= 2
 )
-UPDATE season_{{ season }}.team_player tp
+UPDATE season_{season}.team_player tp
 SET tp.positions = p.positions
 FROM (
     select

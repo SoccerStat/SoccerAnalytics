@@ -10,7 +10,7 @@ with selected_matches as materialized (
 		m.leg,
 		m.competition as id_comp,
 		coalesce(chp.name, c_cup.name) as competition
-	from season_{{season }}.match m
+	from season_{season}.match m
 	left join upper.championship chp
 	on m.competition = chp.id
 	left join upper.continental_cup c_cup
