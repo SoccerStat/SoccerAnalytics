@@ -7,36 +7,64 @@ with players_performance as (
     where season = '{season}'
 ),
 players_positions as (
-	select id_team, id_player, unnest(positions) as positions
-	from players_performance
+    select id_team, id_player, unnest(positions) as position
+    from players_performance
 ),
 positions_freq as (
-	select id_team, id_player, positions, count(*) as freq
-	from players_positions
-	group by id_team, id_player, positions
-	order by id_player, freq desc
+    select id_team, id_player, position, count(*) as freq
+    from players_positions
+    group by id_team, id_player, position
 ),
-most_played_positions as (
-	select id_team, id_player, positions
-	from (
-		select
-			id_team,
-			id_player,
-			positions,
-			freq,
-			DENSE_RANK() OVER (PARTITION BY id_team, id_player ORDER BY freq DESC) AS rnk
-		from positions_freq
-	) ppe
-	where rnk <= 2
+freq_totals as (
+    select id_team, id_player, sum(freq) as total_freq
+    from positions_freq
+    group by id_team, id_player
+),
+positions_ordered as (
+    select
+        pf.id_team,
+        pf.id_player,
+        pf.position,
+        pf.freq,
+        ft.total_freq,
+        sum(pf.freq) over (
+            partition by pf.id_team, pf.id_player
+            order by pf.freq desc, pf.position asc
+            rows between unbounded preceding and current row
+        ) as cum_freq,
+        DENSE_RANK() over (
+            partition by pf.id_team, pf.id_player
+            order by pf.freq desc
+        ) as rn
+    from positions_freq pf
+    join freq_totals ft on pf.id_team = ft.id_team and pf.id_player = ft.id_player
+),
+positions_ordered_enriched as (
+	select *,
+		cum_freq / total_freq as cum_freq_pct,
+		lag(rn) over (partition by id_team, id_player order by freq desc, position asc) as prev_rn,
+		lead(rn) over (partition by id_team, id_player order by freq desc, position asc) as next_rn
+	from positions_ordered
+),
+positions_to_keep as (
+	select *
+	from positions_ordered_enriched
+	where case
+		when cum_freq_pct >= 0.8 and (rn = next_rn or rn = prev_rn or next_rn is null and rn != 1)
+		then cum_freq_pct < 0.8
+		when cum_freq_pct < 0.8 and (rn = next_rn or rn = prev_rn)
+		then false
+		else true
+	end
 )
-UPDATE season_{season}.team_player tp
-SET positions = p.positions
-FROM (
+update season_{season}.team_player tp
+set positions = p.positions
+from (
     select
         id_team,
         id_player,
         array_agg(distinct positions)::varchar[] as positions
-    from most_played_positions
+    from positions_to_keep
     group by id_team, id_player
 ) p
-WHERE tp.team = p.id_team AND tp.player = p.id_player;
+where tp.team = p.id_team and tp.player = p.id_player;
