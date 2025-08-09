@@ -24,7 +24,7 @@ most_played_positions as (
 			id_player,
 			positions,
 			freq,
-			ROW_NUMBER() OVER (PARTITION BY id_team, id_player ORDER BY freq DESC) AS rnk
+			DENSE_RANK() OVER (PARTITION BY id_team, id_player ORDER BY freq DESC) AS rnk
 		from positions_freq
 	) ppe
 	where rnk <= 2
