@@ -1,10 +1,15 @@
 update season_{season}.team_player tp
-set positions = null;
+set positions = null, numbers = null;
 
 with players_performance as (
     select
         id_team,
         id_player,
+        array(
+            select distinct number
+            from unnest(ARRAY[home_number, away_number]) as number
+            where number IS NOT NULL
+        ) as numbers,
         array_cat(home_positions, away_positions) as positions
     from analytics.staging_players_performance
     where season = '{season}'
@@ -65,15 +70,32 @@ positions_to_keep as (
 		then false
 		else cum_freq_pct < 0.8 or prev_cum_freq_pct < 0.8
 	end
-)
-update season_{season}.team_player tp
-set positions = p.positions
-from (
+),
+positions_to_update as (
     select
         id_team,
         id_player,
         array_agg(distinct position)::varchar[] as positions
     from positions_to_keep
     group by id_team, id_player
-) p
-where tp.team = p.id_team and tp.player = p.id_player;
+),
+numbers_to_update as (
+    select
+        id_team,
+        id_player,
+        array(
+            select distinct unnest(array_agg(numbers))
+        ) as numbers
+    from players_performance
+    group by id_team, id_player
+),
+positions_and_numbers as (
+    select p.id_team, p.id_player, p.positions, n.numbers
+    from positions_to_update p
+    join numbers_to_update n
+    on p.id_team = n.id_team and p.id_player = n.id_player
+)
+update season_{season}.team_player tp
+set positions = pn.positions, numbers = pn.numbers
+from positions_and_numbers pn
+where tp.team = pn.id_team and tp.player = pn.id_player;
