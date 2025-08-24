@@ -17,18 +17,24 @@ with selected_matches as materialized (
 	on m.competition = c_cup.id
 	where m.competition = '{id_comp}'
 ),
-injuries as (
-    select e.match, e.team, se.player_in, se.player_out as injured_player
+subs as (
+    select
+        e.match,
+        e.team,
+        se.player_in,
+        se.player_out,
+        notes
     from season_{season}.event e
     join season_{season}.sub_event se
     on (e.id = se.id and e.match = se.match)
-    where played_home and lower(se.notes) like '%injury%'
+    where played_home
 ),
 home_stats as (
 	select
 		'{season}' as season,
 		h.id_comp,
 		h.competition,
+		h.id as id_match,
 
 		pms.player as id_player,
 		h.home_team as id_team,
@@ -119,18 +125,7 @@ home_stats as (
 			when not c.started then 1 
 			else 0
 		end as home_sub_in,
-		0 as away_sub_in,
-		case
-			when e.player_out = c.player then 1 
-			else 0
-		end as home_sub_out,
-		0 as away_sub_out,
-
-		case
-		    when i.injured_player is not null then 1
-		    else 0
-		end as home_injured,
-		0 as away_injured
+		0 as away_sub_in
 
 	from selected_matches as h
 	join (select * from season_{season}.player_main_stats where played_home) as pms
@@ -141,14 +136,23 @@ home_stats as (
 	on h.id = ts_away.match
 	join (select * from season_{season}.compo where played_home) as c
 	on h.id = c.match and pms.player = c.player
-	left join (select e.match, e.team, se.player_in, se.player_out from season_{season}.event e join season_{season}.sub_event se on (e.id = se.id and e.match = se.match) where e.played_home and (se.notes is null or lower(se.notes) not like '%injury%')) as e
-	on h.id = e.match and (e.player_in = c.player or e.player_out = c.player)
-	left join injuries i
-	on h.id = e.match and pms.player = i.injured_player
 )
 insert into analytics.staging_players_performance
-select *
-from home_stats;
+select *,
+    case
+        when s.player_out = c.player and lower(s.notes) not like '%injury%' then 1
+        else 0
+    end as home_sub_out,
+    0 as away_sub_out,
+
+    case
+        when s.player_in is null and s.player_out = c.player and lower(s.notes) like '%injury%' then 1
+        else 0
+    end as home_injured,
+    0 as away_injured
+from home_stats h
+left join subs s
+on h.id_match = s.match and h.id_team = s.team and (s.player_in = h.id_player or s.player_out = h.id_player);
 
 
 with selected_matches as materialized (
@@ -170,12 +174,17 @@ with selected_matches as materialized (
 	on m.competition = c_cup.id
 	where m.competition = '{id_comp}'
 ),
-injuries as (
-    select e.match, e.team, se.player_in, se.player_out as injured_player
+subs as (
+    select
+        e.match,
+        e.team,
+        se.player_in,
+        se.player_out,
+        notes
     from season_{season}.event e
     join season_{season}.sub_event se
     on (e.id = se.id and e.match = se.match)
-    where not played_home and lower(se.notes) like '%injury%'
+    where not played_home
 ),
 away_stats as (
 	select
@@ -265,18 +274,7 @@ away_stats as (
 		case
 			when not c.started then 1 else 0
 		end as away_sub_in,
-		0 as home_sub_out,
-		case
-			when e.player_out = c.player
-			then 1
-			else 0
-		end as away_sub_out,
-
-		0 as home_injured,
-		case
-		    when i.injured_player is not null then 1
-		    else 0
-		end as away_injured
+		0 as home_sub_out
 
 	from selected_matches as a
 	join (select * from season_{season}.player_main_stats where not played_home) as pms
@@ -293,5 +291,18 @@ away_stats as (
 	on a.id = e.match and pms.player = i.injured_player
 )
 insert into analytics.staging_players_performance
-select *
-from away_stats;
+select *,
+    case
+        when s.player_out = c.player and lower(s.notes) not like '%injury%' then 1
+        else 0
+    end as home_sub_out,
+    0 as away_sub_out,
+
+    case
+        when s.player_in is null and s.player_out = c.player and lower(s.notes) like '%injury%' then 1
+        else 0
+    end as home_injured,
+    0 as away_injured
+from away_stats a
+left join subs s
+on a.id_match = s.match and a.id_team = s.team and (s.player_in = a.id_player or s.player_out = a.id_player);
