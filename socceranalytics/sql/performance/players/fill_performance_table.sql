@@ -217,10 +217,18 @@ joined as (
         MAX(h.home_sub_in)           as home_sub_in,
         MAX(h.away_sub_in)           as away_sub_in,
 
-        oi.home_sub_out,
+        case
+            when oi.home_sub_out is null
+            then 0
+            else oi.home_sub_out
+        end as home_sub_out,
         0 as away_sub_out,
 
-        oi.home_injured,
+        case
+            when oi.home_injured is null
+            then 0
+            else oi.home_sub_out
+        end as home_sub_out,
         0 as away_injured
     from home_stats h
     left join out_and_injured oi
@@ -443,10 +451,18 @@ joined as (
         MAX(a.away_sub_in)           as away_sub_in,
 
         0 as home_sub_out,
-        oi.away_sub_out,
+        case
+            when oi.away_sub_out is null
+            then 0
+            else oi.away_sub_out
+        end as away_sub_out,
 
         0 as home_injured,
-        oi.away_injured
+        case
+            when oi.away_injured is null
+            then 0
+            else oi.away_injured
+        end as away_injured
     from away_stats a
     left join out_and_injured oi
     on a.id_match = oi.match and a.id_team = oi.team and a.id_player = oi.player_out
