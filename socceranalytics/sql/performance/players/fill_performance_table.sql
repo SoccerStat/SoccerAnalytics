@@ -410,17 +410,17 @@ joined as (
         MAX(a.home_sub_in)           as home_sub_in,
         MAX(a.away_sub_in)           as away_sub_in,
 
+        0 as home_sub_out,
         case
             when s.player_out = a.id_player and (s.notes is null or lower(s.notes) not like '%injury%') then 1
             else 0
-        end as home_sub_out,
-        0 as away_sub_out,
+        end as away_sub_out,
 
+        0 as home_injured,
         case
             when s.player_in is null and s.player_out = a.id_player and (s.notes is null or lower(s.notes) like '%injury%') then 1
             else 0
-        end as home_injured,
-        0 as away_injured
+        end as away_injured
     from away_stats a
     left join subs s
     on a.id_match = s.match and a.id_team = s.team and (s.player_in = a.id_player or s.player_out = a.id_player)
