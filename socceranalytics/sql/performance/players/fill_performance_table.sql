@@ -23,7 +23,7 @@ subs as (
         e.team,
         se.player_in,
         se.player_out,
-        notes
+        se.notes
     from season_{season}.event e
     join season_{season}.sub_event se
     on (e.id = se.id and e.match = se.match)
@@ -180,7 +180,7 @@ subs as (
         e.team,
         se.player_in,
         se.player_out,
-        notes
+        se.notes
     from season_{season}.event e
     join season_{season}.sub_event se
     on (e.id = se.id and e.match = se.match)
@@ -285,10 +285,6 @@ away_stats as (
 	on a.id = ts_home.match
 	join (select * from season_{season}.compo where not played_home) c
 	on a.id = c.match and pms.player = c.player
-	left join (select e.match, e.team, se.player_in, se.player_out from season_{season}.event e join season_{season}.sub_event se on (e.id = se.id and e.match = se.match) where not e.played_home and (se.notes is null or lower(se.notes) not like '%injury%')) as e
-	on a.id = e.match and (e.player_in = c.player or e.player_out = c.player)
-	left join injuries i
-	on a.id = e.match and pms.player = i.injured_player
 )
 insert into analytics.staging_players_performance
 select *,
