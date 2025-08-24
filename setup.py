@@ -5,7 +5,7 @@ with open("requirements.txt", encoding="utf-8") as f:
 
 setup(
     name="socceranalytics",
-    version='1.0.93',  # quote simple !!!
+    version='1.0.94',  # quote simple !!!
     packages=find_packages(),
     package_data={
         "socceranalytics.sql": ["**/*.sql"],
