@@ -227,8 +227,8 @@ joined as (
         case
             when oi.home_injured is null
             then 0
-            else oi.home_sub_out
-        end as home_sub_out,
+            else oi.home_injured
+        end as home_injured,
         0 as away_injured
     from home_stats h
     left join out_and_injured oi
