@@ -20,13 +20,13 @@ class TeamsPerformance(BasePerformance, CompHelper):
         Supposed to be run once a day.
         Used to build rankings and opposition tables.
         """
-        log("\tTruncating the Teams' performance table...")
+        log("Truncating the Teams' performance table...")
         self.db.execute_sql_file(self.performance_sql_path, "truncate_performance_tables.sql")
 
-        log("\tFilling the Teams' performance table...")
+        log("Filling the Teams' performance table...")
         teams_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
 
-        log("\tFilling the Teams' expected performance table...")
+        log("Filling the Teams' expected performance table...")
         insert_query = sql.SQL("""
             INSERT INTO understat.staging_teams_understat_performance
             ("match", "competition", "season", "name_team", "name_opponent", "played_home", "home_xg_for", "away_xg_for", "home_xg_against", "away_xg_against")
