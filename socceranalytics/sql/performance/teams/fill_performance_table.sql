@@ -34,6 +34,9 @@ home_team as (
 		away_team as id_opponent,
 		true as played_home,
 
+		manager as home_manager,
+		null as away_manager,
+
 		1 as home_match,
 		0 as away_match,
 		ts.score as home_score,
@@ -180,6 +183,9 @@ away_team as (
 		away_team as id_team,
 		home_team as id_opponent,
 		false as played_home,
+
+		null as home_manager,
+		manager as away_manager,
 
 		0 as home_match,
 		1 as away_match,
