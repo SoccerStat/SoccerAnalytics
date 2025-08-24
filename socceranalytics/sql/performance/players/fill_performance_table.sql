@@ -31,7 +31,6 @@ subs as (
 ),
 home_stats as (
 	select
-		'{season}' as season,
 		h.id_comp,
 		h.competition,
 		h.id as id_match,
@@ -140,7 +139,65 @@ home_stats as (
 	on h.id = c.match and pms.player = c.player
 ),
 joined as (
-    select h.*,
+    select
+        '{season}' as season,
+        h.id_comp,
+        h.competition,
+        h.id_match,
+        h.id_player,
+        h.id_team,
+
+        MAX(h.id_opponent)           as id_opponent,
+        MAX(h.home_number)           as home_number,
+        MAX(h.away_number)           as away_number,
+        MAX(h.home_positions)        as home_positions,
+        MAX(h.away_positions)        as away_positions,
+        MAX(h.home_match)            as home_match,
+        MAX(h.away_match)            as away_match,
+        MAX(h.date)                  as date,
+        MAX(h.time)                  as time,
+        MAX(h.week)                  as week,
+        MAX(h.round)                 as round,
+        MAX(h.leg)                   as leg,
+        MAX(h.home_win)              as home_win,
+        MAX(h.away_win)              as away_win,
+        MAX(h.home_draw)             as home_draw,
+        MAX(h.away_draw)             as away_draw,
+        MAX(h.home_lose)             as home_lose,
+        MAX(h.away_lose)             as away_lose,
+        MAX(h.home_gk)               as home_gk,
+        MAX(h.away_gk)               as away_gk,
+        MAX(h.home_goals)            as home_goals,
+        MAX(h.away_goals)            as away_goals,
+        MAX(h.home_assists)          as home_assists,
+        MAX(h.away_assists)          as away_assists,
+        MAX(h.home_pens_made)        as home_pens_made,
+        MAX(h.away_pens_made)        as away_pens_made,
+        MAX(h.home_pens_att)         as home_pens_att,
+        MAX(h.away_pens_att)         as away_pens_att,
+        MAX(h.home_xg)               as home_xg,
+        MAX(h.away_xg)               as away_xg,
+        MAX(h.home_clean_sheet)      as home_clean_sheet,
+        MAX(h.away_clean_sheet)      as away_clean_sheet,
+        MAX(h.home_shots)            as home_shots,
+        MAX(h.away_shots)            as away_shots,
+        MAX(h.home_shots_ot)         as home_shots_ot,
+        MAX(h.away_shots_ot)         as away_shots_ot,
+        MAX(h.home_cards_yellow)     as home_cards_yellow,
+        MAX(h.away_cards_yellow)     as away_cards_yellow,
+        MAX(h.home_cards_red)        as home_cards_red,
+        MAX(h.away_cards_red)        as away_cards_red,
+        MAX(h.home_cards_yellow_red) as home_cards_yellow_red,
+        MAX(h.away_cards_yellow_red) as away_cards_yellow_red,
+        MAX(h.home_captain)          as home_captain,
+        MAX(h.away_captain)          as away_captain,
+        MAX(h.home_minutes)          as home_minutes,
+        MAX(h.away_minutes)          as away_minutes,
+        MAX(h.home_started)          as home_started,
+        MAX(h.away_started)          as away_started,
+        MAX(h.home_sub_in)           as home_sub_in,
+        MAX(h.away_sub_in)           as away_sub_in,
+
         case
             when s.player_out = h.id_player and (s.notes is null or lower(s.notes) not like '%injury%') then 1
             else 0
@@ -155,6 +212,7 @@ joined as (
     from home_stats h
     left join subs s
     on h.id_match = s.match and h.id_team = s.team and (s.player_in = h.id_player or s.player_out = h.id_player)
+    group by h.id_comp, h.competition, h.id_match, h.id_player, h.id_team
 )
 insert into analytics.staging_players_performance
 select * from joined;
@@ -193,7 +251,6 @@ subs as (
 ),
 away_stats as (
 	select
-		'{season}' as season,
 		a.id_comp,
 		a.competition,
 		a.id as id_match,
@@ -294,7 +351,65 @@ away_stats as (
 	on a.id = c.match and pms.player = c.player
 ),
 joined as (
-    select a.*,
+    select
+        '{season}' as season,
+        a.id_comp,
+        a.competition,
+        a.id_match,
+        a.id_player,
+        a.id_team,
+
+        MAX(a.id_opponent)           as id_opponent,
+        MAX(a.home_number)           as home_number,
+        MAX(a.away_number)           as away_number,
+        MAX(a.home_positions)        as home_positions,
+        MAX(a.away_positions)        as away_positions,
+        MAX(a.home_match)            as home_match,
+        MAX(a.away_match)            as away_match,
+        MAX(a.date)                  as date,
+        MAX(a.time)                  as time,
+        MAX(a.week)                  as week,
+        MAX(a.round)                 as round,
+        MAX(a.leg)                   as leg,
+        MAX(a.home_win)              as home_win,
+        MAX(a.away_win)              as away_win,
+        MAX(a.home_draw)             as home_draw,
+        MAX(a.away_draw)             as away_draw,
+        MAX(a.home_lose)             as home_lose,
+        MAX(a.away_lose)             as away_lose,
+        MAX(a.home_gk)               as home_gk,
+        MAX(a.away_gk)               as away_gk,
+        MAX(a.home_goals)            as home_goals,
+        MAX(a.away_goals)            as away_goals,
+        MAX(a.home_assists)          as home_assists,
+        MAX(a.away_assists)          as away_assists,
+        MAX(a.home_pens_made)        as home_pens_made,
+        MAX(a.away_pens_made)        as away_pens_made,
+        MAX(a.home_pens_att)         as home_pens_att,
+        MAX(a.away_pens_att)         as away_pens_att,
+        MAX(a.home_xg)               as home_xg,
+        MAX(a.away_xg)               as away_xg,
+        MAX(a.home_clean_sheet)      as home_clean_sheet,
+        MAX(a.away_clean_sheet)      as away_clean_sheet,
+        MAX(a.home_shots)            as home_shots,
+        MAX(a.away_shots)            as away_shots,
+        MAX(a.home_shots_ot)         as home_shots_ot,
+        MAX(a.away_shots_ot)         as away_shots_ot,
+        MAX(a.home_cards_yellow)     as home_cards_yellow,
+        MAX(a.away_cards_yellow)     as away_cards_yellow,
+        MAX(a.home_cards_red)        as home_cards_red,
+        MAX(a.away_cards_red)        as away_cards_red,
+        MAX(a.home_cards_yellow_red) as home_cards_yellow_red,
+        MAX(a.away_cards_yellow_red) as away_cards_yellow_red,
+        MAX(a.home_captain)          as home_captain,
+        MAX(a.away_captain)          as away_captain,
+        MAX(a.home_minutes)          as home_minutes,
+        MAX(a.away_minutes)          as away_minutes,
+        MAX(a.home_started)          as home_started,
+        MAX(a.away_started)          as away_started,
+        MAX(a.home_sub_in)           as home_sub_in,
+        MAX(a.away_sub_in)           as away_sub_in,
+
         case
             when s.player_out = a.id_player and (s.notes is null or lower(s.notes) not like '%injury%') then 1
             else 0
@@ -309,6 +424,7 @@ joined as (
     from away_stats a
     left join subs s
     on a.id_match = s.match and a.id_team = s.team and (s.player_in = a.id_player or s.player_out = a.id_player)
+    group by a.id_comp, a.competition, a.id_match, a.id_player, a.id_team
 )
 insert into analytics.staging_players_performance
 select *
