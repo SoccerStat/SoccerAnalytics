@@ -250,7 +250,7 @@ with selected_matches as materialized (
 	on m.competition = c_cup.id
 	where m.competition = '{id_comp}'
 ),
-subs as (
+out_and_injured as (
     select
         e.match,
         e.team,
