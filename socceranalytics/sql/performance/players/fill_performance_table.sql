@@ -270,11 +270,7 @@ away_stats as (
 		case
 			when c.started then 1 else 0
 		end as away_started,
-		0 as home_sub_in,
-		case
-			when not c.started then 1 else 0
-		end as away_sub_in,
-		0 as home_sub_out
+		0 as home_sub_in
 
 	from selected_matches as a
 	join (select * from season_{season}.player_main_stats where not played_home) as pms
