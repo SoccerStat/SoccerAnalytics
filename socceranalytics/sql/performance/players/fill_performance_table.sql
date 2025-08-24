@@ -194,6 +194,7 @@ away_stats as (
 		'{season}' as season,
 		a.id_comp,
 		a.competition,
+		a.id as id_match,
 
 		pms.player as id_player,
 		a.away_team as id_team,
