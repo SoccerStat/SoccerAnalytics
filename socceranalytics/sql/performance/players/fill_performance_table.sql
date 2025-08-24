@@ -142,13 +142,13 @@ home_stats as (
 joined as (
     select h.*,
         case
-            when s.player_out = h.id_player and lower(s.notes) not like '%injury%' then 1
+            when s.player_out = h.id_player and (s.notes is null or lower(s.notes) not like '%injury%') then 1
             else 0
         end as home_sub_out,
         0 as away_sub_out,
 
         case
-            when s.player_in is null and s.player_out = h.id_player and lower(s.notes) like '%injury%' then 1
+            when s.player_in is null and s.player_out = h.id_player and (s.notes is null or lower(s.notes) like '%injury%') then 1
             else 0
         end as home_injured,
         0 as away_injured
@@ -296,13 +296,13 @@ away_stats as (
 joined as (
     select a.*,
         case
-            when s.player_out = a.id_player and lower(s.notes) not like '%injury%' then 1
+            when s.player_out = a.id_player and (s.notes is null or lower(s.notes) not like '%injury%') then 1
             else 0
         end as home_sub_out,
         0 as away_sub_out,
 
         case
-            when s.player_in is null and s.player_out = a.id_player and lower(s.notes) like '%injury%' then 1
+            when s.player_in is null and s.player_out = a.id_player and (s.notes is null or lower(s.notes) like '%injury%') then 1
             else 0
         end as home_injured,
         0 as away_injured
