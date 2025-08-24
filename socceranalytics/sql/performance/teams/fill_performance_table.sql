@@ -34,8 +34,8 @@ home_team as (
 		away_team as id_opponent,
 		true as played_home,
 
-		manager as home_manager,
-		null as away_manager,
+		ts.manager as home_manager,
+		ts_away.manager as away_manager,
 
 		1 as home_match,
 		0 as away_match,
@@ -184,8 +184,8 @@ away_team as (
 		home_team as id_opponent,
 		false as played_home,
 
-		null as home_manager,
-		manager as away_manager,
+		ts_home.manager as home_manager,
+		ts.manager as away_manager,
 
 		0 as home_match,
 		1 as away_match,
