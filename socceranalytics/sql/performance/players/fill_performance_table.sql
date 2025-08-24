@@ -116,11 +116,13 @@ home_stats as (
 
 		pms.nb_minutes as home_minutes,
 		0 as away_minutes,
+
 		case
 			when c.started then 1 
 			else 0
 		end as home_started,
 		0 as away_started,
+
 		case
 			when not c.started then 1 
 			else 0
@@ -138,7 +140,7 @@ home_stats as (
 	on h.id = c.match and pms.player = c.player
 ),
 joined as (
-    select *,
+    select h.*,
         case
             when s.player_out = h.id_player and lower(s.notes) not like '%injury%' then 1
             else 0
@@ -270,10 +272,12 @@ away_stats as (
 
 		0 as home_minutes,
 		pms.nb_minutes as away_minutes,
+
 		0 as home_started,
 		case
 			when c.started then 1 else 0
 		end as away_started,
+
 		0 as home_sub_in,
 		case
 			when not c.started then 1 else 0
@@ -290,7 +294,7 @@ away_stats as (
 	on a.id = c.match and pms.player = c.player
 ),
 joined as (
-    select *,
+    select a.*,
         case
             when s.player_out = a.id_player and lower(s.notes) not like '%injury%' then 1
             else 0
