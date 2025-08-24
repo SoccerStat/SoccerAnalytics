@@ -46,7 +46,7 @@ out_and_injured as (
     join season_{season}.sub_event se
     on (e.id = se.id and e.match = se.match)
     where played_home
-    group by match, team, player_out
+    group by e.match, e.team, player_out
 ),
 home_stats as (
 	select
@@ -279,7 +279,7 @@ subs as (
     join season_{season}.sub_event se
     on (e.id = se.id and e.match = se.match)
     where not played_home
-    group by match, team, player_out
+    group by e.match, e.team, player_out
 ),
 away_stats as (
 	select
