@@ -198,16 +198,20 @@ joined as (
         MAX(h.home_sub_in)           as home_sub_in,
         MAX(h.away_sub_in)           as away_sub_in,
 
-        case
-            when s.player_out = h.id_player and (s.notes is null or lower(s.notes) not like '%injury%') then 1
-            else 0
-        end as home_sub_out,
+        MAX(
+            case
+                when s.player_out = h.id_player and (s.notes is null or lower(s.notes) not like '%injury%') then 1
+                else 0
+            end
+        ) as home_sub_out,
         0 as away_sub_out,
 
-        case
-            when s.player_in is null and s.player_out = h.id_player and (s.notes is null or lower(s.notes) like '%injury%') then 1
-            else 0
-        end as home_injured,
+        MAX(
+            case
+                when s.player_in is null and s.player_out = h.id_player and (s.notes is null or lower(s.notes) like '%injury%') then 1
+                else 0
+            end
+        ) as home_injured,
         0 as away_injured
     from home_stats h
     left join subs s
@@ -411,16 +415,20 @@ joined as (
         MAX(a.away_sub_in)           as away_sub_in,
 
         0 as home_sub_out,
-        case
-            when s.player_out = a.id_player and (s.notes is null or lower(s.notes) not like '%injury%') then 1
-            else 0
-        end as away_sub_out,
+        MAX(
+            case
+                when s.player_out = a.id_player and (s.notes is null or lower(s.notes) not like '%injury%') then 1
+                else 0
+            end
+        ) as away_sub_out,
 
         0 as home_injured,
-        case
-            when s.player_in is null and s.player_out = a.id_player and (s.notes is null or lower(s.notes) like '%injury%') then 1
-            else 0
-        end as away_injured
+        MAX(
+            case
+                when s.player_in is null and s.player_out = a.id_player and (s.notes is null or lower(s.notes) like '%injury%') then 1
+                else 0
+            end
+        )as away_injured
     from away_stats a
     left join subs s
     on a.id_match = s.match and a.id_team = s.team and (s.player_in = a.id_player or s.player_out = a.id_player)
