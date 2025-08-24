@@ -136,23 +136,26 @@ home_stats as (
 	on h.id = ts_away.match
 	join (select * from season_{season}.compo where played_home) as c
 	on h.id = c.match and pms.player = c.player
+),
+joined as (
+    select *,
+        case
+            when s.player_out = h.id_player and lower(s.notes) not like '%injury%' then 1
+            else 0
+        end as home_sub_out,
+        0 as away_sub_out,
+
+        case
+            when s.player_in is null and s.player_out = h.id_player and lower(s.notes) like '%injury%' then 1
+            else 0
+        end as home_injured,
+        0 as away_injured
+    from home_stats h
+    left join subs s
+    on h.id_match = s.match and h.id_team = s.team and (s.player_in = h.id_player or s.player_out = h.id_player)
 )
 insert into analytics.staging_players_performance
-select *,
-    case
-        when s.player_out = h.id_player and lower(s.notes) not like '%injury%' then 1
-        else 0
-    end as home_sub_out,
-    0 as away_sub_out,
-
-    case
-        when s.player_in is null and s.player_out = h.id_player and lower(s.notes) like '%injury%' then 1
-        else 0
-    end as home_injured,
-    0 as away_injured
-from home_stats h
-left join subs s
-on h.id_match = s.match and h.id_team = s.team and (s.player_in = h.id_player or s.player_out = h.id_player);
+select * from joined;
 
 
 with selected_matches as materialized (
@@ -284,20 +287,24 @@ away_stats as (
 	on a.id = ts_home.match
 	join (select * from season_{season}.compo where not played_home) c
 	on a.id = c.match and pms.player = c.player
+),
+joined as (
+    select *,
+        case
+            when s.player_out = a.id_player and lower(s.notes) not like '%injury%' then 1
+            else 0
+        end as home_sub_out,
+        0 as away_sub_out,
+
+        case
+            when s.player_in is null and s.player_out = a.id_player and lower(s.notes) like '%injury%' then 1
+            else 0
+        end as home_injured,
+        0 as away_injured
+    from away_stats a
+    left join subs s
+    on a.id_match = s.match and a.id_team = s.team and (s.player_in = a.id_player or s.player_out = a.id_player)
 )
 insert into analytics.staging_players_performance
-select *,
-    case
-        when s.player_out = a.id_player and lower(s.notes) not like '%injury%' then 1
-        else 0
-    end as home_sub_out,
-    0 as away_sub_out,
-
-    case
-        when s.player_in is null and s.player_out = a.id_player and lower(s.notes) like '%injury%' then 1
-        else 0
-    end as home_injured,
-    0 as away_injured
-from away_stats a
-left join subs s
-on a.id_match = s.match and a.id_team = s.team and (s.player_in = a.id_player or s.player_out = a.id_player);
+select *
+from joined;
