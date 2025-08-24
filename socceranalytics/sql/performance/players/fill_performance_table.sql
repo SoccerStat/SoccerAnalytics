@@ -17,6 +17,13 @@ with selected_matches as materialized (
 	on m.competition = c_cup.id
 	where m.competition = '{id_comp}'
 ),
+injuries as (
+    select e.match, e.team, se.player_in, se.player_out as injured_player
+    from season_{season}.event e
+    join season_{season}.sub_event se
+    on (e.id = se.id and e.match = se.match)
+    where played_home and lower(se.notes) like '%injury%'
+),
 home_stats as (
 	select
 		'{season}' as season,
@@ -117,7 +124,13 @@ home_stats as (
 			when e.player_out = c.player then 1 
 			else 0
 		end as home_sub_out,
-		0 as away_sub_out
+		0 as away_sub_out,
+
+		case
+		    when i.injured_player is not null then 1
+		    else 0
+		end as home_injured,
+		0 as away_injured
 
 	from selected_matches as h
 	join (select * from season_{season}.player_main_stats where played_home) as pms
@@ -130,6 +143,8 @@ home_stats as (
 	on h.id = c.match and pms.player = c.player
 	left join (select e.match, e.team, se.player_in, se.player_out from season_{season}.event e join season_{season}.sub_event se on (e.id = se.id and e.match = se.match) where e.played_home and (se.notes is null or lower(se.notes) not like '%injury%')) as e
 	on h.id = e.match and (e.player_in = c.player or e.player_out = c.player)
+	left join injuries i
+	on h.id = e.match and pms.id_player = i.injured_player
 )
 insert into analytics.staging_players_performance
 select *
@@ -154,6 +169,13 @@ with selected_matches as materialized (
 	left join upper.continental_cup c_cup
 	on m.competition = c_cup.id
 	where m.competition = '{id_comp}'
+),
+injuries as (
+    select e.match, e.team, se.player_in, se.player_out as injured_player
+    from season_{season}.event e
+    join season_{season}.sub_event se
+    on (e.id = se.id and e.match = se.match)
+    where not played_home and lower(se.notes) like '%injury%'
 ),
 away_stats as (
 	select
@@ -245,8 +267,16 @@ away_stats as (
 		end as away_sub_in,
 		0 as home_sub_out,
 		case
-			when e.player_out = c.player then 1 else 0
-		end as away_sub_out
+			when e.player_out = c.player
+			then 1
+			else 0
+		end as away_sub_out,
+
+		0 as home_injured,
+		case
+		    when i.injured_player is not null then 1
+		    else 0
+		end as away_injured
 
 	from selected_matches as a
 	join (select * from season_{season}.player_main_stats where not played_home) as pms
@@ -259,6 +289,8 @@ away_stats as (
 	on a.id = c.match and pms.player = c.player
 	left join (select e.match, e.team, se.player_in, se.player_out from season_{season}.event e join season_{season}.sub_event se on (e.id = se.id and e.match = se.match) where not e.played_home and (se.notes is null or lower(se.notes) not like '%injury%')) as e
 	on a.id = e.match and (e.player_in = c.player or e.player_out = c.player)
+	left join injuries i
+	on h.id = e.match and pms.id_player = i.injured_player
 )
 insert into analytics.staging_players_performance
 select *
