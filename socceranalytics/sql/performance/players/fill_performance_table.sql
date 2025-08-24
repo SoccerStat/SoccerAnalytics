@@ -128,7 +128,7 @@ home_stats as (
 	on h.id = ts_away.match
 	join (select * from season_{season}.compo where played_home) as c
 	on h.id = c.match and pms.player = c.player
-	left join (select e.match, e.team, se.player_in, se.player_out from season_{season}.event e join season_{season}.sub_event se on (e.id = se.id and e.match = se.match) where e.played_home) as e
+	left join (select e.match, e.team, se.player_in, se.player_out from season_{season}.event e join season_{season}.sub_event se on (e.id = se.id and e.match = se.match) where e.played_home and (se.notes is null or lower(se.notes) not like '%injury%')) as e
 	on h.id = e.match and (e.player_in = c.player or e.player_out = c.player)
 )
 insert into analytics.staging_players_performance
@@ -257,7 +257,7 @@ away_stats as (
 	on a.id = ts_home.match
 	join (select * from season_{season}.compo where not played_home) c
 	on a.id = c.match and pms.player = c.player
-	left join (select e.match, e.team, se.player_in, se.player_out from season_{season}.event e join season_{season}.sub_event se on (e.id = se.id and e.match = se.match) where not e.played_home) as e
+	left join (select e.match, e.team, se.player_in, se.player_out from season_{season}.event e join season_{season}.sub_event se on (e.id = se.id and e.match = se.match) where not e.played_home and (se.notes is null or lower(se.notes) not like '%injury%')) as e
 	on a.id = e.match and (e.player_in = c.player or e.player_out = c.player)
 )
 insert into analytics.staging_players_performance
