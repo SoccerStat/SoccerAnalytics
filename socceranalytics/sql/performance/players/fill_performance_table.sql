@@ -212,7 +212,7 @@ joined as (
     from home_stats h
     left join subs s
     on h.id_match = s.match and h.id_team = s.team and (s.player_in = h.id_player or s.player_out = h.id_player)
-    group by h.id_comp, h.competition, h.id_match, h.id_player, h.id_team, s.player_out, s.notes
+    group by h.id_comp, h.competition, h.id_match, h.id_player, h.id_team, s.player_in, s.player_out, s.notes
 )
 insert into analytics.staging_players_performance
 select * from joined;
@@ -424,7 +424,7 @@ joined as (
     from away_stats a
     left join subs s
     on a.id_match = s.match and a.id_team = s.team and (s.player_in = a.id_player or s.player_out = a.id_player)
-    group by a.id_comp, a.competition, a.id_match, a.id_player, a.id_team, s.player_out, s.notes
+    group by a.id_comp, a.competition, a.id_match, a.id_player, a.id_team, s.player_in, s.player_out, s.notes
 )
 insert into analytics.staging_players_performance
 select *
