@@ -27,7 +27,7 @@ out_and_injured as (
             case
                 when player_in is not null
                     and player_out is not null
-                    and lower(se.notes) not like '%injury'
+                    and (se.notes is null or lower(se.notes) not like '%injury')
                 then 1
                 else 0
             end
@@ -260,7 +260,7 @@ out_and_injured as (
             case
                 when player_in is not null
                     and player_out is not null
-                    and lower(se.notes) not like '%injury'
+                    and (se.notes is null or lower(se.notes) not like '%injury')
                 then 1
                 else 0
             end
