@@ -225,7 +225,7 @@ joined as (
     from home_stats h
     left join out_and_injured oi
     on h.id_match = oi.match and h.id_team = oi.team and h.id_player = oi.player_out
-    group by h.id_comp, h.competition, h.id_match, h.id_player, h.id_team
+    group by h.id_comp, h.competition, h.id_match, h.id_player, h.id_team, oi.home_sub_out, oi.home_injured
 )
 insert into analytics.staging_players_performance
 select * from joined;
@@ -450,7 +450,7 @@ joined as (
     from away_stats a
     left join out_and_injured oi
     on a.id_match = oi.match and a.id_team = oi.team and a.id_player = oi.player_out
-    group by a.id_comp, a.competition, a.id_match, a.id_player, a.id_team
+    group by a.id_comp, a.competition, a.id_match, a.id_player, a.id_team, oi.away_sub_out, oi.away_injured
 )
 insert into analytics.staging_players_performance
 select *
