@@ -17,17 +17,36 @@ with selected_matches as materialized (
 	on m.competition = c_cup.id
 	where m.competition = '{id_comp}'
 ),
-subs as (
+out_and_injured as (
     select
         e.match,
         e.team,
-        se.player_in,
         se.player_out,
-        se.notes
+
+        MAX(
+            case
+                when player_in is not null
+                    and player_out is not null
+                    and lower(notes) not like '%injury'
+                then 1
+                else 0
+            end
+        ) as home_sub_out,
+
+        MAX(
+            case
+                when player_in is null
+                    and player_out is not null
+                    and lower(notes) like '%injury'
+                then 1
+                else 0
+            end
+        ) as home_injured
     from season_{season}.event e
     join season_{season}.sub_event se
     on (e.id = se.id and e.match = se.match)
     where played_home
+    group by match, team, player_out
 ),
 home_stats as (
 	select
@@ -198,29 +217,14 @@ joined as (
         MAX(h.home_sub_in)           as home_sub_in,
         MAX(h.away_sub_in)           as away_sub_in,
 
-        MAX(
-            case
-                when s.player_out = h.id_player
-                    and (s.notes is null or lower(s.notes) not like '%injury%')
-                then 1
-                else 0
-            end
-        ) as home_sub_out,
+        oi.home_sub_out,
         0 as away_sub_out,
 
-        MAX(
-            case
-                when s.player_in is null
-                    and s.player_out = h.id_player
-                    and (s.notes is null or lower(s.notes) like '%injury%')
-                then 1
-                else 0
-            end
-        ) as home_injured,
+        oi.home_injured,
         0 as away_injured
     from home_stats h
-    left join subs s
-    on h.id_match = s.match and h.id_team = s.team and (s.player_in = h.id_player or s.player_out = h.id_player)
+    left join out_and_injured oi
+    on h.id_match = oi.match and h.id_team = oi.team and h.id_player = oi.player_out
     group by h.id_comp, h.competition, h.id_match, h.id_player, h.id_team
 )
 insert into analytics.staging_players_performance
@@ -250,13 +254,32 @@ subs as (
     select
         e.match,
         e.team,
-        se.player_in,
         se.player_out,
-        se.notes
+
+        MAX(
+            case
+                when player_in is not null
+                    and player_out is not null
+                    and lower(notes) not like '%injury'
+                then 1
+                else 0
+            end
+        ) as away_sub_out,
+
+        MAX(
+            case
+                when player_in is null
+                    and player_out is not null
+                    and lower(notes) like '%injury'
+                then 1
+                else 0
+            end
+        ) as away_injured
     from season_{season}.event e
     join season_{season}.sub_event se
     on (e.id = se.id and e.match = se.match)
     where not played_home
+    group by match, team, player_out
 ),
 away_stats as (
 	select
@@ -420,28 +443,13 @@ joined as (
         MAX(a.away_sub_in)           as away_sub_in,
 
         0 as home_sub_out,
-        MAX(
-            case
-                when s.player_out = a.id_player
-                    and (s.notes is null or lower(s.notes) not like '%injury%')
-                then 1
-                else 0
-            end
-        ) as away_sub_out,
+        oi.away_sub_out,
 
         0 as home_injured,
-        MAX(
-            case
-                when s.player_in is null
-                    and s.player_out = a.id_player
-                    and (s.notes is null or lower(s.notes) like '%injury%')
-                then 1
-                else 0
-            end
-        ) as away_injured
+        oi.away_injured
     from away_stats a
-    left join subs s
-    on a.id_match = s.match and a.id_team = s.team and (s.player_in = a.id_player or s.player_out = a.id_player)
+    left join out_and_injured oi
+    on a.id_match = oi.match and a.id_team = oi.team and a.id_player = oi.player_out
     group by a.id_comp, a.competition, a.id_match, a.id_player, a.id_team
 )
 insert into analytics.staging_players_performance
