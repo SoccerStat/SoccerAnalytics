@@ -140,13 +140,13 @@ home_stats as (
 insert into analytics.staging_players_performance
 select *,
     case
-        when s.player_out = c.player and lower(s.notes) not like '%injury%' then 1
+        when s.player_out = h.id_player and lower(s.notes) not like '%injury%' then 1
         else 0
     end as home_sub_out,
     0 as away_sub_out,
 
     case
-        when s.player_in is null and s.player_out = c.player and lower(s.notes) like '%injury%' then 1
+        when s.player_in is null and s.player_out = h.id_player and lower(s.notes) like '%injury%' then 1
         else 0
     end as home_injured,
     0 as away_injured
@@ -289,13 +289,13 @@ away_stats as (
 insert into analytics.staging_players_performance
 select *,
     case
-        when s.player_out = c.player and lower(s.notes) not like '%injury%' then 1
+        when s.player_out = a.id_player and lower(s.notes) not like '%injury%' then 1
         else 0
     end as home_sub_out,
     0 as away_sub_out,
 
     case
-        when s.player_in is null and s.player_out = c.player and lower(s.notes) like '%injury%' then 1
+        when s.player_in is null and s.player_out = a.id_player and lower(s.notes) like '%injury%' then 1
         else 0
     end as home_injured,
     0 as away_injured
