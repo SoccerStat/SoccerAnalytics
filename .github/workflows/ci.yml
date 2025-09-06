@@ -44,7 +44,7 @@ jobs:
 
   update_version:
     needs: build
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -52,7 +52,7 @@ jobs:
 
       - name: Determine new version
         run: |
-          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          last_tag=$(git tag --list "v*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
           last_tag=${last_tag#v}
           IFS='.' read -r major minor patch <<< "$last_tag"
 
@@ -71,8 +71,19 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
           git add setup.py
           git commit -m "Update version to $new_version"
           git tag "$tag_version"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
           git push --tags
+
+  # Job pour bloquer push direct sur main (optionnel)
+  block_direct_main_push:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Block direct push to main
+        run: |
+          echo "❌ Direct pushes to main are not allowed. Please open a Pull Request."
+          exit 1
