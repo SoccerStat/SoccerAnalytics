@@ -22,6 +22,7 @@ jobs:
           exit 1
   build:
     needs: precheck
+    if: ${{ needs.precheck.result != 'failure' }}
     runs-on: ubuntu-latest
     outputs:
       build_success: ${{ steps.build_check.outcome }}
