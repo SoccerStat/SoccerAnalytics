@@ -8,11 +8,6 @@ on:
     branches:
       - "main"
   workflow_dispatch:
-    inputs:
-      run_on_main:
-        description: "Run update on main manually"
-        required: false
-        default: "true"
 
 permissions:
   contents: write
