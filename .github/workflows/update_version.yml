@@ -1,17 +1,13 @@
 name: Updating SoccerScrapingAnalytics library
 
 on:
-  # Automatique sur les branches feature
-  push:
-    branches:
-      - "feature/*"
+  # Automatique pour feature/* après build réussi
+  workflow_run:
+    workflows: ["Build SoccerScrapingAnalytics library"]
+    types:
+      - completed
   # Manuel pour main
   workflow_dispatch:
-    inputs:
-      bump_version:
-        description: "Lancer la mise à jour sur main"
-        required: false
-        default: "true"
 
 permissions:
   contents: write
@@ -19,33 +15,30 @@ permissions:
 jobs:
   update_version:
     runs-on: ubuntu-latest
-
+    if: |
+      # Si manuel (main) OU push automatique sur feature/* après build réussi
+      github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'feature/')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Update version in setup.py
+      - name: Determine new version
         run: |
-          # Récupérer la version courante depuis setup.py
-          current_version=$(grep "version=" setup.py | sed -E "s/.*version='([^']+)'.*/\1/")
+          # Récupère dernier tag release
+          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          last_tag=${last_tag#v}  # retirer le 'v'
+          IFS='.' read -r major minor patch <<< "$last_tag"
 
-          # Diviser la version en major, minor, patch
-          IFS='.' read -r major minor patch <<< "$current_version"
-
-          # Si on est sur la branche 'main', incrémenter la version PATCH
-          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
-            # Sur main : incrément patch
+          if [[ "${GITHUB_REF}" == "refs/heads/main" || "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            # Main : incrément patch
             patch=$((patch + 1))
             new_version="$major.$minor.$patch"
           else
-            # Sur feature/* : snapshot
-            new_version="$current_version-snapshot"
+            # Feature : snapshot basé sur dernier tag
+            new_version="$major.$minor.$patch-snapshot"
           fi
 
           tag_version="v$new_version"
-
-          # Afficher la nouvelle version pour vérification
-          echo "Current version: $current_version"
           echo "New version: $new_version"
           echo "Tag version: $tag_version"
 
