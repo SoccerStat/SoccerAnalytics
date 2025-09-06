@@ -69,15 +69,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            branch_name=$GITHUB_HEAD_REF
-          else
-            branch_name=${GITHUB_REF#refs/heads/}
-          fi
-          
+          branch_name=${GITHUB_EVENT_NAME=="pull_request" ? $GITHUB_HEAD_REF : ${GITHUB_REF#refs/heads/}}
+
           git fetch origin $branch_name
           git rebase origin/$branch_name || echo "Rebase failed, skipping"
-          
 
           # Commit si nécessaire
           git add setup.py
