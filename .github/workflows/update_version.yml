@@ -15,8 +15,8 @@ permissions:
 jobs:
   update_version:
     runs-on: ubuntu-latest
+    # Si manuel (main) OU push automatique sur feature/* après build réussi
     if: |
-      # Si manuel (main) OU push automatique sur feature/* après build réussi
       github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'feature/')
     steps:
       - name: Checkout code
