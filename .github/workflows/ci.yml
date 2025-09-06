@@ -68,24 +68,24 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          branch_name=${GITHUB_EVENT_NAME=="pull_request" ? $GITHUB_HEAD_REF : ${GITHUB_REF#refs/heads/}}
-
-          git fetch origin $branch_name
-          git rebase origin/$branch_name || echo "Rebase failed, skipping"
 
           # Commit si nécessaire
           git add setup.py
           git commit -m "Update version to $new_version" || echo "No changes to commit"
 
-          # Push on the feature branch
+          # Determine the target branch for the push
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            # PR : push on the source branch
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_HEAD_REF
+            branch_name="$GITHUB_HEAD_REF"
           else
-            # main or workflow_dispatch
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
+            branch_name="${GITHUB_REF#refs/heads/}"
           fi
+
+          # Synchronize with the remote to prevent "branch tip is behind"
+          git fetch origin "$branch_name"
+          git rebase origin/"$branch_name" || echo "Rebase failed, continuing"
+
+          # Push the updated branch
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:"$branch_name"
 
           # Create the tag only if it doesn't exist yet
           if git rev-parse "$tag_version" >/dev/null 2>&1; then
