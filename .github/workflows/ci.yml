@@ -21,6 +21,7 @@ jobs:
           echo "❌ Direct pushes to main are not allowed. Please use a Pull Request."
           exit 1
   build:
+    if: github.ref != 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
     outputs:
       build_success: ${{ steps.build_check.outcome }}
