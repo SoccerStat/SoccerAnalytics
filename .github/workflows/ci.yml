@@ -1,13 +1,14 @@
-name: Build and Update SoccerScrapingAnalytics library
+name: Build and Update SoccerScrapingAnalytics
 
 on:
   push:
     branches:
-      - "feature/*"
+      - "feature/*"    # build uniquement
+      - "main"         # build après merge
   pull_request:
     branches:
-      - "main"
-  workflow_dispatch:
+      - "main"         # build + update version pour PR
+  workflow_dispatch:    # update manuelle si besoin
 
 permissions:
   contents: write
@@ -16,14 +17,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Check branch
-        run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/main" && "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            echo "❌ Direct pushes to main are not allowed. Please use a Pull Request."
-            exit 1
-          else
-            echo "✅ OK, continue build..."
-          fi
       - uses: actions/checkout@v4
 
       - name: Set up Python 3.11
@@ -39,35 +32,30 @@ jobs:
       - name: Lint with flake8
         run: make lint
 
-      - name: Mark build success
-        id: build_check
-        run: echo "done"
-
   update_version:
     needs: build
-    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/heads/feature/') || github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Fetch all tags
         run: git fetch --tags
 
       - name: Determine new version
         run: |
-          # Retrieve the last release tag
+          # Récupérer le dernier tag release (ignorer les snapshots)
           last_tag=$(git tag --list "v*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
-          last_tag=${last_tag#v} # To remove the 'v' in front of the tag
+          last_tag=${last_tag#v}
           echo "Current version: $last_tag"
           IFS='.' read -r major minor patch <<< "$last_tag"
 
-          if [[ "${GITHUB_REF}" == "refs/heads/main" || "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            # Main : patch increment
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            # Main manuel : incrément patch
             patch=$((patch + 1))
             new_version="$major.$minor.$patch"
           else
-            # Feature : snapshot based on the last tag release
+            # PR : snapshot basé sur le dernier tag release
             new_version="$major.$minor.$patch-snapshot"
           fi
 
@@ -75,21 +63,34 @@ jobs:
           echo "New version: $new_version"
           echo "Tag version: $tag_version"
 
-          # Update the tag in setup.py
+          # Mettre à jour setup.py
           sed -i "s/version='[^']*'/version='$new_version'/" setup.py
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Commit and push
+          # Commit si nécessaire
           git add setup.py
           git commit -m "Update version to $new_version" || echo "No changes to commit"
 
-          # Vérifie si le tag existe déjà avant de le créer
+          # Determine the target branch for the push
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            branch_name="$GITHUB_HEAD_REF"
+          else
+            branch_name="${GITHUB_REF#refs/heads/}"
+          fi
+
+          # Synchronize with the remote to prevent "branch tip is behind"
+          git fetch origin "$branch_name"
+          git rebase origin/"$branch_name" || echo "Rebase failed, continuing"
+
+          # Push the updated branch
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:"$branch_name"
+
+          # Create the tag only if it doesn't exist yet
           if git rev-parse "$tag_version" >/dev/null 2>&1; then
             echo "Tag $tag_version already exists, skipping tag creation."
           else
             git tag "$tag_version"
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
             git push --tags
           fi
