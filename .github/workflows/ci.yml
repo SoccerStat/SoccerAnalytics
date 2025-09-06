@@ -54,7 +54,8 @@ jobs:
         run: |
           # Retrieve the last release tag
           last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          last_tag=${last_tag#v}  # retirer le 'v'
+          last_tag=${last_tag#v}  # pour retirer le 'v'
+          echo "Current version: $last_tag"
           IFS='.' read -r major minor patch <<< "$last_tag"
 
           if [[ "${GITHUB_REF}" == "refs/heads/main" || "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
