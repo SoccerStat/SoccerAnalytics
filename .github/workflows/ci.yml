@@ -8,11 +8,6 @@ on:
     branches:
       - "main"
   workflow_dispatch:
-    inputs:
-      run_on_main:
-        description: "Run update on main manually"
-        required: false
-        default: "true"
 
 permissions:
   contents: write
@@ -44,7 +39,7 @@ jobs:
 
   update_version:
     needs: build
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')) }}
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/heads/feature/') || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -56,9 +51,8 @@ jobs:
       - name: Determine new version
         run: |
           # Retrieve the last release tag
-          # last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           last_tag=$(git tag --list "v*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
-          last_tag=${last_tag#v}  # pour retirer le 'v'
+          last_tag=${last_tag#v} # To remove the 'v' in front of the tag
           echo "Current version: $last_tag"
           IFS='.' read -r major minor patch <<< "$last_tag"
 
@@ -67,7 +61,7 @@ jobs:
             patch=$((patch + 1))
             new_version="$major.$minor.$patch"
           else
-            # Feature : snapshot based on the last tag
+            # Feature : snapshot based on the last tag release
             new_version="$major.$minor.$patch-snapshot"
           fi
 
@@ -83,10 +77,16 @@ jobs:
 
           # Commit and push
           git add setup.py
-          git commit -m "Update version to $new_version"
-          git tag "$tag_version"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
-          git push --tags
+          git commit -m "Update version to $new_version" || echo "No changes to commit"
+
+          # Vérifie si le tag existe déjà avant de le créer
+          if git rev-parse "$tag_version" >/dev/null 2>&1; then
+            echo "Tag $tag_version already exists, skipping tag creation."
+          else
+            git tag "$tag_version"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
+            git push --tags
+          fi
 
   # Job pour bloquer push direct sur main (optionnel)
   block_direct_main_push:
