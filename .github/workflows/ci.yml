@@ -34,7 +34,7 @@ jobs:
 
   update_version:
     needs: build
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,40 +54,41 @@ jobs:
             # Main manuel : incrément patch
             patch=$((patch + 1))
             new_version="$major.$minor.$patch"
-          else
+          elif [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
             # PR : snapshot basé sur le dernier tag release
             new_version="$major.$minor.$patch-snapshot"
+          else
+            # Merge main automatique : pas de commit, juste tag
+            new_version="$major.$minor.$patch"
           fi
 
           tag_version="v$new_version"
           echo "New version: $new_version"
           echo "Tag version: $tag_version"
 
-          # Mettre à jour setup.py
-          sed -i "s/version='[^']*'/version='$new_version'/" setup.py
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Commit si nécessaire
-          git add setup.py
-          git commit -m "Update version to $new_version" || echo "No changes to commit"
-
-          # Determine the target branch for the push
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            branch_name="$GITHUB_HEAD_REF"
-          else
-            branch_name="${GITHUB_REF#refs/heads/}"
+          # Mettre à jour setup.py uniquement pour PR ou workflow_dispatch
+          if [[ "${GITHUB_EVENT_NAME}" != "push" || "$GITHUB_REF" != "refs/heads/main" ]]; then
+            sed -i "s/version='[^']*'/version='$new_version'/" setup.py
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add setup.py
+            git commit -m "Update version to $new_version" || echo "No changes to commit"
           fi
 
-          # Synchronize with the remote to prevent "branch tip is behind"
-          git fetch origin "$branch_name"
-          git rebase origin/"$branch_name" || echo "Rebase failed, continuing"
+          # Déterminer la branche cible pour le push
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            branch_name="$GITHUB_HEAD_REF"
+            git fetch origin "$branch_name"
+            git rebase origin/"$branch_name" || echo "Rebase failed, continuing"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:"$branch_name"
+          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            branch_name="${GITHUB_REF#refs/heads/}"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$branch_name
+          else
+            echo "Merge on main, no push required."
+          fi
 
-          # Push the updated branch
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:"$branch_name"
-
-          # Create the tag only if it doesn't exist yet
+          # Créer le tag uniquement s'il n'existe pas
           if git rev-parse "$tag_version" >/dev/null 2>&1; then
             echo "Tag $tag_version already exists, skipping tag creation."
           else
