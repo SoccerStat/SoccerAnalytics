@@ -95,5 +95,5 @@ jobs:
     steps:
       - name: Block direct push to main
         run: |
-          echo "❌ Direct pushes to main are not allowed. Please open a Pull Request."
+          echo "❌ Direct pushes t   o main are not allowed. Please open a Pull Request."
           exit 1
