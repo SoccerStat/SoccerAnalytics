@@ -18,7 +18,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - run: |
-          echo "❌ Direct pushes to main are not allowed. Please use a Pull Request."
+          echo "❌ Direct pushes to  main are not allowed. Please use a Pull Request."
           exit 1
   build:
     if: github.ref != 'refs/heads/main' || github.event_name != 'push'
