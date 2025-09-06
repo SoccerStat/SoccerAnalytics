@@ -50,6 +50,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Fetch all tags
+        run: git fetch --tags
+
       - name: Determine new version
         run: |
           # Retrieve the last release tag
