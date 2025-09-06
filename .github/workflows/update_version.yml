@@ -1,7 +1,17 @@
 name: Updating SoccerScrapingAnalytics library
 
 on:
+  # Automatique sur les branches feature
+  push:
+    branches:
+      - "feature/*"
+  # Manuel pour main
   workflow_dispatch:
+    inputs:
+      bump_version:
+        description: "Lancer la mise à jour sur main"
+        required: false
+        default: "true"
 
 permissions:
   contents: write
@@ -11,44 +21,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Update version in setup.py
-      run: |
-        # Récupérer la version courante depuis le fichier setup.py
-        current_version=$(grep "version=" setup.py | sed -E "s/.*version='([^']+)'.*/\1/")
-        
-        # Diviser la version en major, minor, patch
-        IFS='.' read -r major minor patch <<< "$current_version"
-        
-        # Si on est sur la branche 'main', incrémenter la version PATCH
-        if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
-          patch=$((patch + 1))
-          new_version="$major.$minor.$patch"
+      - name: Update version in setup.py
+        run: |
+          # Récupérer la version courante depuis setup.py
+          current_version=$(grep "version=" setup.py | sed -E "s/.*version='([^']+)'.*/\1/")
+
+          # Diviser la version en major, minor, patch
+          IFS='.' read -r major minor patch <<< "$current_version"
+
+          # Si on est sur la branche 'main', incrémenter la version PATCH
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            # Sur main : incrément patch
+            patch=$((patch + 1))
+            new_version="$major.$minor.$patch"
+          else
+            # Sur feature/* : snapshot
+            new_version="$current_version-snapshot"
+          fi
+
           tag_version="v$new_version"
-        else
-          # Sinon, ajouter '-snapshot' à la version
-          new_version="$current_version-snapshot"
-          tag_version="v$new_version"
-        fi
 
-        # Afficher la nouvelle version pour vérification
-        echo "Current version: $current_version"
-        echo "New version: $new_version"
-        echo "Tag version: $tag_version"
-        
-        # Met à jour la version dans le fichier setup.py
-        sed -i "s/version='[^']*'/version='$new_version'/" setup.py
+          # Afficher la nouvelle version pour vérification
+          echo "Current version: $current_version"
+          echo "New version: $new_version"
+          echo "Tag version: $tag_version"
 
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Met à jour la version dans le fichier setup.py
+          sed -i "s/version='[^']*'/version='$new_version'/" setup.py
 
-        # Commit et push du changement de version
-        git add setup.py
-        git commit -m "Update version to $new_version"
-        git tag "$tag_version"
-        
-        # Push les modifications et le tag
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
-        git push --tags
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Commit et push
+          git add setup.py
+          git commit -m "Update version to $new_version"
+          git tag "$tag_version"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
+          git push --tags
