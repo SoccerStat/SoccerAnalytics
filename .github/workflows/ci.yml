@@ -1,0 +1,78 @@
+name: Build and Update SoccerScrapingAnalytics library
+
+on:
+  push:
+    branches:
+      - "feature/*"
+  pull_request:
+    branches:
+      - "main"
+  workflow_dispatch:
+    inputs:
+      run_on_main:
+        description: "Run update on main manually"
+        required: false
+        default: "true"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      build_success: ${{ steps.build_check.outcome }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with flake8
+        run: make lint
+
+      - name: Mark build success
+        id: build_check
+        run: echo "done"
+
+  update_version:
+    needs: build
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine new version
+        run: |
+          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          last_tag=${last_tag#v}
+          IFS='.' read -r major minor patch <<< "$last_tag"
+
+          if [[ "${GITHUB_REF}" == "refs/heads/main" || "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            patch=$((patch + 1))
+            new_version="$major.$minor.$patch"
+          else
+            new_version="$major.$minor.$patch-snapshot"
+          fi
+
+          tag_version="v$new_version"
+          echo "New version: $new_version"
+          echo "Tag version: $tag_version"
+
+          sed -i "s/version='[^']*'/version='$new_version'/" setup.py
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add setup.py
+          git commit -m "Update version to $new_version"
+          git tag "$tag_version"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
+          git push --tags
