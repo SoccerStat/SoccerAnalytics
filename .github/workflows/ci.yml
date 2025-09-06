@@ -73,11 +73,19 @@ jobs:
           git add setup.py
           git commit -m "Update version to $new_version" || echo "No changes to commit"
 
-          # Créer le tag seulement s'il n'existe pas déjà
+          # Push on the feature branch
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            # PR : push on the source branch
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_HEAD_REF
+          else
+            # main or workflow_dispatch
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
+          fi
+
+          # Create the tag only if it doesn't exist yet
           if git rev-parse "$tag_version" >/dev/null 2>&1; then
             echo "Tag $tag_version already exists, skipping tag creation."
           else
             git tag "$tag_version"
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
             git push --tags
           fi
