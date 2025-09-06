@@ -13,6 +13,13 @@ permissions:
   contents: write
 
 jobs:
+  precheck:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - run: |
+          echo "❌ Direct pushes to main are not allowed. Please use a Pull Request."
+          exit 1
   build:
     runs-on: ubuntu-latest
     outputs:
@@ -87,13 +94,3 @@ jobs:
             git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$GITHUB_REF
             git push --tags
           fi
-
-  # Job pour bloquer push direct sur main (optionnel)
-  block_direct_main_push:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Block direct push to main
-        run: |
-          echo "❌ Direct pushes t   o main are not allowed. Please open a Pull Request."
-          exit 1
