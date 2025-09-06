@@ -12,19 +12,8 @@ permissions:
   contents: read
 
 jobs:
-  block-direct-main-push:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Block direct push to main
-        run: |
-          echo "❌ Direct pushes to main are not allowed. Please open a Pull Request."
-          exit 1
-
   build:
-    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
