@@ -3,12 +3,11 @@ name: Build and Update SoccerScrapingAnalytics
 on:
   push:
     branches:
-      - "feature/*"    # build uniquement
-      - "main"         # build après merge
+      - "feature/*"   # build classique sur feature
   pull_request:
     branches:
-      - "main"         # build + update version pour PR
-  workflow_dispatch:    # update manuelle si besoin
+      - "main"        # build + snapshot sur PR
+  workflow_dispatch:   # main manuel : build + patch update
 
 permissions:
   contents: write
@@ -63,7 +62,7 @@ jobs:
           echo "New version: $new_version"
           echo "Tag version: $tag_version"
 
-          # Mettre à jour setup.py
+          # Mettre à jour setup.py uniquement pour PR ou workflow_dispatch
           sed -i "s/version='[^']*'/version='$new_version'/" setup.py
 
           git config user.name "github-actions[bot]"
@@ -73,24 +72,26 @@ jobs:
           git add setup.py
           git commit -m "Update version to $new_version" || echo "No changes to commit"
 
-          # Determine the target branch for the push
+          # Déterminer la branche cible pour le push
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
             branch_name="$GITHUB_HEAD_REF"
-          else
+            # Rebase pour éviter "branch tip is behind"
+            git fetch origin "$branch_name"
+            git rebase origin/"$branch_name" || echo "Rebase failed, continuing"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:"$branch_name"
+          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
             branch_name="${GITHUB_REF#refs/heads/}"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$branch_name
           fi
 
-          # Synchronize with the remote to prevent "branch tip is behind"
-          git fetch origin "$branch_name"
-          git rebase origin/"$branch_name" || echo "Rebase failed, continuing"
-
-          # Push the updated branch
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:"$branch_name"
-
-          # Create the tag only if it doesn't exist yet
-          if git rev-parse "$tag_version" >/dev/null 2>&1; then
-            echo "Tag $tag_version already exists, skipping tag creation."
-          else
-            git tag "$tag_version"
-            git push --tags
+          # Supprimer l'ancien tag snapshot si il existe déjà
+          if [[ "${new_version}" == *"-snapshot" ]]; then
+            if git rev-parse "$tag_version" >/dev/null 2>&1; then
+              git tag -d "$tag_version"
+              git push --delete origin "$tag_version"
+            fi
           fi
+
+          # Créer le tag
+          git tag "$tag_version"
+          git push --tags
