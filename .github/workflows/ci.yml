@@ -3,11 +3,12 @@ name: Build and Update SoccerScrapingAnalytics
 on:
   push:
     branches:
-      - "feature/*"   # build classique sur feature
+      - "feature/*"    # Build classique sur feature
+      - "main"         # Build automatique après merge
   pull_request:
     branches:
-      - "main"        # build + snapshot sur PR
-  workflow_dispatch:   # main manuel : build + patch update
+      - "main"         # PR vers main → snapshot
+  workflow_dispatch:   # Main manuel → patch update
 
 permissions:
   contents: write
@@ -43,12 +44,13 @@ jobs:
 
       - name: Determine new version
         run: |
-          # Récupérer le dernier tag release (ignorer les snapshots)
+          # Retrieve the last release tag (ignore snapshots)
           last_tag=$(git tag --list "v*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
           last_tag=${last_tag#v}
           echo "Current version: $last_tag"
           IFS='.' read -r major minor patch <<< "$last_tag"
 
+          # Determine the new version
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
             # Main manuel : incrément patch
             patch=$((patch + 1))
@@ -62,29 +64,25 @@ jobs:
           echo "New version: $new_version"
           echo "Tag version: $tag_version"
 
-          # Mettre à jour setup.py uniquement pour PR ou workflow_dispatch
-          sed -i "s/version='[^']*'/version='$new_version'/" setup.py
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Commit si nécessaire
-          git add setup.py
-          git commit -m "Update version to $new_version" || echo "No changes to commit"
-
-          # Déterminer la branche cible pour le push
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            # Update setup.py
+            sed -i "s/version='[^']*'/version='$new_version'/" setup.py
+            git add setup.py
+            git commit -m "Update version to $new_version" || echo "No changes to commit"
+
+            # Push on the PR's source branch
             branch_name="$GITHUB_HEAD_REF"
-            # Rebase pour éviter "branch tip is behind"
             git fetch origin "$branch_name"
             git rebase origin/"$branch_name" || echo "Rebase failed, continuing"
             git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:"$branch_name"
-          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            branch_name="${GITHUB_REF#refs/heads/}"
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:$branch_name
+          else
+            echo "Main branch protected or workflow dispatch → skip commit push"
           fi
 
-          # Supprimer l'ancien tag snapshot si il existe déjà
+          # Delete the old snapshot tag if it already exists
           if [[ "${new_version}" == *"-snapshot" ]]; then
             if git rev-parse "$tag_version" >/dev/null 2>&1; then
               git tag -d "$tag_version"
@@ -92,6 +90,6 @@ jobs:
             fi
           fi
 
-          # Créer le tag
-          git tag "$tag_version"
+          # Create the tag
+          git tag -f "$tag_version"
           git push --tags
