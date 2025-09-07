@@ -83,6 +83,7 @@ jobs:
           fi
 
           # Delete the old snapshot tag if it already exists
+
           if [[ "${new_version}" == *"-snapshot" ]]; then
             if git rev-parse "$tag_version" >/dev/null 2>&1; then
               git tag -d "$tag_version"
@@ -92,4 +93,5 @@ jobs:
 
           # Create the tag
           git tag -f "$tag_version"
+
           git push --tags
