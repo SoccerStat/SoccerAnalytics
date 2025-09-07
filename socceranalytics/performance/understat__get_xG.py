@@ -1,13 +1,14 @@
 import aiohttp
 from understat import Understat
 import asyncio
-import json
+
 
 def reprocess_club_name(club):
     return club.replace(
         'Parma Calcio 1913',
         'Parma'
     )
+
 
 def get_teams_xG(understat_comp, season):
     async def main():
@@ -47,6 +48,7 @@ def get_teams_xG(understat_comp, season):
             return xG_data
         return None
     return asyncio.run(main())
+
 
 def get_players_xG(match_id):
     async def main():

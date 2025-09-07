@@ -3,13 +3,14 @@ from socceranalytics.utils.data_loader import DataLoader
 
 from socceranalytics.utils.logging import log
 
+
 class AllTeams:
     """Fill teams performance tables.
     """
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         self.db = postgres_to_dataframe
         self.data_loader = DataLoader(postgres_to_dataframe)
-        self.sql_path = f"socceranalytics.sql.all_items.teams"
+        self.sql_path = "socceranalytics.sql.all_items.teams"
 
     def process_all_teams_table(self):
         """Get all teams we may have that have participated in any competition at any season.
