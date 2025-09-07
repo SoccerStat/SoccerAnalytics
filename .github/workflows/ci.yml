@@ -83,9 +83,9 @@ jobs:
           fi
 
           # Delete the old snapshot tag if it already exists
-
           if [[ "${new_version}" == *"-snapshot" ]]; then
             if git rev-parse "$tag_version" >/dev/null 2>&1; then
+              echo "Snapshot tag ${new_version} already exists: recreating it..."
               git tag -d "$tag_version"
               git push --delete origin "$tag_version"
             fi
