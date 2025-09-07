@@ -7,6 +7,7 @@ from socceranalytics.utils.comp_helper import CompHelper
 
 from socceranalytics.utils.logging import log
 
+
 class TeamsPerformance(BasePerformance, CompHelper):
     """Fill teams performance tables.
     """
@@ -28,15 +29,26 @@ class TeamsPerformance(BasePerformance, CompHelper):
 
         log("Filling the Teams' expected performance table...")
         insert_query = sql.SQL("""
-            INSERT INTO understat.staging_teams_understat_performance
-            ("match", "competition", "season", "name_team", "name_opponent", "played_home", "home_xg_for", "away_xg_for", "home_xg_against", "away_xg_against")
+            INSERT INTO understat.staging_teams_understat_performance(
+                "match",
+                "competition",
+                "season",
+                "name_team",
+                "name_opponent",
+                "played_home",
+                "home_xg_for",
+                "away_xg_for",
+                "home_xg_against",
+                "away_xg_against"
+            )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT ("match", "played_home") DO NOTHING
         """)
-        # expected_performance_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
+        # expected_performance_ranking_template =
+        # self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
 
         for season in self.data_loader.get_seasons():
-            for id_comp,name_comp in zip(self.data_loader.get_competition_ids(), self.data_loader.get_competition_names()):
+            for id_comp, name_comp in zip(self.data_loader.get_competition_ids(), self.data_loader.get_competition_names()):
                 self.db.execute_query(
                     teams_ranking_template.format(
                         season=season,

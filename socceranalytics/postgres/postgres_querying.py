@@ -5,7 +5,6 @@ import warnings
 from psycopg2.extensions import cursor
 from psycopg2 import OperationalError, DatabaseError
 import pandas as pd
-import os
 
 from socceranalytics.utils.logging import log
 
