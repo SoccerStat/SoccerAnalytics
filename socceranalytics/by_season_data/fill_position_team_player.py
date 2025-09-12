@@ -15,6 +15,7 @@ class TeamPlayer:
         by_season_query = self.db.read_sql_file(self.sql_path, "get_most_played_positions.sql")
 
         for season in self.data_loader.get_seasons():
+            log(f"\t{season}")
             self.db.execute_query(
                 by_season_query.format(
                     season=season,
