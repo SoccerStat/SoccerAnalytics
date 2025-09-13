@@ -9,7 +9,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  issues: write
 
 jobs:
   create_release:
@@ -18,10 +17,11 @@ jobs:
     if: |
       !contains(github.event.head_commit.message, 'snapshot') &&
       !contains(github.event.head_commit.message, '[skip ci]') &&
-      !startsWith(github.event.head_commit.message, 'Release:')
+      !contains(github.event.head_commit.message, 'Release')
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - name: Fetch all tags
@@ -42,13 +42,18 @@ jobs:
             last_tag="v0.0.0"
           fi
           last_tag=${last_tag#v}
+          
+          echo "Last tag: $last_tag"
+
           IFS='.' read -r major minor patch <<< "$last_tag"
           patch=$((patch + 1))
           new_version="$major.$minor.$patch"
           tag_version="v$new_version"
+
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
+          echo "New version will be: $new_version"
           echo "tag_version=$tag_version" >> $GITHUB_OUTPUT
-          echo "Next version will be: $new_version"
+          echo "Tag version: $tag_version"
 
       - name: Check if release already exists
         id: check_release
@@ -56,58 +61,67 @@ jobs:
           branch_name="release/${{ steps.release_version.outputs.new_version }}"
           tag_name="${{ steps.release_version.outputs.tag_version }}"
           
-          # Vérifier la branche
+          # Checks if the branch already exists
           if git ls-remote --exit-code --heads origin "$branch_name" >/dev/null 2>&1; then
             echo "branch_exists=true" >> $GITHUB_OUTPUT
           else
             echo "branch_exists=false" >> $GITHUB_OUTPUT
           fi
           
-          # Vérifier le tag
+          # Checks if the tag already exists
           if git ls-remote --exit-code --tags origin "$tag_name" >/dev/null 2>&1; then
             echo "tag_exists=true" >> $GITHUB_OUTPUT
           else
             echo "tag_exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Set Git identity
-        if: steps.check_release.outputs.branch_exists == 'false'
+      - name: Set Git identity if the release branch does not exist
         run: |
-          git config user.name "github-app[bot]"
-          git config user.email "github-app[bot]@users.noreply.github.com"
+          if [ "${{ steps.check_release.outputs.branch_exists }}" = "false" ]; then
+            git config user.name "github-app[bot]"
+            git config user.email "github-app[bot]@users.noreply.github.com"
+          else
+            echo "The branch $branch_name already exists: skipped."
+          fi
 
-      - name: Update version for release
-        if: steps.check_release.outputs.branch_exists == 'false'
+      - name: Update version for release if the release branch does not exist
         run: |
-          sed -i "s/version='[^']*'/version='${{ steps.release_version.outputs.new_version }}'/" setup.py
+          if [ "${{ steps.check_release.outputs.branch_exists }}" = "false" ]; then
+            sed -i "s/version='[^']*'/version='${{ steps.release_version.outputs.new_version }}'/" setup.py
+          else
+            echo "The branch $branch_name already exists: skipped."
+          fi
 
-      - name: Create PR for release bump
+      - name: Create PR for release bump if the release branch does not exist
         id: create_pr
-        if: steps.check_release.outputs.branch_exists == 'false'
         run: |
-          branch_name="release/${{ steps.release_version.outputs.new_version }}"
-          git checkout -b "$branch_name"
-          git add setup.py
-          git commit -m "Release: bump version to ${{ steps.release_version.outputs.new_version }}"
-          git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:"$branch_name"
-          
-          pr_url=$(gh pr create \
-            --base main \
-            --head "$branch_name" \
-            --title "Release v${{ steps.release_version.outputs.new_version }}" \
-            --body "🚀 **Automatic Release PR**
-
-          This PR bumps the version to \`v${{ steps.release_version.outputs.new_version }}\`.
-
-          **⚠️ Important:** This PR should be merged immediately after review to complete the release process." \
-            --label "release,automated")
-          
-          echo "pr_url=$pr_url" >> $GITHUB_OUTPUT
-          echo "Created release PR: $pr_url"
+          if [ "${{ steps.check_release.outputs.branch_exists }}" = "false" ]; then
+            branch_name="release/${{ steps.release_version.outputs.new_version }}"
+            git checkout -b "$branch_name"
+            git add setup.py
+            git commit -m "Release: bump version to ${{ steps.release_version.outputs.new_version }}"
+            git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:"$branch_name"
+            
+            pr_url=$(gh pr create \
+              --base main \
+              --head "$branch_name" \
+              --title "Release v${{ steps.release_version.outputs.new_version }}" \
+              --body "🚀 **Automatic Release PR**
+  
+            This PR bumps the version to \`v${{ steps.release_version.outputs.new_version }}\`.
+  
+            **⚠️ Important:** This PR should be merged immediately after review to complete the release process." \
+              --label "release,automated")
+            
+            echo "pr_url=$pr_url" >> $GITHUB_OUTPUT
+            echo "Created release PR: $pr_url"
+          else
+            echo "The branch $branch_name already exists: skipped."
+          fi
         env:
           GH_TOKEN: ${{ steps.get_app_token.outputs.token }}
 
-      - name: Create release tag
+      - name: Create release tag if it does not exist yet
         if: steps.create_pr.outputs.pr_url != '' && steps.check_release.outputs.tag_exists == 'false'
         run: |
           git tag "${{ steps.release_version.outputs.tag_version }}"
