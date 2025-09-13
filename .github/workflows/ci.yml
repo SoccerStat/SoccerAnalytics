@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
@@ -54,7 +54,7 @@ jobs:
           fi
           last_tag=${last_tag#v}
           IFS='.' read -r major minor patch <<< "$last_tag"
-          snapshot_version="$major.$minor.$patch-snapshot"
+          snapshot_version="$major.$minor.$patch-snapshot-${{ github.event.number }}"
           echo "snapshot_version=$snapshot_version" >> $GITHUB_OUTPUT
 
       - name: Set Git identity
@@ -77,8 +77,7 @@ jobs:
           git tag "$snapshot_tag"
           git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --tags
 
-
-  post_merge:
+  post_merge_release:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
@@ -111,36 +110,42 @@ jobs:
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
           echo "tag_version=$tag_version" >> $GITHUB_OUTPUT
 
-      - name: Create release branch and commit bump
+      - name: Set Git identity
         run: |
           git config user.name "github-app[bot]"
           git config user.email "github-app[bot]@users.noreply.github.com"
-          
+
+      - name: Check if release already exists
+        id: check_release
+        run: |
           branch_name="release/${{ steps.release_version.outputs.new_version }}"
           
-          # Vérifier si la branche existe déjà
-          if git show-ref --verify --quiet refs/remotes/origin/"$branch_name"; then
-            echo "Branch $branch_name already exists, skipping creation"
-            exit 0
+          # Vérifier si la branche existe déjà localement ou à distance
+          if git ls-remote --exit-code --heads origin "$branch_name" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release branch $branch_name already exists, skipping creation"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release branch $branch_name does not exist, will create"
           fi
-          
-          # Créer la branche locale
-          git checkout -b "$branch_name"
-          
-          # Mettre à jour la version
+
+      - name: Update version and create PR
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          # Modifier la version dans le répertoire de travail
           sed -i "s/version='[^']*'/version='${{ steps.release_version.outputs.new_version }}'/" setup.py
-          git add setup.py
-          git commit -m "Release: bump version to ${{ steps.release_version.outputs.new_version }}"
-          
-          # Pousser la branche distante
-          git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:"$branch_name"
 
       - name: Create PR for release bump
         id: create_pr
+        if: steps.check_release.outputs.exists == 'false'
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ steps.get_app_token.outputs.token }}
+          commit-message: "Release: bump version to ${{ steps.release_version.outputs.new_version }}"
+          committer: "github-app[bot] <github-app[bot]@users.noreply.github.com>"
+          author: "github-app[bot] <github-app[bot]@users.noreply.github.com>"
           branch: "release/${{ steps.release_version.outputs.new_version }}"
+          delete-branch: true
           base: main
           title: "Release v${{ steps.release_version.outputs.new_version }}"
           body: |
@@ -162,3 +167,9 @@ jobs:
         run: |
           git tag "${{ steps.release_version.outputs.tag_version }}"
           git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --tags
+
+      - name: Output PR information
+        if: steps.create_pr.outputs.pull-request-number
+        run: |
+          echo "Created PR #${{ steps.create_pr.outputs.pull-request-number }}"
+          echo "PR URL: ${{ steps.create_pr.outputs.pull-request-url }}"
