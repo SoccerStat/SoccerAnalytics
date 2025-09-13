@@ -37,10 +37,6 @@ jobs:
       - name: Lint with flake8
         run: make lint
 
-      - name: Run tests (optional)
-        run: |
-          # make test
-
       - name: Generate GitHub App token
         id: get_app_token
         uses: tibdex/github-app-token@v2
