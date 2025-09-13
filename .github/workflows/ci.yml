@@ -90,27 +90,35 @@ jobs:
           git config user.name "github-app[bot]"
           git config user.email "github-app[bot]@users.noreply.github.com"
 
+          # Complete fetch for all the branches and tags
+          git fetch --prune --unshallow || true
+          git fetch origin
+
           branch_name="release/${{ steps.release_version.outputs.new_version }}"
+
+          # Create the local branch
           git checkout -b "$branch_name"
 
+          # Update version
           sed -i "s/version='[^']*'/version='${{ steps.release_version.outputs.new_version }}'/" setup.py
           git add setup.py
           git commit -m "Release: bump version to ${{ steps.release_version.outputs.new_version }}"
 
+          # Push on the remote branche
           git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:"$branch_name"
 
       - name: Create PR for release bump
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ steps.get_app_token.outputs.token }}
-          branch: "release/${{ steps.release_version.outputs.new_version }}"
+          branch: "release/${{ steps.release_version.outputs.new_version }}"  # Local branch
           base: main
           title: "Release v${{ steps.release_version.outputs.new_version }}"
           body: "Automatic PR to bump version to v${{ steps.release_version.outputs.new_version }}"
           labels: "release"
           commit-message: "Release: bump version to ${{ steps.release_version.outputs.new_version }}"
 
-      - name: Create tag (optional)
+      - name: Create tag
         run: |
           git tag -f "${{ steps.release_version.outputs.tag_version }}"
           git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --tags
