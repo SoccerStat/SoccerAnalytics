@@ -19,6 +19,8 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
@@ -42,6 +44,11 @@ jobs:
           IFS='.' read -r major minor patch <<< "$last_tag"
           snapshot_version="$major.$minor.$patch-snapshot"
           echo "snapshot_version=$snapshot_version" >> $GITHUB_OUTPUT
+          
+      - name: Set Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Update version in PR
         run: |
