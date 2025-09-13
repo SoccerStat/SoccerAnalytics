@@ -86,7 +86,13 @@ jobs:
             git rebase origin/"$branch_name" || echo "Rebase failed, continuing"
             git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:"$branch_name"
           else
-            echo "Main branch protected or workflow dispatch → skip commit push"
+            # Update setup.py
+            sed -i "s/version='[^']*'/version='$new_version'/" setup.py
+            git add setup.py
+            git commit -m "Release: bump version to $new_version" || echo "No changes to commit"
+          
+            # Push on main with the App token
+            git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:main
           fi
 
           # Delete the old snapshot tag if it already exists
