@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened]
   push:
     branches:
       - main
@@ -21,6 +22,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
@@ -35,33 +37,54 @@ jobs:
       - name: Lint with flake8
         run: make lint
 
+      - name: Generate GitHub App token
+        id: get_app_token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Determine snapshot version
         id: snapshot_version
         run: |
           git fetch --tags
           last_tag=$(git tag --list "v*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
+          if [ -z "$last_tag" ]; then
+            last_tag="v0.0.0"
+          fi
           last_tag=${last_tag#v}
           IFS='.' read -r major minor patch <<< "$last_tag"
           snapshot_version="$major.$minor.$patch-snapshot"
           echo "snapshot_version=$snapshot_version" >> $GITHUB_OUTPUT
-          
+
       - name: Set Git identity
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-app[bot]"
+          git config user.email "github-app[bot]@users.noreply.github.com"
 
       - name: Update version in PR
         run: |
           sed -i "s/version='[^']*'/version='${{ steps.snapshot_version.outputs.snapshot_version }}'/" setup.py
           git add setup.py
-          git commit -m "Update version to ${{ steps.snapshot_version.outputs.snapshot_version }}" || echo "No changes to commit"
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m "Update version to ${{ steps.snapshot_version.outputs.snapshot_version }}"
+            git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:${{ github.head_ref }}
+          fi
+
+      - name: Create snapshot tag
+        run: |
+          snapshot_tag="v${{ steps.snapshot_version.outputs.snapshot_version }}"
+          git tag "$snapshot_tag"
+          git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --tags
+
 
   post_merge:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Fetch all tags
         run: git fetch --tags
@@ -77,6 +100,9 @@ jobs:
         id: release_version
         run: |
           last_tag=$(git tag --list "v*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
+          if [ -z "$last_tag" ]; then
+            last_tag="v0.0.0"
+          fi
           last_tag=${last_tag#v}
           IFS='.' read -r major minor patch <<< "$last_tag"
           patch=$((patch + 1))
@@ -89,36 +115,50 @@ jobs:
         run: |
           git config user.name "github-app[bot]"
           git config user.email "github-app[bot]@users.noreply.github.com"
-
-          # Complete fetch for all the branches and tags
-          git fetch --prune --unshallow || true
-          git fetch origin
-
+          
           branch_name="release/${{ steps.release_version.outputs.new_version }}"
-
-          # Create the local branch
+          
+          # Vérifier si la branche existe déjà
+          if git show-ref --verify --quiet refs/remotes/origin/"$branch_name"; then
+            echo "Branch $branch_name already exists, skipping creation"
+            exit 0
+          fi
+          
+          # Créer la branche locale
           git checkout -b "$branch_name"
-
-          # Update version
+          
+          # Mettre à jour la version
           sed -i "s/version='[^']*'/version='${{ steps.release_version.outputs.new_version }}'/" setup.py
           git add setup.py
           git commit -m "Release: bump version to ${{ steps.release_version.outputs.new_version }}"
-
-          # Push on the remote branche
+          
+          # Pousser la branche distante
           git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:"$branch_name"
 
       - name: Create PR for release bump
+        id: create_pr
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ steps.get_app_token.outputs.token }}
-          branch: "release/${{ steps.release_version.outputs.new_version }}"  # Local branch
+          branch: "release/${{ steps.release_version.outputs.new_version }}"
           base: main
           title: "Release v${{ steps.release_version.outputs.new_version }}"
-          body: "Automatic PR to bump version to v${{ steps.release_version.outputs.new_version }}"
-          labels: "release"
-          commit-message: "Release: bump version to ${{ steps.release_version.outputs.new_version }}"
+          body: |
+            🚀 **Automatic Release PR**
+            
+            This PR bumps the version to `v${{ steps.release_version.outputs.new_version }}` and prepares for release.
+            
+            **Changes:**
+            - Updated version in `setup.py`
+            
+            **Next steps:**
+            1. Review and approve this PR
+            2. Merge to trigger tag creation
+          labels: "release,automated"
+          assignees: ${{ github.repository_owner }}
 
-      - name: Create tag
+      - name: Create release tag
+        if: steps.create_pr.outputs.pull-request-number
         run: |
-          git tag -f "${{ steps.release_version.outputs.tag_version }}"
+          git tag "${{ steps.release_version.outputs.tag_version }}"
           git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --tags
