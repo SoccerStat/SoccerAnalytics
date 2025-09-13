@@ -17,8 +17,7 @@ jobs:
     if: |
       !contains(github.head_ref, 'release/') &&
       !contains(github.event.pull_request.labels.*.name, 'release') &&
-      !contains(github.event.pull_request.labels.*.name, 'automated') &&
-      github.actor != 'github-app[bot]'
+      !contains(github.event.pull_request.labels.*.name, 'automated')
     steps:
       - uses: actions/checkout@v4 # Clone the repository in the runner
         with:
@@ -54,7 +53,7 @@ jobs:
             last_tag="v0.0.0"
           fi
           last_tag=${last_tag#v}
-          
+
           echo "Last tag: $last_tag"
 
           IFS='.' read -r major minor patch <<< "$last_tag"
@@ -73,10 +72,10 @@ jobs:
         run: |
           current_version=$(grep -o "version='[^']*'" setup.py | sed "s/version='\\([^']*\\)'/\\1/")
           target_version="${{ steps.snapshot_version.outputs.snapshot_version }}"
-          
+
           echo "Current version: $current_version"
           echo "Target version: $target_version"
-          
+
           if [ "$current_version" != "$target_version" ]; then
             sed -i "s/version='[^']*'/version='$target_version'/" setup.py
             git add setup.py
@@ -84,16 +83,22 @@ jobs:
             git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:${{ github.head_ref }}
           fi
 
-      - name: Create snapshot tag
+      - name: Create snapshot tag aligned with main
         run: |
           snapshot_tag="v${{ steps.snapshot_version.outputs.snapshot_version }}"
-          
+
           echo "Snapshot tag: $snapshot_tag"
-          
+
+          # Merge main into a temporary branch to align snapshot
+          git fetch origin main
+          git checkout -b temp-snapshot origin/main
+          git merge --no-commit --no-ff ${{ github.head_ref }} || true
+
+          # Create and push tag if it doesn't already exist
           if ! git tag -l "$snapshot_tag" | grep -q "$snapshot_tag"; then
             git tag "$snapshot_tag"
-            git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --tags
-            echo "Created tag $snapshot_tag"
+            git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} "$snapshot_tag"
+            echo "Created tag $snapshot_tag on main+PR"
           else
             echo "Tag $snapshot_tag already exists"
           fi
