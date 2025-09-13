@@ -39,15 +39,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fetch all tags
+        run: git fetch --tags
+
       - name: Generate GitHub App token
         id: get_app_token
         uses: tibdex/github-app-token@v2
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
-
-      - name: Fetch all tags
-        run: git fetch --tags
 
       - name: Determine new version
         run: |
@@ -71,8 +71,8 @@ jobs:
           echo "New version: $new_version"
           echo "Tag version: $tag_version"
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-app[bot]"
+          git config user.email "github-app[bot]@users.noreply.github.com"
 
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
             # Update setup.py
@@ -94,7 +94,7 @@ jobs:
             if git rev-parse "$tag_version" >/dev/null 2>&1; then
               echo "Snapshot tag ${new_version} already exists: recreating it..."
               git tag -d "$tag_version"
-              git push --delete origin "$tag_version"
+              git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --delete "$tag_version"
             fi
           fi
 
