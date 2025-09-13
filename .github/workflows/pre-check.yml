@@ -83,22 +83,21 @@ jobs:
             git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:${{ github.head_ref }}
           fi
 
-      - name: Create snapshot tag aligned with main
+      - name: Create snapshot tag aligned with PR branch
         run: |
           snapshot_tag="v${{ steps.snapshot_version.outputs.snapshot_version }}"
 
           echo "Snapshot tag: $snapshot_tag"
 
-          # Merge main into a temporary branch to align snapshot
-          git fetch origin main
-          git checkout -b temp-snapshot origin/main
-          git merge --no-commit --no-ff ${{ github.head_ref }} || true
+          # Checkout PR branch (feature source)
+          git fetch origin ${{ github.head_ref }}
+          git checkout ${{ github.head_ref }}
 
-          # Create and push tag if it doesn't already exist
+          # Create and push tag if it doesn't exist
           if ! git tag -l "$snapshot_tag" | grep -q "$snapshot_tag"; then
             git tag "$snapshot_tag"
             git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} "$snapshot_tag"
-            echo "Created tag $snapshot_tag on main+PR"
+            echo "Created tag $snapshot_tag on PR branch"
           else
             echo "Tag $snapshot_tag already exists"
           fi
