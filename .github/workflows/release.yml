@@ -124,6 +124,10 @@ jobs:
       - name: Create release tag if it does not exist yet
         if: steps.create_pr.outputs.pr_url != '' && steps.check_release.outputs.tag_exists == 'false'
         run: |
+          git fetch origin main
+          git checkout main
+          git pull origin main
+
           git tag "${{ steps.release_version.outputs.tag_version }}"
           git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --tags
           echo "Created release tag: ${{ steps.release_version.outputs.tag_version }}"
