@@ -1,28 +1,28 @@
 name: PR Check and Snapshot
 
-on:
+on: # When this action should be launched
   pull_request:
     branches:
-      - main
+      - main # Target branch of the PR
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: write # Authorized to modify files
+  pull-requests: write # Authorized to create/modify/close/merge Pull Requests
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Exclure explicitement les PRs de release
+    # Exclude Release Pull Requests (if branch starts with "release/" and label of the PR is "release" or "automated")
     if: |
-      !startsWith(github.head_ref, 'release/') && 
+      !contains(github.head_ref, 'release/') &&
       !contains(github.event.pull_request.labels.*.name, 'release') &&
       !contains(github.event.pull_request.labels.*.name, 'automated')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4 # Clone the repository in the runner
         with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
+          ref: ${{ github.head_ref }} # Refers to the source branch -> The checkout is done on the PR branch
+          fetch-depth: 0 # The runner retrieves all the branches and tags -> Enables to have all the existing tags to calculate snapshots and releases
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
@@ -37,9 +37,9 @@ jobs:
       - name: Lint with flake8
         run: make lint
 
-      - name: Generate GitHub App token
-        id: get_app_token
-        uses: tibdex/github-app-token@v2
+      - name: Generate GitHub App token # Temporary token which has the required permissions
+        id: get_app_token # To use outputs of this step in the following steps
+        uses: tibdex/github-app-token@v2 # Used to generate the App's token with its app_id and its private_key
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -53,8 +53,13 @@ jobs:
             last_tag="v0.0.0"
           fi
           last_tag=${last_tag#v}
+          
+          echo "Last tag: $last_tag"
+
           IFS='.' read -r major minor patch <<< "$last_tag"
           snapshot_version="$major.$minor.$patch-snapshot-${{ github.event.number }}"
+
+          echo "Snapshot version: $snapshot_version"
           echo "snapshot_version=$snapshot_version" >> $GITHUB_OUTPUT
 
       - name: Set Git identity
@@ -67,6 +72,9 @@ jobs:
           current_version=$(grep -o "version='[^']*'" setup.py | sed "s/version='\\([^']*\\)'/\\1/")
           target_version="${{ steps.snapshot_version.outputs.snapshot_version }}"
           
+          echo "Current version: $current_version"
+          echo "Target version: $target_version"
+          
           if [ "$current_version" != "$target_version" ]; then
             sed -i "s/version='[^']*'/version='$target_version'/" setup.py
             git add setup.py
@@ -77,6 +85,8 @@ jobs:
       - name: Create snapshot tag
         run: |
           snapshot_tag="v${{ steps.snapshot_version.outputs.snapshot_version }}"
+          
+          echo "Snapshot tag: $snapshot_tag"
           
           if ! git tag -l "$snapshot_tag" | grep -q "$snapshot_tag"; then
             git tag "$snapshot_tag"
