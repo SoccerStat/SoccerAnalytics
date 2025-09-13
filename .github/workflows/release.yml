@@ -70,6 +70,8 @@ jobs:
             --body "🚀 Automatic release PR" \
             --label "release,automated")
           echo "PR created: $pr_url"
+        env:
+          GH_TOKEN: ${{ steps.get_app_token.outputs.token }}
 
       - name: Create release tag (if PR merged)
         if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
@@ -81,6 +83,8 @@ jobs:
           git tag "${{ steps.release_version.outputs.tag_version }}"
           git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --tags
           echo "Created release tag: ${{ steps.release_version.outputs.tag_version }}"
+        env:
+          GH_TOKEN: ${{ steps.get_app_token.outputs.token }}
 
       - name: Delete release branch (if PR merged)
         if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
