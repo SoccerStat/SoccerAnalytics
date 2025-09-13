@@ -1,21 +1,22 @@
 name: Build and Update SoccerAnalytics
 
 on:
-  push:
-    branches:
-      - "feature/*"    # Classic build sur feature
-      - "main"         # Auto. build after merge
   pull_request:
     branches:
-      - "main"         # PR main → snapshot
-  workflow_dispatch:   # Manual Main → patch update
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
-  contents: write   # for push and tag
+  contents: write
+  pull-requests: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
 
@@ -32,10 +33,26 @@ jobs:
       - name: Lint with flake8
         run: make lint
 
-  update_version:
-    needs: build
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+      - name: Determine snapshot version
+        id: snapshot_version
+        run: |
+          git fetch --tags
+          last_tag=$(git tag --list "v*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
+          last_tag=${last_tag#v}
+          IFS='.' read -r major minor patch <<< "$last_tag"
+          snapshot_version="$major.$minor.$patch-snapshot"
+          echo "snapshot_version=$snapshot_version" >> $GITHUB_OUTPUT
+
+      - name: Update version in PR
+        run: |
+          sed -i "s/version='[^']*'/version='${{ steps.snapshot_version.outputs.snapshot_version }}'/" setup.py
+          git add setup.py
+          git commit -m "Update version to ${{ steps.snapshot_version.outputs.snapshot_version }}" || echo "No changes to commit"
+          git push
+
+  post_merge:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
@@ -49,51 +66,44 @@ jobs:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - name: Determine new version
-        id: determine_version
+      - name: Determine new release version
+        id: release_version
         run: |
-          # Retrieve the last release tag (ignore snapshots)
           last_tag=$(git tag --list "v*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
           last_tag=${last_tag#v}
-          echo "Current version: $last_tag"
           IFS='.' read -r major minor patch <<< "$last_tag"
-
-          # Determine the new version
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            # Manual Main: patch increment
-            patch=$((patch + 1))
-            new_version="$major.$minor.$patch"
-          else
-            # PR : snapshot based on the last release tag
-            new_version="$major.$minor.$patch-snapshot"
-          fi
-
-          echo "tag_version=v$new_version" >> $GITHUB_OUTPUT
+          patch=$((patch + 1))
+          new_version="$major.$minor.$patch"
+          tag_version="v$new_version"
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
+          echo "tag_version=$tag_version" >> $GITHUB_OUTPUT
 
-      - name: Bump version and commit
+      - name: Create release branch and commit bump
         run: |
           git config user.name "github-app[bot]"
           git config user.email "github-app[bot]@users.noreply.github.com"
 
-          # Update setup.py
-          sed -i "s/version='[^']*'/version='${{ steps.determine_version.outputs.new_version }}'/" setup.py
+          branch_name="release/${{ steps.release_version.outputs.new_version }}"
+          git checkout -b "$branch_name"
+
+          sed -i "s/version='[^']*'/version='${{ steps.release_version.outputs.new_version }}'/" setup.py
           git add setup.py
-          git commit -m "Release: bump version to ${{ steps.determine_version.outputs.new_version }}" || echo "No changes to commit"
+          git commit -m "Release: bump version to ${{ steps.release_version.outputs.new_version }}"
 
-          # Push commit direct sur main via le token de l'App
-          git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:main
+          git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:"$branch_name"
 
-      - name: Delete old snapshot tag if exists
+      - name: Create PR for release bump
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ steps.get_app_token.outputs.token }}
+          branch: "release/${{ steps.release_version.outputs.new_version }}"
+          base: main
+          title: "Release v${{ steps.release_version.outputs.new_version }}"
+          body: "Automatic PR to bump version to v${{ steps.release_version.outputs.new_version }}"
+          labels: "release"
+          commit-message: "Release: bump version to ${{ steps.release_version.outputs.new_version }}"
+
+      - name: Create tag (optional)
         run: |
-          if [[ "${{ steps.determine_version.outputs.new_version }}" == *"-snapshot" ]]; then
-            if git rev-parse "${{ steps.determine_version.outputs.tag_version }}" >/dev/null 2>&1; then
-              git tag -d "${{ steps.determine_version.outputs.tag_version }}"
-              git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --delete "${{ steps.determine_version.outputs.tag_version }}"
-            fi
-          fi
-
-      - name: Create and push tag
-        run: |
-          git tag -f "${{ steps.determine_version.outputs.tag_version }}"
+          git tag -f "${{ steps.release_version.outputs.tag_version }}"
           git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --tags
