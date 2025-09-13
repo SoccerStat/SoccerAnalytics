@@ -1,0 +1,91 @@
+name: PR Check and Snapshot
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Exclure explicitement les PRs de release
+    if: |
+      !startsWith(github.head_ref, 'release/') && 
+      !contains(github.event.pull_request.labels.*.name, 'release') &&
+      !contains(github.event.pull_request.labels.*.name, 'automated')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with flake8
+        run: make lint
+
+      - name: Run tests (optional)
+        run: |
+          # make test
+
+      - name: Generate GitHub App token
+        id: get_app_token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Determine snapshot version
+        id: snapshot_version
+        run: |
+          git fetch --tags
+          last_tag=$(git tag --list "v*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
+          if [ -z "$last_tag" ]; then
+            last_tag="v0.0.0"
+          fi
+          last_tag=${last_tag#v}
+          IFS='.' read -r major minor patch <<< "$last_tag"
+          snapshot_version="$major.$minor.$patch-snapshot-${{ github.event.number }}"
+          echo "snapshot_version=$snapshot_version" >> $GITHUB_OUTPUT
+
+      - name: Set Git identity
+        run: |
+          git config user.name "github-app[bot]"
+          git config user.email "github-app[bot]@users.noreply.github.com"
+
+      - name: Update version in PR
+        run: |
+          current_version=$(grep -o "version='[^']*'" setup.py | sed "s/version='\\([^']*\\)'/\\1/")
+          target_version="${{ steps.snapshot_version.outputs.snapshot_version }}"
+          
+          if [ "$current_version" != "$target_version" ]; then
+            sed -i "s/version='[^']*'/version='$target_version'/" setup.py
+            git add setup.py
+            git commit -m "Update version to $target_version [skip ci]"
+            git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:${{ github.head_ref }}
+          fi
+
+      - name: Create snapshot tag
+        run: |
+          snapshot_tag="v${{ steps.snapshot_version.outputs.snapshot_version }}"
+          
+          if ! git tag -l "$snapshot_tag" | grep -q "$snapshot_tag"; then
+            git tag "$snapshot_tag"
+            git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --tags
+            echo "Created tag $snapshot_tag"
+          else
+            echo "Tag $snapshot_tag already exists"
+          fi
