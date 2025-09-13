@@ -3,15 +3,15 @@ name: Build and Update SoccerAnalytics
 on:
   push:
     branches:
-      - "feature/*"    # Build classique sur feature
-      - "main"         # Build automatique après merge
+      - "feature/*"    # Classic build sur feature
+      - "main"         # Auto. build after merge
   pull_request:
     branches:
-      - "main"         # PR vers main → snapshot
-  workflow_dispatch:   # Main manuel → patch update
+      - "main"         # PR main → snapshot
+  workflow_dispatch:   # Manual Main → patch update
 
 permissions:
-  contents: write
+  contents: write   # for push and tag
 
 jobs:
   build:
@@ -50,6 +50,7 @@ jobs:
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Determine new version
+        id: determine_version
         run: |
           # Retrieve the last release tag (ignore snapshots)
           last_tag=$(git tag --list "v*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
@@ -59,52 +60,40 @@ jobs:
 
           # Determine the new version
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            # Main manuel : incrément patch
+            # Manual Main: patch increment
             patch=$((patch + 1))
             new_version="$major.$minor.$patch"
           else
-            # PR : snapshot basé sur le dernier tag release
+            # PR : snapshot based on the last release tag
             new_version="$major.$minor.$patch-snapshot"
           fi
 
-          tag_version="v$new_version"
-          echo "New version: $new_version"
-          echo "Tag version: $tag_version"
+          echo "tag_version=v$new_version" >> $GITHUB_OUTPUT
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
 
+      - name: Bump version and commit
+        run: |
           git config user.name "github-app[bot]"
           git config user.email "github-app[bot]@users.noreply.github.com"
 
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            # Update setup.py
-            sed -i "s/version='[^']*'/version='$new_version'/" setup.py
-            git add setup.py
-            git commit -m "Update version to $new_version" || echo "No changes to commit"
+          # Update setup.py
+          sed -i "s/version='[^']*'/version='${{ steps.determine_version.outputs.new_version }}'/" setup.py
+          git add setup.py
+          git commit -m "Release: bump version to ${{ steps.determine_version.outputs.new_version }}" || echo "No changes to commit"
 
-            # Push on the PR's source branch
-            branch_name="$GITHUB_HEAD_REF"
-            git fetch origin "$branch_name"
-            git rebase origin/"$branch_name" || echo "Rebase failed, continuing"
-            git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:"$branch_name"
-          else
-            # Update setup.py
-            sed -i "s/version='[^']*'/version='$new_version'/" setup.py
-            git add setup.py
-            git commit -m "Release: bump version to $new_version" || echo "No changes to commit"
-          
-            # Push on main with the App token
-            git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:main
-          fi
+          # Push commit direct sur main via le token de l'App
+          git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} HEAD:main
 
-          # Delete the old snapshot tag if it already exists
-          if [[ "${new_version}" == *"-snapshot" ]]; then
-            if git rev-parse "$tag_version" >/dev/null 2>&1; then
-              echo "Snapshot tag ${new_version} already exists: recreating it..."
-              git tag -d "$tag_version"
-              git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --delete "$tag_version"
+      - name: Delete old snapshot tag if exists
+        run: |
+          if [[ "${{ steps.determine_version.outputs.new_version }}" == *"-snapshot" ]]; then
+            if git rev-parse "${{ steps.determine_version.outputs.tag_version }}" >/dev/null 2>&1; then
+              git tag -d "${{ steps.determine_version.outputs.tag_version }}"
+              git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --delete "${{ steps.determine_version.outputs.tag_version }}"
             fi
           fi
 
-          # Create the tag
-          git tag -f "$tag_version"
-
+      - name: Create and push tag
+        run: |
+          git tag -f "${{ steps.determine_version.outputs.tag_version }}"
           git push https://x-access-token:${{ steps.get_app_token.outputs.token }}@github.com/${{ github.repository }} --tags
