@@ -17,7 +17,8 @@ jobs:
     if: |
       !contains(github.head_ref, 'release/') &&
       !contains(github.event.pull_request.labels.*.name, 'release') &&
-      !contains(github.event.pull_request.labels.*.name, 'automated')
+      !contains(github.event.pull_request.labels.*.name, 'automated') &&
+      github.actor != 'github-app[bot]'
     steps:
       - uses: actions/checkout@v4 # Clone the repository in the runner
         with:
@@ -68,6 +69,7 @@ jobs:
           git config user.email "github-app[bot]@users.noreply.github.com"
 
       - name: Update version in PR
+        if: github.event.pull_request.head.repo.full_name == github.repository
         run: |
           current_version=$(grep -o "version='[^']*'" setup.py | sed "s/version='\\([^']*\\)'/\\1/")
           target_version="${{ steps.snapshot_version.outputs.snapshot_version }}"
