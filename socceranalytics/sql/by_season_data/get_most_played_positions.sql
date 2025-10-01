@@ -98,4 +98,4 @@ positions_and_numbers as (
 update season_{season}.team_player tp
 set positions = pn.positions, numbers = pn.numbers
 from positions_and_numbers pn
-where tp.team = pn.id_team and tp.player = split_part(pn.id_player, '_', 1);
+where tp.team = pn.id_team and tp.id = pn.id_player;
