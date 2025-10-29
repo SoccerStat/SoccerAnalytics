@@ -126,6 +126,32 @@ home_stats as (
 		pms.nb_cards_second_yellow as home_cards_yellow_red,
 		0 as away_cards_yellow_red,
 
+		pms.nb_tackles as home_tackles,
+		0 as away_tackles,
+
+		pms.nb_interceptions as home_interceptions,
+		0 as away_interceptions,
+
+		pms.nb_blocks as home_blocks,
+		0 as away_blocks,
+
+		pps.nb_passes_succ as home_passes_succ,
+		0 as away_passes_succ,
+        pps.nb_passes_total as home_passes_total,
+        0 as away_passes_total,
+
+        pps.nb_passes_prgv as home_passes_prgv,
+        0 as away_passes_prgv,
+
+        pps.nb_assisted_shots as home_assisted_shots,
+        0 as away_assisted_shots,
+
+        pps.nb_crosses as home_crosses,
+        0 as away_crosses,
+
+        pps.nb_pass_xa as home_pass_xa,
+        0 as away_pass_xa,
+
 		case
 			when ts.captain = pms.player then 1 
 			else 0
@@ -150,6 +176,8 @@ home_stats as (
 	from selected_matches as h
 	join (select * from season_{season}.player_main_stats where played_home) as pms
 	on pms.match = h.id
+	join (select * from season_{season}.player_passes_stats where played_home) as pps
+	on pms.match = pps.match and pms.player = pps.player
 	join (select match, team, captain, score from season_{season}.team_stats where played_home) as ts 
 	on h.id = ts.match and ts.team = h.home_team
 	join (select match, team, captain, score from season_{season}.team_stats where not played_home) as ts_away
@@ -362,6 +390,32 @@ away_stats as (
 		0 as home_cards_yellow_red,
 		pms.nb_cards_second_yellow as away_cards_yellow_red,
 
+		0 as home_tackles,
+		pms.nb_tackles as away_tackles,
+
+		0 as home_interceptions,
+		pms.nb_interceptions as away_interceptions,
+
+		0 as home_blocks,
+		pms.nb_blocks as away_blocks,
+
+		0 as home_passes_succ,
+		pps.nb_passes_succ as away_passes_succ,
+        0 as home_passes_total,
+        pps.nb_passes_total as away_passes_total,
+
+        0 as home_passes_prgv,
+        pps.nb_passes_prgv as away_passes_prgv,
+
+        0 as home_assisted_shots,
+        pps.nb_assisted_shots as away_assisted_shots,
+
+        0 as home_crosses,
+        pps.nb_crosses as away_crosses,
+
+        0 as home_pass_xa,
+        pps.nb_pass_xa as away_pass_xa,
+
 		0 as home_captain,
 		case
 			when ts.captain = pms.player then 1 else 0
@@ -383,6 +437,8 @@ away_stats as (
 	from selected_matches as a
 	join (select * from season_{season}.player_main_stats where not played_home) as pms
 	on pms.match = a.id
+	join (select * from season_{season}.player_passes_stats where not played_home) as pps
+	on pms.match = pps.match and pms.player = pps.player
 	join (select match, team, captain, score from season_{season}.team_stats where not played_home) as ts 
 	on a.id = ts.match and ts.team = a.away_team
 	join (select match, team, captain, score from season_{season}.team_stats where played_home) as ts_home
