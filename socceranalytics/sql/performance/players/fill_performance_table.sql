@@ -137,7 +137,7 @@ home_stats as (
 
 		pps.nb_passes_succ as home_passes_succ,
 		0 as away_passes_succ,
-        pps.nb_passes_total as home_passes_total,
+        pps.nb_passes_att as home_passes_total,
         0 as away_passes_total,
 
         pps.nb_passes_prgv as home_passes_prgv,
@@ -402,7 +402,7 @@ away_stats as (
 		0 as home_passes_succ,
 		pps.nb_passes_succ as away_passes_succ,
         0 as home_passes_total,
-        pps.nb_passes_total as away_passes_total,
+        pps.nb_passes_att as away_passes_total,
 
         0 as home_passes_prgv,
         pps.nb_passes_prgv as away_passes_prgv,
