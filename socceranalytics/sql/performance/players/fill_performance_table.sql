@@ -140,7 +140,7 @@ home_stats as (
         pps.nb_passes_att as home_passes_total,
         0 as away_passes_total,
 
-        pps.nb_passes_prgv as home_passes_prgv,
+        pps.nb_passes_progressive as home_passes_prgv,
         0 as away_passes_prgv,
 
         pps.nb_assisted_shots as home_assisted_shots,
@@ -404,8 +404,9 @@ away_stats as (
         0 as home_passes_total,
         pps.nb_passes_att as away_passes_total,
 
+
         0 as home_passes_prgv,
-        pps.nb_passes_prgv as away_passes_prgv,
+        pps.nb_passes_progressive as away_passes_prgv,
 
         0 as home_assisted_shots,
         pps.nb_assisted_shots as away_assisted_shots,
