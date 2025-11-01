@@ -578,8 +578,8 @@ joined as (
         MAX(a.home_assisted_shots)   as home_assisted_shots,
         MAX(a.away_assisted_shots)   as away_assisted_shots,
 
-        MAX(h.home_pass_xa)        as home_pass_xa,
-        MAX(h.away_pass_xa)        as away_pass_xa
+        MAX(a.home_pass_xa)        as home_pass_xa,
+        MAX(a.away_pass_xa)        as away_pass_xa
     from away_stats a
     left join out_and_injured oi
     on a.id_match = oi.match and a.id_team = oi.team and a.id_player = oi.player_out
