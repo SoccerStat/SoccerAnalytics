@@ -1,4 +1,11 @@
-with selected_matches as materialized (
+with players_nationalities as (
+    select
+        player,
+        array_agg(distinct country) as Nationalities
+    from upper.player_nationality pn
+    group by player
+),
+selected_matches as materialized (
 	select 
 		m.id,
 		m.home_team,
@@ -192,8 +199,18 @@ joined as (
         h.competition,
         h.id_match,
         h.id_player,
+        p.name as player,
+
+        EXTRACT(YEAR FROM age(current_date, birth_date))::integer AS "Age",
+		p.height::integer as "Height",
+		p.weight::integer as "Weight",
+		p.strong_foot as "Footed",
+		pn.Nationalities as "Nationalities",
+
         h.id_team,
+        c1.name as club,
         MAX(h.id_opponent)           as id_opponent,
+        c2.name as opponent,
 
         MAX(h.home_match)            as home_match,
         MAX(h.away_match)            as away_match,
@@ -291,13 +308,28 @@ joined as (
     from home_stats h
     left join out_and_injured oi
     on h.id_match = oi.match and h.id_team = oi.team and h.id_player = oi.player_out
-    group by h.id_comp, h.competition, h.id_match, h.id_player, h.id_team, oi.home_sub_out, oi.home_injured
+    left join (select id, name from upper.club) as c1
+	on h.id_team = h.id_comp || '_' || c1.id
+    left join (select id, name from upper.club) as c2
+	on h.id_opponent = h.id_comp || '_' || c2.id
+	left join upper.player p
+	on h.id_player = p.id || '_' || h.id_team
+	join players_nationalities pn
+	on h.id_player = pn.player || '_' || h.id_team
+    group by h.id_comp, h.competition, h.id_match, h.id_player,p.name, p.birth_date, p.height, p.weight, p.strong_foot, pn.nationalities, h.id_team, c1.name, c2.name, oi.home_sub_out, oi.home_injured
 )
 insert into analytics.staging_players_performance
 select * from joined;
 
 
-with selected_matches as materialized (
+with players_nationalities as (
+    select
+        player,
+        array_agg(distinct country) as Nationalities
+    from upper.player_nationality pn
+    group by player
+),
+selected_matches as materialized (
 	select 
 		m.id,
 		m.home_team,
@@ -484,8 +516,18 @@ joined as (
         a.competition,
         a.id_match,
         a.id_player,
+        p.name as player,
+
+        EXTRACT(YEAR FROM age(current_date, birth_date))::integer AS "Age",
+		p.height::integer as "Height",
+		p.weight::integer as "Weight",
+		p.strong_foot as "Footed",
+		pn.Nationalities as "Nationalities",
+
         a.id_team,
+        c1.name as club,
         MAX(a.id_opponent)           as id_opponent,
+        c2.name as opponent,
 
         MAX(a.home_match)            as home_match,
         MAX(a.away_match)            as away_match,
@@ -583,7 +625,15 @@ joined as (
     from away_stats a
     left join out_and_injured oi
     on a.id_match = oi.match and a.id_team = oi.team and a.id_player = oi.player_out
-    group by a.id_comp, a.competition, a.id_match, a.id_player, a.id_team, oi.away_sub_out, oi.away_injured
+    left join (select id, name from upper.club) as c1
+	on a.id_team = a.id_comp || '_' || c1.id
+    left join (select id, name from upper.club) as c2
+	on a.id_opponent = a.id_comp || '_' || c2.id
+	left join upper.player p
+	on a.id_player = p.id || '_' || a.id_team
+	left join players_nationalities pn
+	on a.id_player = pn.player || '_' || a.id_team
+    group by a.id_comp, a.competition, a.id_match, a.id_player, a.id_team, p.name, p.birth_date, p.height, p.weight, p.strong_foot, pn.nationalities, a.id_team, c1.name, c2.name, oi.away_sub_out, oi.away_injured
 )
 insert into analytics.staging_players_performance
 select *
