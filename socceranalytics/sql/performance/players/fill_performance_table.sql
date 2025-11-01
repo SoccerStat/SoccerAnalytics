@@ -211,18 +211,18 @@ joined as (
         MAX(h.away_started)          as away_started,
         MAX(h.home_sub_in)           as home_sub_in,
         MAX(h.away_sub_in)           as away_sub_in,
-        0 as home_sub_out,
         case
-            when oi.away_sub_out is null
+            when oi.home_sub_out is null
             then 0
-            else oi.away_sub_out
-        end as away_sub_out,
-        0 as home_injured,
+            else oi.home_sub_out
+        end as home_sub_out,
+        0 as away_sub_out,
         case
-            when oi.away_injured is null
+            when oi.home_injured is null
             then 0
-            else oi.away_injured
-        end as away_injured
+            else oi.home_injured
+        end as home_injured,
+        0 as away_injured,
 
         MAX(h.home_minutes)          as home_minutes,
         MAX(h.away_minutes)          as away_minutes,
@@ -514,7 +514,7 @@ joined as (
             when oi.away_injured is null
             then 0
             else oi.away_injured
-        end as away_injured
+        end as away_injured,
 
         MAX(a.home_minutes)          as home_minutes,
         MAX(a.away_minutes)          as away_minutes,
