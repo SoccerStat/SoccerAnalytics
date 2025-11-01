@@ -193,14 +193,40 @@ joined as (
         h.id_match,
         h.id_player,
         h.id_team,
-
         MAX(h.id_opponent)           as id_opponent,
-        MAX(h.home_number)           as home_number,
-        MAX(h.away_number)           as away_number,
-        MAX(h.home_positions)        as home_positions,
-        MAX(h.away_positions)        as away_positions,
+
         MAX(h.home_match)            as home_match,
         MAX(h.away_match)            as away_match,
+
+        MAX(h.home_number)           as home_number,
+        MAX(h.away_number)           as away_number,
+        MAX(h.home_captain)          as home_captain,
+        MAX(h.away_captain)          as away_captain,
+        MAX(h.home_positions)        as home_positions,
+        MAX(h.away_positions)        as away_positions,
+        MAX(h.home_gk)               as home_gk,
+        MAX(h.away_gk)               as away_gk,
+
+        MAX(h.home_started)          as home_started,
+        MAX(h.away_started)          as away_started,
+        MAX(h.home_sub_in)           as home_sub_in,
+        MAX(h.away_sub_in)           as away_sub_in,
+        0 as home_sub_out,
+        case
+            when oi.away_sub_out is null
+            then 0
+            else oi.away_sub_out
+        end as away_sub_out,
+        0 as home_injured,
+        case
+            when oi.away_injured is null
+            then 0
+            else oi.away_injured
+        end as away_injured
+
+        MAX(h.home_minutes)          as home_minutes,
+        MAX(h.away_minutes)          as away_minutes,
+
         MAX(h.date)                  as date,
         MAX(h.time)                  as time,
         MAX(h.week)                  as week,
@@ -212,8 +238,7 @@ joined as (
         MAX(h.away_draw)             as away_draw,
         MAX(h.home_lose)             as home_lose,
         MAX(h.away_lose)             as away_lose,
-        MAX(h.home_gk)               as home_gk,
-        MAX(h.away_gk)               as away_gk,
+
         MAX(h.home_goals)            as home_goals,
         MAX(h.away_goals)            as away_goals,
         MAX(h.home_assists)          as home_assists,
@@ -222,42 +247,47 @@ joined as (
         MAX(h.away_pens_made)        as away_pens_made,
         MAX(h.home_pens_att)         as home_pens_att,
         MAX(h.away_pens_att)         as away_pens_att,
+
         MAX(h.home_xg)               as home_xg,
         MAX(h.away_xg)               as away_xg,
-        MAX(h.home_clean_sheet)      as home_clean_sheet,
-        MAX(h.away_clean_sheet)      as away_clean_sheet,
         MAX(h.home_shots)            as home_shots,
         MAX(h.away_shots)            as away_shots,
         MAX(h.home_shots_ot)         as home_shots_ot,
         MAX(h.away_shots_ot)         as away_shots_ot,
+
+        MAX(h.home_clean_sheet)      as home_clean_sheet,
+        MAX(h.away_clean_sheet)      as away_clean_sheet,
+
         MAX(h.home_cards_yellow)     as home_cards_yellow,
         MAX(h.away_cards_yellow)     as away_cards_yellow,
         MAX(h.home_cards_red)        as home_cards_red,
         MAX(h.away_cards_red)        as away_cards_red,
         MAX(h.home_cards_yellow_red) as home_cards_yellow_red,
         MAX(h.away_cards_yellow_red) as away_cards_yellow_red,
-        MAX(h.home_captain)          as home_captain,
-        MAX(h.away_captain)          as away_captain,
-        MAX(h.home_minutes)          as home_minutes,
-        MAX(h.away_minutes)          as away_minutes,
-        MAX(h.home_started)          as home_started,
-        MAX(h.away_started)          as away_started,
-        MAX(h.home_sub_in)           as home_sub_in,
-        MAX(h.away_sub_in)           as away_sub_in,
 
-        case
-            when oi.home_sub_out is null
-            then 0
-            else oi.home_sub_out
-        end as home_sub_out,
-        0 as away_sub_out,
+        MAX(h.home_tackles)          as home_tackles,
+        MAX(h.away_tackles)          as away_tackles,
 
-        case
-            when oi.home_injured is null
-            then 0
-            else oi.home_injured
-        end as home_injured,
-        0 as away_injured
+        MAX(h.home_interceptions)    as home_interceptions,
+        MAX(h.away_interceptions)    as away_interceptions,
+
+        MAX(h.home_blocks)           as home_blocks,
+        MAX(h.away_blocks)           as away_blocks,
+
+        MAX(h.home_passes_succ)      as home_passes_succ,
+        MAX(h.away_passes_succ)      as away_passes_succ,
+
+        MAX(h.home_passes_total)     as home_passes_total,
+        MAX(h.away_passes_total)     as away_passes_total,
+
+        MAX(h.home_passes_prgv)      as home_passes_prgv,
+        MAX(h.away_passes_prgv)      as away_passes_prgv,
+
+        MAX(h.home_assisted_shots)   as home_assisted_shots,
+        MAX(h.away_assisted_shots)   as away_assisted_shots,
+
+        MAX(h.home_passes_xa)        as home_passes_xa,
+        MAX(h.away_passes_xa)        as away_passes_xa
     from home_stats h
     left join out_and_injured oi
     on h.id_match = oi.match and h.id_team = oi.team and h.id_player = oi.player_out
@@ -455,14 +485,40 @@ joined as (
         a.id_match,
         a.id_player,
         a.id_team,
-
         MAX(a.id_opponent)           as id_opponent,
-        MAX(a.home_number)           as home_number,
-        MAX(a.away_number)           as away_number,
-        MAX(a.home_positions)        as home_positions,
-        MAX(a.away_positions)        as away_positions,
+
         MAX(a.home_match)            as home_match,
         MAX(a.away_match)            as away_match,
+
+        MAX(a.home_number)           as home_number,
+        MAX(a.away_number)           as away_number,
+        MAX(a.home_captain)          as home_captain,
+        MAX(a.away_captain)          as away_captain,
+        MAX(a.home_positions)        as home_positions,
+        MAX(a.away_positions)        as away_positions,
+        MAX(a.home_gk)               as home_gk,
+        MAX(a.away_gk)               as away_gk,
+
+        MAX(a.home_started)          as home_started,
+        MAX(a.away_started)          as away_started,
+        MAX(a.home_sub_in)           as home_sub_in,
+        MAX(a.away_sub_in)           as away_sub_in,
+        0 as home_sub_out,
+        case
+            when oi.away_sub_out is null
+            then 0
+            else oi.away_sub_out
+        end as away_sub_out,
+        0 as home_injured,
+        case
+            when oi.away_injured is null
+            then 0
+            else oi.away_injured
+        end as away_injured
+
+        MAX(a.home_minutes)          as home_minutes,
+        MAX(a.away_minutes)          as away_minutes,
+
         MAX(a.date)                  as date,
         MAX(a.time)                  as time,
         MAX(a.week)                  as week,
@@ -474,8 +530,7 @@ joined as (
         MAX(a.away_draw)             as away_draw,
         MAX(a.home_lose)             as home_lose,
         MAX(a.away_lose)             as away_lose,
-        MAX(a.home_gk)               as home_gk,
-        MAX(a.away_gk)               as away_gk,
+
         MAX(a.home_goals)            as home_goals,
         MAX(a.away_goals)            as away_goals,
         MAX(a.home_assists)          as home_assists,
@@ -484,42 +539,48 @@ joined as (
         MAX(a.away_pens_made)        as away_pens_made,
         MAX(a.home_pens_att)         as home_pens_att,
         MAX(a.away_pens_att)         as away_pens_att,
+
         MAX(a.home_xg)               as home_xg,
         MAX(a.away_xg)               as away_xg,
-        MAX(a.home_clean_sheet)      as home_clean_sheet,
-        MAX(a.away_clean_sheet)      as away_clean_sheet,
         MAX(a.home_shots)            as home_shots,
         MAX(a.away_shots)            as away_shots,
         MAX(a.home_shots_ot)         as home_shots_ot,
         MAX(a.away_shots_ot)         as away_shots_ot,
+
+        MAX(a.home_clean_sheet)      as home_clean_sheet,
+        MAX(a.away_clean_sheet)      as away_clean_sheet,
+
         MAX(a.home_cards_yellow)     as home_cards_yellow,
         MAX(a.away_cards_yellow)     as away_cards_yellow,
         MAX(a.home_cards_red)        as home_cards_red,
         MAX(a.away_cards_red)        as away_cards_red,
         MAX(a.home_cards_yellow_red) as home_cards_yellow_red,
         MAX(a.away_cards_yellow_red) as away_cards_yellow_red,
-        MAX(a.home_captain)          as home_captain,
-        MAX(a.away_captain)          as away_captain,
-        MAX(a.home_minutes)          as home_minutes,
-        MAX(a.away_minutes)          as away_minutes,
-        MAX(a.home_started)          as home_started,
-        MAX(a.away_started)          as away_started,
-        MAX(a.home_sub_in)           as home_sub_in,
-        MAX(a.away_sub_in)           as away_sub_in,
 
-        0 as home_sub_out,
-        case
-            when oi.away_sub_out is null
-            then 0
-            else oi.away_sub_out
-        end as away_sub_out,
+        MAX(a.home_tackles)          as home_tackles,
+        MAX(a.away_tackles)          as away_tackles,
 
-        0 as home_injured,
-        case
-            when oi.away_injured is null
-            then 0
-            else oi.away_injured
-        end as away_injured
+        MAX(a.home_interceptions)    as home_interceptions,
+        MAX(a.away_interceptions)    as away_interceptions,
+
+        MAX(a.home_blocks)           as home_blocks,
+        MAX(a.away_blocks)           as away_blocks,
+
+        MAX(a.home_passes_succ)      as home_passes_succ,
+        MAX(a.away_passes_succ)      as away_passes_succ,
+
+        MAX(a.home_passes_total)     as home_passes_total,
+        MAX(a.away_passes_total)     as away_passes_total,
+
+        MAX(a.home_passes_prgv)      as home_passes_prgv,
+        MAX(a.away_passes_prgv)      as away_passes_prgv,
+
+        MAX(a.home_assisted_shots)   as home_assisted_shots,
+        MAX(a.away_assisted_shots)   as away_assisted_shots,
+
+        MAX(a.home_passes_xa)        as home_passes_xa,
+        MAX(a.away_passes_xa)        as away_passes_xa
+
     from away_stats a
     left join out_and_injured oi
     on a.id_match = oi.match and a.id_team = oi.team and a.id_player = oi.player_out
