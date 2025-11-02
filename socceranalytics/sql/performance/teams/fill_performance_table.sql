@@ -145,9 +145,9 @@ home_team as (
 	left join season_{season}.team_stats ts_away
 	on h.id = ts_away.match and h.away_team = ts_away.team
 	left join (select id, name from upper.club) c1
-	on h.home_team = c1.id || '_' || h.id_comp
+	on h.home_team = h.id_comp || '_' || c1.id
 	left join (select id, name from upper.club) c2
-	on h.away_team = c2.id || '_' || h.id_comp
+	on h.away_team = h.id_comp || '_' || c2.id
 )
 insert into analytics.staging_teams_performance
 select *
@@ -301,9 +301,9 @@ away_team as (
 	left join season_{season}.team_stats ts_home
 	on a.id = ts_home.match and a.home_team = ts_home.team
 	left join (select id, name from upper.club) c1
-	on a.away_team = c1.id || '_' || a.id_comp
+	on a.away_team = a.id_comp || '_' || c1.id
 	left join (select id, name from upper.club) c2
-	on a.home_team = c2.id || '_' || a.id_comp
+	on a.home_team = a.id_comp || '_' || c2.id
 )
 insert into analytics.staging_teams_performance
 select *
