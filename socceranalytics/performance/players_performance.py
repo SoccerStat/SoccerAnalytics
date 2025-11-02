@@ -17,17 +17,19 @@ class PlayersPerformance(BasePerformance):
         Used to build rankings and opposition tables.
         """
         log("Truncating the Players' performance table...")
-        self.db.execute_sql_file(self.performance_sql_path, "truncate_performance_table.sql")
+        truncate_players_ranking_template = self.db.read_sql_file(self.performance_sql_path, "truncate_performance_table.sql")
+        for season in self.data_loader.get_seasons():
+            self.db.execute_query(truncate_players_ranking_template.format(season=season))
 
         log("Filling the Players' performance table...")
-        teams_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
+        fill_players_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
 
         for season in self.data_loader.get_seasons():
             log(f"\t{season}")
             for id_comp in self.data_loader.get_competition_ids():
                 log(f"\t\t{id_comp}")
                 self.db.execute_query(
-                    teams_ranking_template.format(
+                    fill_players_ranking_template.format(
                         season=season,
                         id_comp=id_comp,
                     )

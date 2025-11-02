@@ -1,1 +1,1 @@
-TRUNCATE TABLE analytics.staging_players_performance;
+TRUNCATE TABLE analytics.staging_players_performance WHERE season = '{season}';

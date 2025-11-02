@@ -22,10 +22,13 @@ class TeamsPerformance(BasePerformance, CompHelper):
         Used to build rankings and opposition tables.
         """
         log("Truncating the Teams' performance table...")
-        self.db.execute_sql_file(self.performance_sql_path, "truncate_performance_tables.sql")
+        truncate_teams_ranking_template = self.db.read_sql_file(self.performance_sql_path, "truncate_performance_tables.sql")
+
+        for season in self.data_loader.get_seasons():
+            self.db.execute_query(truncate_teams_ranking_template.format(season=season))
 
         log("Filling the Teams' performance table...")
-        teams_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
+        fill_teams_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
 
         log("Filling the Teams' expected performance table...")
         insert_query = sql.SQL("""
@@ -50,7 +53,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
         for season in self.data_loader.get_seasons():
             for id_comp, name_comp in zip(self.data_loader.get_competition_ids(), self.data_loader.get_competition_names()):
                 self.db.execute_query(
-                    teams_ranking_template.format(
+                    fill_teams_ranking_template.format(
                         season=season,
                         id_comp=id_comp,
                     )
