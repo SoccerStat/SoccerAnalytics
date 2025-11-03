@@ -21,7 +21,7 @@ class DataLoader:
         """
         all_season_schemas_query = sql.SQL("""select * from analytics.get_season_schemas();""")
         all_seasons_schemas = self.db.df_from_query(all_season_schemas_query).iloc[:, 0].tolist()
-        return [season_schema[7:] for season_schema in all_seasons_schemas]
+        return [season_schema[7:] for season_schema in all_seasons_schemas if season_schema[7:] >= "2025_2026"]
 
     def get_competition_ids(self):
         """Get the interesting competitions (domestic cups excluded).
