@@ -51,6 +51,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
         # self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
 
         for season in self.data_loader.get_seasons():
+            log(f"\t{season}")
             for id_comp, name_comp in zip(self.data_loader.get_competition_ids(), self.data_loader.get_competition_names()):
                 self.db.execute_query(
                     fill_teams_ranking_template.format(
