@@ -56,7 +56,7 @@ trio-websocket==0.12.2
 tomli==2.3.0
 typing_extensions==4.15.0
 tzdata==2025.2
-understat==0.1.12
+understat==0.1.14
 Unidecode==1.3.6
 urllib3==2.6.0
 webdriver-manager==4.0.2
