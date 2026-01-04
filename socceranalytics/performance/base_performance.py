@@ -16,5 +16,5 @@ class BasePerformance(ABC):
         self.opposition_sql_path = f"socceranalytics.sql.oppositions.{kind}_x_teams"
 
     @abstractmethod
-    def process_performance_table(self):
+    def process_performance_table(self, min_season):
         pass

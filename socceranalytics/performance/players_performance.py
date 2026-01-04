@@ -10,21 +10,21 @@ class PlayersPerformance(BasePerformance):
     def __init__(self, postgres_to_dataframe: PostgresQuerying):
         super().__init__(postgres_to_dataframe, "players")
 
-    def process_performance_table(self):
+    def process_performance_table(self, min_season):
         """Truncate and fill the staging_players_performance
         tables in the analytics schema.
-        Supposed to be ran once a day.
+        Supposed to be run once a day.
         Used to build rankings and opposition tables.
         """
         log("Truncating the Players' performance table...")
         truncate_players_ranking_template = self.db.read_sql_file(self.performance_sql_path, "truncate_performance_table.sql")
-        for season in self.data_loader.get_seasons():
+        for season in self.data_loader.get_seasons(min_season):
             self.db.execute_query(truncate_players_ranking_template.format(season=season))
 
         log("Filling the Players' performance table...")
         fill_players_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
 
-        for season in self.data_loader.get_seasons():
+        for season in self.data_loader.get_seasons(min_season):
             log(f"\t{season}")
             for id_comp in self.data_loader.get_competition_ids():
                 log(f"\t\t{id_comp}")

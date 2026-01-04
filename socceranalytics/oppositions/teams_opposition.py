@@ -27,7 +27,7 @@ class TeamsOpposition:
         """
 
         seasons = [season.replace('-', '_') for season in seasons]
-        seasons = seasons if seasons else self.data_loader.get_seasons()
+        seasons = seasons if seasons else self.data_loader.get_seasons(min_season)
         comps = comps if comps else self.data_loader.get_competition_names()
 
         self.db.execute_query(
@@ -91,7 +91,7 @@ class TeamsOpposition:
         """
 
         seasons = [season.replace('-', '_') for season in seasons]
-        seasons = seasons if seasons else self.data_loader.get_seasons()
+        seasons = seasons if seasons else self.data_loader.get_seasons(min_season)
         comps = comps if comps else self.data_loader.get_competition_names()
 
         self.db.execute_query(

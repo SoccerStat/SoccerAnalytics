@@ -10,11 +10,11 @@ class TeamPlayer:
         self.data_loader = DataLoader(postgres_to_dataframe)
         self.sql_path = "socceranalytics.sql.by_season_data"
 
-    def update_team_player_table(self):
+    def update_team_player_table(self, min_season):
         log("\tUpdating the 'Team Player' table of each season...")
         by_season_query = self.db.read_sql_file(self.sql_path, "get_most_played_positions.sql")
 
-        for season in self.data_loader.get_seasons():
+        for season in self.data_loader.get_seasons(min_season):
             log(f"\t{season}")
             self.db.execute_query(
                 by_season_query.format(

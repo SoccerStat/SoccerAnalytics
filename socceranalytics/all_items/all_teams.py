@@ -12,7 +12,7 @@ class AllTeams:
         self.data_loader = DataLoader(postgres_to_dataframe)
         self.sql_path = "socceranalytics.sql.all_items.teams"
 
-    def process_all_teams_table(self):
+    def process_all_teams_table(self, min_season):
         """Get all teams we may have that have participated in any competition at any season.
         """
         log("\tTruncating the Teams' table...")
@@ -21,7 +21,7 @@ class AllTeams:
         log("\tFilling the Teams' table...")
         teams_ranking_template = self.db.read_sql_file(self.sql_path, "fill_all_teams_table.sql")
 
-        for season in self.data_loader.get_seasons():
+        for season in self.data_loader.get_seasons(min_season):
             for id_comp in self.data_loader.get_competition_ids():
                 self.db.execute_query(
                     teams_ranking_template.format(

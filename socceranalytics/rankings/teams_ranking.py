@@ -119,7 +119,7 @@ class TeamsRanking:
         """
 
         seasons = [season.replace('-', '_') for season in seasons]
-        seasons = seasons if seasons else self.data_loader.get_seasons()
+        seasons = seasons if seasons else self.data_loader.get_seasons(min_season)
 
         self.db.execute_query(
             f"""
