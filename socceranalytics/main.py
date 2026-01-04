@@ -8,7 +8,7 @@ from socceranalytics.postgres.postgres_querying import PostgresQuerying
 from socceranalytics.data.paths import Config
 
 from socceranalytics.utils.utils import get_ti, parse_args
-from socceranalytics.logging import log
+from socceranalytics.utils.logging import log
 
 
 def run(args):
