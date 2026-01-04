@@ -27,13 +27,13 @@ def run(args):
     teams_performance.process_mapping_clubs_table()
 
     all_teams = AllTeams(db)
-    all_teams.process_all_teams_table(min_season)
+    all_teams.process_all_teams_table(min_season, max_season)
 
     players_performance = PlayersPerformance(db)
-    players_performance.process_performance_table(min_season)
+    players_performance.process_performance_table(min_season, max_season)
 
     team_player = TeamPlayer(db)
-    team_player.update_team_player_table(min_season)
+    team_player.update_team_player_table(min_season, max_season)
 
     end_time = get_ti()
     log(f"--- {end_time - start_time} ---")

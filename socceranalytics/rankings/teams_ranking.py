@@ -113,14 +113,13 @@ class TeamsRanking:
         side: str = 'both',
         n_sim: int = 1000000,
         r: int = 2,
-        expected_performance_ranking: bool = True,
-        min_season: str = None
+        expected_performance_ranking: bool = True
     ) -> pd.DataFrame:
         """Build classic teams ranking, and optionally add the expected performance.
         """
 
         seasons = [season.replace('-', '_') for season in seasons]
-        seasons = seasons if seasons else self.data_loader.get_seasons(min_season)
+        seasons = seasons if seasons else self.data_loader.get_seasons()
 
         self.db.execute_query(
             f"""

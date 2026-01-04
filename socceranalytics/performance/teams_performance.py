@@ -15,7 +15,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
         super().__init__(postgres_to_dataframe, "teams")
         CompHelper.__init__(self)
 
-    def process_performance_table(self, min_season):
+    def process_performance_table(self, min_season, max_season):
         """Truncate and fill the staging_teams_performance and staging_teams_expected_performance
         tables in the analytics schema.
         Supposed to be run once a day.
@@ -24,7 +24,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
         log("Truncating the Teams' performance table...")
         truncate_teams_ranking_template = self.db.read_sql_file(self.performance_sql_path, "truncate_performance_tables.sql")
 
-        for season in self.data_loader.get_seasons(min_season):
+        for season in self.data_loader.get_seasons(min_season, max_season):
             self.db.execute_query(truncate_teams_ranking_template.format(season=season))
 
         log("Filling the Teams' performance table...")
@@ -50,7 +50,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
         # expected_performance_ranking_template =
         # self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
 
-        for season in self.data_loader.get_seasons(min_season):
+        for season in self.data_loader.get_seasons(min_season, max_season):
             log(f"\t{season}")
             for id_comp, name_comp in zip(self.data_loader.get_competition_ids(), self.data_loader.get_competition_names()):
                 self.db.execute_query(
