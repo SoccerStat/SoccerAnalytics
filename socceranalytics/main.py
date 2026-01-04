@@ -16,6 +16,9 @@ def run(args):
     min_season = args.min_season
     max_season = args.max_season
 
+    if min_season > max_season:
+        log("min_season must be less than max_season.", exception=True)
+
     start_time = get_ti()
 
     Config.load_env_files(args.env)
