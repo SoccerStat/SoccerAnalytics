@@ -21,7 +21,7 @@ class DataLoader:
     def get_seasons(self, min_season=None):
         """Get all the season schemas.
         """
-        all_season_schemas_query = sql.SQL("""select * from analytics.get_season_schemas();""")
+        all_season_schemas_query = sql.SQL("""select * from analytics.get_season_schemas() order by 1;""")
         all_seasons_schemas = self.db.df_from_query(all_season_schemas_query).iloc[:, 0].tolist()
         return [season_schema[7:] for season_schema in all_seasons_schemas if min_season is None or season_schema[7:] >= min_season]
 
