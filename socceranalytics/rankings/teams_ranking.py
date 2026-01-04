@@ -113,7 +113,8 @@ class TeamsRanking:
         side: str = 'both',
         n_sim: int = 1000000,
         r: int = 2,
-        expected_performance_ranking: bool = True
+        expected_performance_ranking: bool = True,
+        min_season: str = None
     ) -> pd.DataFrame:
         """Build classic teams ranking, and optionally add the expected performance.
         """

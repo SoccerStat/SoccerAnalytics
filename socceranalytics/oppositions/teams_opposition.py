@@ -21,7 +21,8 @@ class TeamsOpposition:
         team: str,
         seasons: list[str],
         comps: list[str],
-        side: str = 'both'
+        side: str = 'both',
+        min_season: str = None,
     ) -> pd.DataFrame:
         """Build Oppositions table between a teams and teams it played against.
         """
@@ -71,13 +72,15 @@ class TeamsOpposition:
         team: str,
         seasons: tuple[str],
         comps: tuple[str],
-        side: str
+        side: str,
+        min_season: str = None
     ):
         return self.build_oppositions(
             team=team,
             comps=list(comps),
             seasons=list(seasons),
-            side=side
+            side=side,
+            min_season=min_season
         )
 
     def build_matrix(
@@ -91,7 +94,7 @@ class TeamsOpposition:
         """
 
         seasons = [season.replace('-', '_') for season in seasons]
-        seasons = seasons if seasons else self.data_loader.get_seasons(min_season)
+        seasons = seasons if seasons else self.data_loader.get_seasons()
         comps = comps if comps else self.data_loader.get_competition_names()
 
         self.db.execute_query(

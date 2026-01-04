@@ -7,10 +7,7 @@ import pytz
 
 from socceranalytics.data.paths import Config
 
-from socceranalytics.utils.utils import Utils
-
-
-utils = Utils()
+from socceranalytics.utils.utils import build_dated_file_path
 
 
 def log(message: str, error: bool = False, exception: bool = False) -> None:
@@ -42,9 +39,8 @@ def setup_logger(error_level: bool = False, exception: bool = False):
     Configure and return a logger.
 
     Args:
-        name (str): The name of the logger.
-        log_file (str): The file to which the log messages will be written.
-        level (int, OptionalType): The logging level (e.g., logging.DEBUG, logging.INFO, etc.). Defaults to logging.INFO.
+        error_level (bool): The logging level (e.g., logging.DEBUG, logging.INFO, etc.). Defaults to False.
+        exception (bool)
 
     Returns:
         logging.Logger: Configured logger.
@@ -56,7 +52,7 @@ def setup_logger(error_level: bool = False, exception: bool = False):
     if not logger.hasHandlers():
 
         if Config.ENV != "local":
-            path_logging = utils.build_dated_file_path(Config.PATH_LOGGING, "log")
+            path_logging = build_dated_file_path(Config.PATH_LOGGING, "log")
             path_latest_logging = f"{Config.PATH_LOGGING}/latest.log"
             # Ensure the directory exists
             log_dir = os.path.dirname(path_logging)
