@@ -14,6 +14,7 @@ from socceranalytics.utils.logging import log
 def run(args):
     env = args.env
     min_season = args.min_season
+    max_season = args.max_season
 
     start_time = get_ti()
 
@@ -23,7 +24,7 @@ def run(args):
     db = PostgresQuerying()
 
     teams_performance = TeamsPerformance(db)
-    teams_performance.process_performance_table(min_season)
+    teams_performance.process_performance_table(min_season, max_season)
     teams_performance.process_mapping_clubs_table()
 
     all_teams = AllTeams(db)

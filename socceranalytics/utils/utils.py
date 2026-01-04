@@ -23,6 +23,7 @@ def parse_args():
 
     parser.add_argument("--env", type=str, required=True, choices=["dev", "prod"])
     parser.add_argument("--min_season", type=season_type, required=False)
+    parser.add_argument("--max_season", type=season_type, required=False)
 
     return parser.parse_args()
 
