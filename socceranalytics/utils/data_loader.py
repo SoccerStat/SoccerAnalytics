@@ -26,8 +26,8 @@ class DataLoader:
         return [
             season_schema[7:]
             for season_schema in all_seasons_schemas
-            if (min_season is None or season_schema >= min_season)
-            and (max_season is None or season_schema <= max_season)
+            if (min_season is None or season_schema[7:] >= min_season)
+            and (max_season is None or season_schema[7:] <= max_season)
         ]
 
     def get_competition_ids(self):
