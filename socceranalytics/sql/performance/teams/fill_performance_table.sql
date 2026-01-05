@@ -297,7 +297,7 @@ away_team as (
 		ts.nb_passes_total as away_passes_total
 	from selected_matches as a
 	left join season_{season}.team_stats ts 
-	on a.away_team = ts.team and a.id = ts.match
+	on a.id = ts.match and a.away_team = ts.team
 	left join season_{season}.team_stats ts_home
 	on a.id = ts_home.match and a.home_team = ts_home.team
 	left join (select id, name from upper.club) c1
