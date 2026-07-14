@@ -45,7 +45,16 @@ class TeamsPerformance(BasePerformance, CompHelper):
                 "away_xg_against"
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT ("match", "played_home") DO NOTHING
+            ON CONFLICT ("match", "played_home")
+            DO UPDATE SET
+                "competition" = EXCLUDED."competition",
+                "season" = EXCLUDED."season",
+                "name_team" = EXCLUDED."name_team",
+                "name_opponent" = EXCLUDED."name_opponent",
+                "home_xg_for" = EXCLUDED."home_xg_for",
+                "away_xg_for" = EXCLUDED."away_xg_for",
+                "home_xg_against" = EXCLUDED."home_xg_against",
+                "away_xg_against" = EXCLUDED."away_xg_against";
         """)
         # expected_performance_ranking_template =
         # self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
