@@ -24,7 +24,9 @@ class TeamsPerformance(BasePerformance, CompHelper):
         log("Truncating the Teams' performance table...")
         truncate_teams_ranking_template = self.db.read_sql_file(self.performance_sql_path, "truncate_performance_tables.sql")
 
-        for season in self.data_loader.get_seasons(min_season, max_season):
+        seasons = self.data_loader.get_seasons(min_season, max_season)
+
+        for season in seasons:
             self.db.execute_query(truncate_teams_ranking_template.format(season=season))
 
         log("Filling the Teams' performance table...")
@@ -59,7 +61,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
         # expected_performance_ranking_template =
         # self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
 
-        for season in self.data_loader.get_seasons(min_season, max_season):
+        for season in seasons:
             log(f"\t{season}")
             for id_comp, name_comp in zip(self.data_loader.get_competition_ids(), self.data_loader.get_competition_names()):
                 self.db.execute_query(
