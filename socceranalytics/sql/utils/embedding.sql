@@ -7,7 +7,7 @@ CREATE OR REPLACE FUNCTION analytics.resolve_entity(
     query_text TEXT,
     query_embedding vector(384)
 )
-RETURNS TABLE(id varchar, name varchar, score FLOAT, source varchar) AS $$
+RETURNS TABLE(id varchar, name varchar, score FLOAT, source text) AS $$
 BEGIN
     RETURN QUERY EXECUTE format(
         'WITH trgm_matches AS (
