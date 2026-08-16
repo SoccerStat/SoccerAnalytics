@@ -1,4 +1,6 @@
-CREATE OR REPLACE FUNCTION resolve_entity(
+drop function if exists analytics.resolve_entity;
+
+CREATE OR REPLACE FUNCTION analytics.resolve_entity(
     table_name TEXT,
     name_col TEXT,
     query_text TEXT,
