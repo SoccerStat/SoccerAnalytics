@@ -9,6 +9,7 @@ CREATE OR REPLACE FUNCTION analytics.resolve_entity(
 )
 RETURNS TABLE(id VARCHAR, name VARCHAR, score FLOAT, trgm_score FLOAT, vector_score FLOAT, lev_score FLOAT) AS $$
 BEGIN
+    --TODO: check quality: 'schema_name.table_name' must exist
     RETURN QUERY EXECUTE format(
         'WITH trgm_matches AS (
             SELECT id, %I AS name, similarity(%I, $1) AS trgm_score
@@ -27,7 +28,7 @@ BEGIN
         candidates AS (
             SELECT t.id, t.name, t.trgm_score, v.vector_score
             FROM trgm_matches t
-            JOIN vector_matches v
+            FULL OUTER JOIN vector_matches v
             ON t.id = v.id
         ),
         scored AS (
