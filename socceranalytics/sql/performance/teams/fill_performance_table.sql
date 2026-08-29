@@ -1,4 +1,10 @@
-with selected_matches as materialized (
+with club_country as (
+    select cl.id, cl.name, co.name as country
+    from upper.club cl
+    left join upper.country co
+    on cl.country = co.diminutive
+),
+selected_matches as materialized (
 	select
 		m.id,
 		m.home_team,
@@ -32,8 +38,10 @@ home_team as (
 		h.id as id_match,
 		home_team as id_team,
 		c1.name as club,
+		c1.country as club_country,
 		away_team as id_opponent,
 		c2.name as opponent,
+		c2.country as opponent_country,
 		true as played_home,
 
 		ts.manager as home_manager,
@@ -144,17 +152,22 @@ home_team as (
 	on h.id = ts.match and h.home_team = ts.team
 	left join season_{season}.team_stats ts_away
 	on h.id = ts_away.match and h.away_team = ts_away.team
-	left join (select id, name from upper.club) c1
+	left join (select id, name, country from club_country) c1
 	on h.home_team = h.id_comp || '_' || c1.id
-	left join (select id, name from upper.club) c2
+	left join (select id, name, country from club_country) c2
 	on h.away_team = h.id_comp || '_' || c2.id
 )
 insert into analytics.staging_teams_performance
 select *
 from home_team;
 
-
-with selected_matches as materialized (
+with club_country as (
+    select cl.id, cl.name, co.name as country
+    from upper.club cl
+    left join upper.country co
+    on cl.country = co.diminutive
+),
+selected_matches as materialized (
 	select
 		m.id,
 		m.home_team,
@@ -188,8 +201,10 @@ away_team as (
 		a.id as id_match,
 		away_team as id_team,
 		c1.name as club,
+		c1.country as club_country,
 		home_team as id_opponent,
 		c2.name as opponent,
+		c2.country as opponent_country,
 		false as played_home,
 
 		ts_home.manager as home_manager,
@@ -300,9 +315,9 @@ away_team as (
 	on a.id = ts.match and a.away_team = ts.team
 	left join season_{season}.team_stats ts_home
 	on a.id = ts_home.match and a.home_team = ts_home.team
-	left join (select id, name from upper.club) c1
+	left join (select id, name, country from club_country) c1
 	on a.away_team = a.id_comp || '_' || c1.id
-	left join (select id, name from upper.club) c2
+	left join (select id, name, country from club_country) c2
 	on a.home_team = a.id_comp || '_' || c2.id
 )
 insert into analytics.staging_teams_performance
