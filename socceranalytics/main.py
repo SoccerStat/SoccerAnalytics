@@ -15,6 +15,8 @@ def run(args):
     env = args.env
     min_season = args.min_season
     max_season = args.max_season
+    update_teams_performance = args.update_teams_performance
+    update_players_performance = args.update_players_performance
 
     if not max_season:
         max_season = min_season
@@ -29,18 +31,20 @@ def run(args):
 
     db = PostgresQuerying()
 
-    teams_performance = TeamsPerformance(db)
-    teams_performance.process_performance_table(min_season, max_season)
-    teams_performance.process_mapping_clubs_table()
+    if update_teams_performance:
+        teams_performance = TeamsPerformance(db)
+        teams_performance.process_performance_table(min_season, max_season)
+        teams_performance.process_mapping_clubs_table()
 
-    all_teams = AllTeams(db)
-    all_teams.process_all_teams_table()
+        all_teams = AllTeams(db)
+        all_teams.process_all_teams_table()
 
-    players_performance = PlayersPerformance(db)
-    players_performance.process_performance_table(min_season, max_season)
+    if update_players_performance:
+        players_performance = PlayersPerformance(db)
+        players_performance.process_performance_table(min_season, max_season)
 
-    team_player = TeamPlayer(db)
-    team_player.update_team_player_table(min_season, max_season)
+        team_player = TeamPlayer(db)
+        team_player.update_team_player_table(min_season, max_season)
 
     end_time = get_ti()
     log(f"--- {end_time - start_time} ---")

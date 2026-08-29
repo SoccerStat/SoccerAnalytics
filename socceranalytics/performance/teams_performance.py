@@ -30,34 +30,11 @@ class TeamsPerformance(BasePerformance, CompHelper):
             self.db.execute_query(truncate_teams_ranking_template.format(season=season))
 
         log("Filling the Teams' performance table...")
-        fill_teams_ranking_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
+        fill_teams_performance_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
 
         log("Filling the Teams' expected performance table...")
-        insert_query = sql.SQL("""
-            INSERT INTO understat.staging_teams_understat_performance(
-                "match",
-                "competition",
-                "season",
-                "name_team",
-                "name_opponent",
-                "played_home",
-                "home_xg_for",
-                "away_xg_for",
-                "home_xg_against",
-                "away_xg_against"
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT ("match", "played_home")
-            DO UPDATE SET
-                "competition" = EXCLUDED."competition",
-                "season" = EXCLUDED."season",
-                "name_team" = EXCLUDED."name_team",
-                "name_opponent" = EXCLUDED."name_opponent",
-                "home_xg_for" = EXCLUDED."home_xg_for",
-                "away_xg_for" = EXCLUDED."away_xg_for",
-                "home_xg_against" = EXCLUDED."home_xg_against",
-                "away_xg_against" = EXCLUDED."away_xg_against";
-        """)
+        fill_understat_performance_template = self.db.read_sql_file(self.performance_sql_path, "fill_understat_performance_table.sql")
+
         # expected_performance_ranking_template =
         # self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
 
@@ -65,7 +42,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
             log(f"\t{season}")
             for id_comp, name_comp in zip(self.data_loader.get_competition_ids(), self.data_loader.get_competition_names()):
                 self.db.execute_query(
-                    fill_teams_ranking_template.format(
+                    fill_teams_performance_template.format(
                         season=season,
                         id_comp=id_comp,
                     )
@@ -84,18 +61,17 @@ class TeamsPerformance(BasePerformance, CompHelper):
                     xG_by_match = get_teams_xG(understat_comp, season[:4])
                     for match in xG_by_match:
                         self.db.execute_query(
-                            insert_query,
-                            (
-                                match["match"],
-                                name_comp,
-                                season,
-                                match["name_team"],
-                                match["name_opponent"],
-                                match["played_home"],
-                                match["home_xg_for"],
-                                match["away_xg_for"],
-                                match["home_xg_against"],
-                                match["away_xg_against"]
+                            fill_understat_performance_template.format(
+                                match=match["match"],
+                                competition=name_comp,
+                                season=season,
+                                name_team=match["name_team"],
+                                name_opponent=match["name_opponent"],
+                                played_home=match["played_home"],
+                                home_xg_for=match["home_xg_for"],
+                                away_xg_for=match["away_xg_for"],
+                                home_xg_against=match["home_xg_against"],
+                                away_xg_against=match["away_xg_against"]
                             )
                         )
 
