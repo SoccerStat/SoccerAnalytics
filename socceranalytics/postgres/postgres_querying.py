@@ -18,6 +18,9 @@ class PostgresQuerying:
         self.postgres_conn = PostgresConnection()
         self.postgres_conn.connect()
 
+    def get_cursor(self):
+        return self.postgres_conn.get_cursor()
+
     def execute_query(self, query: str, params=None, return_cursor=False) -> Optional[cursor]:
         """Execute a query with or without parameters
         """
