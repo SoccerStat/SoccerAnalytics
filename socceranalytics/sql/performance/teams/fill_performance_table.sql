@@ -38,10 +38,8 @@ home_team as (
 		h.id as id_match,
 		home_team as id_team,
 		c1.name as club,
-		c1.country as club_country,
 		away_team as id_opponent,
 		c2.name as opponent,
-		c2.country as opponent_country,
 		true as played_home,
 
 		ts.manager as home_manager,
@@ -146,7 +144,10 @@ home_team as (
 		0 as away_passes_succ,
 
 		ts.nb_passes_total as home_passes_total,
-		0 as away_passes_total
+		0 as away_passes_total,
+
+		c1.country as club_country,
+		c2.country as opponent_country
 	from selected_matches as h
 	left join season_{season}.team_stats ts 
 	on h.id = ts.match and h.home_team = ts.team
@@ -201,10 +202,8 @@ away_team as (
 		a.id as id_match,
 		away_team as id_team,
 		c1.name as club,
-		c1.country as club_country,
 		home_team as id_opponent,
 		c2.name as opponent,
-		c2.country as opponent_country,
 		false as played_home,
 
 		ts_home.manager as home_manager,
@@ -309,7 +308,10 @@ away_team as (
 		ts.nb_passes_succ as away_passes_succ,
 
 		0 as home_passes_total,
-		ts.nb_passes_total as away_passes_total
+		ts.nb_passes_total as away_passes_total,
+
+		c1.country as club_country,
+		c2.country as opponent_country
 	from selected_matches as a
 	left join season_{season}.team_stats ts 
 	on a.id = ts.match and a.away_team = ts.team
