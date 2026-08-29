@@ -1,5 +1,3 @@
-from psycopg2 import sql
-
 from socceranalytics.performance.base_performance import BasePerformance
 from socceranalytics.performance.understat__get_xG import get_teams_xG
 from socceranalytics.postgres.postgres_querying import PostgresQuerying
@@ -33,7 +31,10 @@ class TeamsPerformance(BasePerformance, CompHelper):
         fill_teams_performance_template = self.db.read_sql_file(self.performance_sql_path, "fill_performance_table.sql")
 
         log("Filling the Teams' expected performance table...")
-        fill_understat_performance_template = self.db.read_sql_file(self.performance_sql_path, "fill_understat_performance_table.sql")
+        fill_understat_performance_template = self.db.read_sql_file(
+            self.performance_sql_path,
+            "fill_understat_performance_table.sql"
+        )
 
         # expected_performance_ranking_template =
         # self.db.read_sql_file(self.performance_sql_path, "fill_expected_performance_table.sql")
