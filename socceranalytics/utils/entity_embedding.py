@@ -1,8 +1,13 @@
 from socceranalytics.postgres.postgres_querying import PostgresQuerying
+from fastembed import TextEmbedding
 
 
 def embed_table(db: PostgresQuerying, schema, table, name_col, id_col="id"):
-    cursor = db.execute_query(query=f"SELECT {id_col}, {name_col} FROM {schema}.{table} WHERE embedding IS NULL", return_cursor=True)
+    model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+    cursor = db.execute_query(
+        query=f"SELECT {id_col}, {name_col} FROM {schema}.{table} WHERE embedding IS NULL",
+        return_cursor=True
+    )
     if not cursor:
         print(f"{table}: Nothing to embed")
         return
