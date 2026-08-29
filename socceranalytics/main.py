@@ -32,11 +32,11 @@ def run(args):
 
     db = PostgresQuerying()
 
-    embed_table(db=db.get_cursor(), schema="upper", table="player", name_col="name")
-    embed_table(db=db.get_cursor(), schema="upper", table="club", name_col="name")
-    embed_table(db=db.get_cursor(), schema="upper", table="championship", name_col="name")
-    embed_table(db=db.get_cursor(), schema="upper", table="continental_cup", name_col="name")
-    embed_table(db=db.get_cursor(), schema="upper", table="domestic_cup", name_col="name")
+    embed_table(db=db, schema="upper", table="player", name_col="name")
+    embed_table(db=db, schema="upper", table="club", name_col="name")
+    embed_table(db=db, schema="upper", table="championship", name_col="name")
+    embed_table(db=db, schema="upper", table="continental_cup", name_col="name")
+    embed_table(db=db, schema="upper", table="domestic_cup", name_col="name")
 
     if update_teams_performance:
         teams_performance = TeamsPerformance(db)

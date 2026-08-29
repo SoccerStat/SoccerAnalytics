@@ -28,7 +28,7 @@ class PostgresQuerying:
             return None
 
         try:
-            pg_cursor = self.postgres_conn.get_cursor()
+            pg_cursor = self.get_cursor()
             if params:
                 pg_cursor.execute(query, params)
             else:
