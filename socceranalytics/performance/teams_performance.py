@@ -41,6 +41,7 @@ class TeamsPerformance(BasePerformance, CompHelper):
         for season in seasons:
             log(f"\t{season}")
             for id_comp, name_comp in zip(self.data_loader.get_competition_ids(), self.data_loader.get_competition_names()):
+                log("\t\tFilling Performance table")
                 self.db.execute_query(
                     fill_teams_performance_template.format(
                         season=season,
@@ -56,8 +57,9 @@ class TeamsPerformance(BasePerformance, CompHelper):
                 # )
 
                 if ("UEFA" not in name_comp) and (season >= "2014_2015"):
+                    log("\t\tFilling Understat table")
                     understat_comp = super().get_understat_comp_from_soccerstat(name_comp)
-                    log(f"\t\t{understat_comp}")
+                    log(f"\t\t\t{understat_comp}")
                     xG_by_match = get_teams_xG(understat_comp, season[:4])
                     for match in xG_by_match:
                         self.db.execute_query(
