@@ -7,6 +7,7 @@ from socceranalytics.postgres.postgres_querying import PostgresQuerying
 
 from socceranalytics.data.paths import Config
 
+from socceranalytics.utils.entity_embedding import embed_table
 from socceranalytics.utils.utils import get_ti, parse_args
 from socceranalytics.utils.logging import log
 
@@ -31,6 +32,12 @@ def run(args):
 
     db = PostgresQuerying()
 
+    embed_table(db=db.get_cursor(), schema="upper", table="player", name_col="name")
+    embed_table(db=db.get_cursor(), schema="upper", table="club", name_col="name")
+    embed_table(db=db.get_cursor(), schema="upper", table="championship", name_col="name")
+    embed_table(db=db.get_cursor(), schema="upper", table="continental_cup", name_col="name")
+    embed_table(db=db.get_cursor(), schema="upper", table="domestic_cup", name_col="name")
+
     if update_teams_performance:
         teams_performance = TeamsPerformance(db)
         teams_performance.process_performance_table(min_season, max_season)
@@ -45,6 +52,8 @@ def run(args):
 
         team_player = TeamPlayer(db)
         team_player.update_team_player_table(min_season, max_season)
+
+    db.close()
 
     end_time = get_ti()
     log(f"--- {end_time - start_time} ---")
