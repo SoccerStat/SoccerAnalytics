@@ -1,6 +1,6 @@
-drop function if exists analytics.one_offensive_players_rankings;
+drop function if exists analytics.one_offensive_players_ranking;
 
-create function analytics.one_offensive_players_rankings(in_ranking character varying, in_comp character varying, in_seasons character varying[], first_week integer DEFAULT 0, last_week integer DEFAULT 100, first_date character varying DEFAULT '1970-01-01'::character varying, last_date character varying DEFAULT '2099-12-31'::character varying, day_slots character varying[] DEFAULT '{}'::character varying[], time_slots character varying[] DEFAULT '{}'::character varying[], side analytics.side DEFAULT 'both'::analytics.side, r integer DEFAULT 2)
+create function analytics.one_offensive_players_ranking(in_ranking character varying, in_comp character varying, in_seasons character varying[], first_week integer DEFAULT 0, last_week integer DEFAULT 100, first_date character varying DEFAULT '1970-01-01'::character varying, last_date character varying DEFAULT '2099-12-31'::character varying, day_slots character varying[] DEFAULT '{}'::character varying[], time_slots character varying[] DEFAULT '{}'::character varying[], side analytics.side DEFAULT 'both'::analytics.side, r integer DEFAULT 2)
     returns TABLE("Player" character varying, "Stat" numeric, "Competition" character varying)
     language plpgsql
 as

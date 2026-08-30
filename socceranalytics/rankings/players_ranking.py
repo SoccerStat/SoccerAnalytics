@@ -14,6 +14,10 @@ class PlayersRanking:
         self.ranking_sql_path = "socceranalytics.sql.rankings.players"
         self.data_loader = DataLoader(postgres_to_dataframe)
         self.db.execute_sql_file(self.ranking_sql_path, "all_players_rankings.sql")
+        self.db.execute_sql_file(self.ranking_sql_path, "all_players_rankings_enriched.sql")
+        self.db.execute_sql_file(self.ranking_sql_path, "one_offensive_players_ranking.sql")
+        self.db.execute_sql_file(self.ranking_sql_path, "one_players_ranking.sql")
+        self.db.execute_sql_file(self.ranking_sql_path, "one_players_ranking_enriched.sql")
 
     def build_ranking(
         self,

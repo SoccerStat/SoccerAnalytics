@@ -14,7 +14,10 @@ class TeamsRanking:
         self.db = postgres_to_dataframe
         self.ranking_sql_path = "socceranalytics.sql.rankings.teams"
         self.data_loader = DataLoader(postgres_to_dataframe)
+        self.db.execute_sql_file(self.ranking_sql_path, "all_teams_rankings.sql")
+        self.db.execute_sql_file(self.ranking_sql_path, "all_teams_rankings_enriched.sql")
         self.db.execute_sql_file(self.ranking_sql_path, "one_teams_ranking.sql")
+        self.db.execute_sql_file(self.ranking_sql_path, "overall_teams_ranking.sql")
 
     def __simulate_matches(
         self,

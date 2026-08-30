@@ -17,6 +17,7 @@ class DataLoader:
         # self.db.execute_sql_file(self.utils_sql_path, "embedding.sql")
         # self.db.execute_sql_file(self.utils_sql_path, "getters.sql")
         # self.db.execute_sql_file(self.utils_sql_path, "schemas.sql")
+        # self.db.execute_sql_file(self.utils_sql_path, "selected_matches.sql")
         # self.db.execute_sql_file(self.utils_sql_path, "setters.sql")
         # self.db.execute_sql_file(self.utils_sql_path, "types.sql")
 
