@@ -43,6 +43,9 @@ def run(args):
         teams_performance.process_performance_table(min_season, max_season)
         teams_performance.process_mapping_clubs_table()
 
+        # TODO: créer une table analytics.staging_teams_points_deductions qui regroupe les points de pénalité
+        #   Pour pouvoir ensuite la joindre avec staging_teams_performance dans les fonctions de teams_ranking
+
         all_teams = AllTeams(db)
         all_teams.process_all_teams_table()
 

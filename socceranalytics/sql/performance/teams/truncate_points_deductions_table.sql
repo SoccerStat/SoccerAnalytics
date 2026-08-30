@@ -1,0 +1,1 @@
+DELETE FROM analytics.staging_teams_points_deductions WHERE season = '{season}';
