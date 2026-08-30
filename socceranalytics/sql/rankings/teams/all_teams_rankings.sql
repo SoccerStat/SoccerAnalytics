@@ -22,8 +22,8 @@ begin
 
 			analytics.set_bigint_stat(sum(home_minutes), sum(away_minutes), side) as "Minutes",
 
-			--sum(home_score) as home_score,
-			--sum(away_score) as away_score,
+			-- sum(home_score) as home_score,
+			-- sum(away_score) as away_score,
 
 			analytics.set_bigint_stat(sum(home_match), sum(away_match), side) as Matches,
 
@@ -90,7 +90,7 @@ begin
 			OR LEFT(stats.time::text, 5) = ANY(time_slots)
 		)
 
-		group by stats.id_team, stats.club, stats.competition, chp.id --, "Last Opponent"
+		group by stats.id_team, stats.club, stats.competition, chp.id -- , "Last Opponent"
 	)
 
 	select
@@ -164,12 +164,10 @@ begin
 
 		case when ts."Att Passes"              = 0 then 0.0 else round(ts."Succ Passes"::numeric / ts."Att Passes"::numeric, r)                end as "Succ Passes Rate"
 
-		--ts."Last Opponent"
+		-- ts."Last Opponent"
 	from teams_stats ts
 	left join cup_ranking cr
 	on ts.id_team = cr.id_team;
 
 end;
 $$;
-
-alter function analytics.all_teams_rankings(varchar, character varying[], integer, integer, varchar, varchar, character varying[], character varying[], analytics.side, integer) owner to prd_analytics;

@@ -43,9 +43,7 @@ $$
 language plpgsql;
 
 
-/*
- * TODO: A revoir // Ajouter paramètres first_week, last_week pour choper le dernier adversaire de la période sélectionnée
- */
+-- TODO: A revoir // Ajouter paramètres first_week, last_week pour choper le dernier adversaire de la période sélectionnée
 create or replace function analytics.get_last_opponent(
 	in id_club varchar(20),
 	in id_season varchar(20)

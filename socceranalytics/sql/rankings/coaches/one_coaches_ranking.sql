@@ -12,15 +12,15 @@ begin
 	PERFORM analytics.check_side(side);
 
 	RETURN QUERY
-		/*with cup_ranking as (
-			select * from analytics.cup_ranking(in_comp, in_seasons)
-		),*/
+		-- with cup_ranking as (
+		-- 	select * from analytics.cup_ranking(in_comp, in_seasons)
+		-- ),
 		with coaches_stats as (
 			SELECT
 				case when played_home then home_manager else away_manager end as "Manager",
-				/*coalesce(stats.competition, 'ALL')*/ array_agg(distinct stats.competition) as "Competition",
-				/*coalesce(stats.club, 'ALL')*/ array_agg(distinct stats.club) as "Club",
-				/*coalesce(stats.season, 'ALL')*/ array_agg(distinct stats.season) as "Season",
+				array_agg(distinct stats.competition) as "Competition",
+				array_agg(distinct stats.club) as "Club",
+				array_agg(distinct stats.season) as "Season",
 
 				case when grouping(stats.club) = 1 then 'ALL' else 'Single' end as grouping_clubs,
 				case when grouping(stats.competition) = 1 then 'ALL' else 'Single' end as grouping_competitions,
@@ -35,20 +35,20 @@ begin
 					when 'Loses'        then analytics.set_bigint_stat(sum(home_lose), sum(away_lose), side)
 					when 'Clean Sheets' then analytics.set_bigint_stat(sum(case when home_clean_sheet != 0 then 1 else 0 end), sum(case when away_clean_sheet != 0 then 1 else 0 end), side)
 
-					--when 'Yellow Cards'         then analytics.set_bigint_stat(sum(case when home_y_cards != 0 then 1 else 0 end), sum(case when away_y_cards != 0 then 1 else 0 end), side)
-					--when 'Red Cards'            then analytics.set_bigint_stat(sum(home_r_cards), sum(away_r_cards), side)
-					--when 'Incl. 2 Yellow Cards' then analytics.set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), side)
+					-- when 'Yellow Cards'         then analytics.set_bigint_stat(sum(case when home_y_cards != 0 then 1 else 0 end), sum(case when away_y_cards != 0 then 1 else 0 end), side)
+					-- when 'Red Cards'            then analytics.set_bigint_stat(sum(home_r_cards), sum(away_r_cards), side)
+					-- when 'Incl. 2 Yellow Cards' then analytics.set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), side)
 
 					when 'Goals For'     then analytics.set_bigint_stat(sum(case when home_goals_for != 0 then 1 else 0 end), sum(case when away_goals_for != 0 then 1 else 0 end), side)
 					when 'Goals Against' then analytics.set_bigint_stat(sum(case when home_goals_against != 0 then 1 else 0 end), sum(case when away_goals_against != 0 then 1 else 0 end), side)
 					else null
 				end as "Involved Matches",
 
-				/*case
-					when chp.id is not null
-					then analytics.set_bigint_stat(sum(home_points), sum(away_points), side)
-					else null
-				end as "Points",*/
+				-- case
+				--   when chp.id is not null
+				--   then analytics.set_bigint_stat(sum(home_points), sum(away_points), side)
+				--   else null
+				-- end as "Points",
 
 				analytics.set_bigint_stat(sum(home_win), sum(away_win), side) as "Wins",
 				analytics.set_bigint_stat(sum(home_lose), sum(away_lose), side) as "Loses",
@@ -81,9 +81,9 @@ begin
 					WHEN 'xG For'                  THEN analytics.set_numeric_stat(sum(home_xg_for)::numeric, sum(away_xg_for)::numeric, side)
 					WHEN 'xG Against'              THEN analytics.set_numeric_stat(sum(home_xg_against)::numeric, sum(away_xg_against)::numeric, side)
 
-					--WHEN 'Yellow Cards'            THEN analytics.set_bigint_stat(sum(home_y_cards), sum(away_y_cards), side)
-					--WHEN 'Red Cards'               THEN analytics.set_bigint_stat(sum(home_r_cards), sum(away_r_cards), side)
-					--WHEN 'Incl. 2 Yellow Cards'    THEN analytics.set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), side)
+					-- WHEN 'Yellow Cards'            THEN analytics.set_bigint_stat(sum(home_y_cards), sum(away_y_cards), side)
+					-- WHEN 'Red Cards'               THEN analytics.set_bigint_stat(sum(home_r_cards), sum(away_r_cards), side)
+					-- WHEN 'Incl. 2 Yellow Cards'    THEN analytics.set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), side)
 
 					WHEN 'Fouls'                   THEN analytics.set_bigint_stat(sum(home_fouls), sum(away_fouls), side)
 
@@ -93,8 +93,8 @@ begin
 			FROM analytics.staging_teams_performance as "stats"
 			LEFT JOIN upper.championship chp
 			ON stats.id_comp = chp.id
-			--left join cup_ranking cr
-			--on stats.id_team = cr.id_team
+			-- left join cup_ranking cr
+			-- on stats.id_team = cr.id_team
 			where CASE WHEN 'all' = ANY(ARRAY(SELECT lower(x) FROM unnest(in_comps) AS x)) and not 'bundesliga' = any(ARRAY(SELECT lower(x) FROM unnest(in_comps) AS x)) THEN true ELSE stats.competition = ANY(ARRAY(SELECT x FROM unnest(in_comps) AS x)) END
 			AND stats.season = any(in_seasons)
 			AND (
@@ -128,17 +128,17 @@ begin
 			cs."Club",
 			cs."Season",
 
-			/*coalesce(
-				null,
-				--cr.ranking,
-				rank() over(
-					partition by cs."Competition"
-					order by
-						cs."Points" desc,
-						cs."Goals For" - cs."Goals Against" desc,
-						cs."Goals For" desc
-				)::text
-			) as "Ranking",*/
+			-- coalesce(
+			--   null,
+			--   -- cr.ranking,
+			--   rank() over(
+			--     partition by cs."Competition"
+			--     order by
+			--       cs."Points" desc,
+			--       cs."Goals For" - cs."Goals Against" desc,
+			--       cs."Goals For" desc
+			--   )::text
+			-- ) as "Ranking",
 
 			rank() over(
 				partition by cs."Competition"
@@ -188,13 +188,13 @@ begin
 
 					WHEN 'Succ Passes Rate' THEN case when cs."Att Passes" = 0 then 0.0 else round(cs."Succ Passes"::numeric / cs."Att Passes"::numeric, r) end
 
-					--WHEN 'xG For/Match'     THEN round(cs."xG For" / cs."Matches"::numeric, r)
-					--WHEN 'xG Against/Match' THEN round(cs."xG Against" / cs."Matches"::numeric, r)
+					-- WHEN 'xG For/Match'     THEN round(cs."xG For" / cs."Matches"::numeric, r)
+					-- WHEN 'xG Against/Match' THEN round(cs."xG Against" / cs."Matches"::numeric, r)
 				end
 			)::numeric as "Stat"
 		from coaches_stats cs
-		/*left join cup_ranking cr
-		on cs.id_team = cr.id_team*/
+		-- left join cup_ranking cr
+		-- on cs.id_team = cr.id_team
 		where (
 			(group_by_club AND cs.grouping_clubs != 'ALL')
 	   		OR (NOT group_by_club AND cs.grouping_clubs = 'ALL')

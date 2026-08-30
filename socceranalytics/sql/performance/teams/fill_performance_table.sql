@@ -4,7 +4,7 @@ with club_country as (
     left join upper.country co
     on cl.country = co.diminutive
 ),
-selected_matches as materialized (
+selected_matches as materialized ( -- TODO: remplacer par la function analytics.selected_matches
 	select
 		m.id,
 		m.home_team,
@@ -168,7 +168,7 @@ with club_country as (
     left join upper.country co
     on cl.country = co.diminutive
 ),
-selected_matches as materialized (
+selected_matches as materialized ( -- TODO: remplacer par la function analytics.selected_matches
 	select
 		m.id,
 		m.home_team,

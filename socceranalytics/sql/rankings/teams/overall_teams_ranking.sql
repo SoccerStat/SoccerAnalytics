@@ -64,5 +64,3 @@ begin
 		ORDER BY r."Points" desc, r."Goals Diff" desc, r."Goals For" desc;
 end;
 $$;
-
-alter function analytics.overall_teams_ranking(varchar, character varying[], integer, integer, varchar, varchar, character varying[], character varying[], analytics.side) owner to prd_analytics;

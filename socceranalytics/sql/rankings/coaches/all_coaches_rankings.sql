@@ -11,16 +11,16 @@ begin
 	PERFORM analytics.check_side(side);
 
 	RETURN QUERY
-	/*with cup_ranking as (
-		select *
-		from analytics.cup_ranking(in_comp, in_seasons)
-	),*/
+	-- with cup_ranking as (
+	-- 	 select *
+	--   from analytics.cup_ranking(in_comp, in_seasons)
+	-- ),
 	with coaches_stats as (
 		SELECT
 			CASE WHEN played_home THEN home_manager ELSE away_manager END AS "Coach",
-			/*coalesce(stats.club, 'ALL')*/ array_agg(distinct stats.club) as "Club",
-			/*coalesce(stats.competition, 'ALL')*/ array_agg(distinct stats.competition) as "Competition",
-			/*coalesce(stats.season, 'ALL')*/ array_agg(distinct stats.season) AS "Season",
+			array_agg(distinct stats.club) as "Club",
+			array_agg(distinct stats.competition) as "Competition",
+			array_agg(distinct stats.season) AS "Season",
 
 			case when grouping(stats.club) = 1 then 'ALL' else 'Single' end as grouping_clubs,
 			case when grouping(stats.competition) = 1 then 'ALL' else 'Single' end as grouping_competitions,
@@ -46,11 +46,11 @@ begin
 
 			analytics.set_numeric_stat(sum(home_xg_against)::numeric, sum(away_xg_against)::numeric, side) as "xG Against (fbref)",
 
-			--analytics.set_bigint_stat(sum(home_y_cards), sum(away_y_cards), side) as "Yellow Cards",
-			--analytics.set_bigint_stat(sum(home_r_cards), sum(away_r_cards), side) as "Red Cards",
-			--analytics.set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), side) as "Incl. 2 Yellow Cards",
+			-- analytics.set_bigint_stat(sum(home_y_cards), sum(away_y_cards), side) as "Yellow Cards",
+			-- analytics.set_bigint_stat(sum(home_r_cards), sum(away_r_cards), side) as "Red Cards",
+			-- analytics.set_bigint_stat(sum(home_yr_cards), sum(away_yr_cards), side) as "Incl. 2 Yellow Cards",
 
-			--analytics.set_bigint_stat(sum(home_fouls), sum(away_fouls), side) as "Fouls",
+			-- analytics.set_bigint_stat(sum(home_fouls), sum(away_fouls), side) as "Fouls",
 
 			analytics.set_bigint_stat(sum(home_shots_for), sum(away_shots_for), side) as "Shots For",
 			analytics.set_bigint_stat(sum(home_shots_ot_for), sum(away_shots_ot_for), side) as "Shots on Target For",
@@ -138,10 +138,10 @@ begin
 			else 0.0
 		end as "xG Against/Match (fbref)",
 
-		--cs."Yellow Cards",
-		--cs."Red Cards",
-		--cs."Incl. 2 Yellow Cards",
-		--cs."Fouls",
+		-- cs."Yellow Cards",
+		-- cs."Red Cards",
+		-- cs."Incl. 2 Yellow Cards",
+		-- cs."Fouls",
 
 		cs."Shots For",
 		cs."Shots on Target For",
@@ -173,8 +173,8 @@ begin
 		(group_by_season AND cs.grouping_seasons != 'ALL')
    		OR (NOT group_by_season AND cs.grouping_seasons = 'ALL')
 	);
-	--left join cup_ranking cr
-	--on ts.id_team = cr.id_team
+	-- left join cup_ranking cr
+	-- on ts.id_team = cr.id_team
 
 
 end;

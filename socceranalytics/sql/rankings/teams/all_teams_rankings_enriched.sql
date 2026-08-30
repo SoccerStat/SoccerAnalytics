@@ -67,9 +67,6 @@ begin
 
 			round(avg(att), 0) as Attendance,
 
-			--sum(home_score) as home_score,
-			--sum(away_score) as away_score,
-
 			analytics.set_bigint_stat(sum(home_match), sum(away_match), side) as Matches,
 
 			analytics.set_bigint_stat(sum(home_minutes), sum(away_minutes), side) as "Minutes",
@@ -111,7 +108,7 @@ begin
 		left join understat_enriched u
 		on case when stats.played_home then stats.club || ' - ' || stats.opponent else stats.opponent || ' - ' || stats.club end = u.dual
 		and u.team = stats.club
-		group by stats.id_team, "Club", "Competition" --, "Last Opponent"
+		group by stats.id_team, "Club", "Competition" -- , "Last Opponent"
 	)
 
 	select
@@ -186,12 +183,10 @@ begin
 
 		case when ts."Att Passes"              = 0 then 0.0 else round(ts."Succ Passes"::numeric / ts."Att Passes"::numeric, r)                end as "Succ Passes Rate"
 
-		--ts."Last Opponent"
+		-- ts."Last Opponent"
 	from teams_stats ts;
-	--left join cup_ranking cr
-	--on ts.id_team = cr.id_team;
+	-- left join cup_ranking cr
+	-- on ts.id_team = cr.id_team;
 
 end;
 $$;
-
-alter function analytics.all_teams_rankings_enriched(varchar, character varying[], integer, integer, varchar, varchar, character varying[], character varying[], analytics.side, integer) owner to prd_analytics;

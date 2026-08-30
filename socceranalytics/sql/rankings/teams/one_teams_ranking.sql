@@ -144,8 +144,8 @@ begin
 
 					WHEN 'Succ Passes Rate' THEN case when stats."Att Passes" = 0 then 0.0 else round(stats."Succ Passes"::numeric / stats."Att Passes"::numeric, r) end
 
-					--WHEN 'xG For/Match'     THEN round(stats."xG For" / stats."Matches"::numeric, r)
-					--WHEN 'xG Against/Match' THEN round(stats."xG Against" / stats."Matches"::numeric, r)
+					-- WHEN 'xG For/Match'     THEN round(stats."xG For" / stats."Matches"::numeric, r)
+					-- WHEN 'xG Against/Match' THEN round(stats."xG Against" / stats."Matches"::numeric, r)
 				end
 			)::numeric as "Stat"
 		from stats
@@ -153,5 +153,3 @@ begin
 		on stats.id_team = cr.id_team;
 end;
 $$;
-
-alter function analytics.one_teams_ranking(varchar, varchar, character varying[], integer, integer, varchar, varchar, character varying[], character varying[], analytics.side, integer) owner to prd_analytics;
