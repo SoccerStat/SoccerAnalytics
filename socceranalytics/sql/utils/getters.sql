@@ -40,7 +40,7 @@ create function analytics.get_last_opponent(id_club character varying, id_season
     language plpgsql
 as
 $$
-declare
+DECLARE
     season_schema text;
 	opponent_name varchar(100);
 	query text;

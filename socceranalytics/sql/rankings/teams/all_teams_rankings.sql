@@ -4,8 +4,6 @@ create function analytics.all_teams_rankings(in_comp character varying, in_seaso
     language plpgsql
 as
 $$
-DECLARE
-	query text;
 begin
 	PERFORM analytics.check_side(side);
 

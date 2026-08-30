@@ -1,3 +1,5 @@
+drop function if exists analytics.selected_matches;
+
 create or replace function analytics.selected_matches(
         in season varchar(20),
         in comp varchar(100),

@@ -89,7 +89,7 @@ create or replace function analytics.check_dates(
 )
 returns void as
 $$
-declare
+DECLARE
 	d1 date;
 	d2 date;
 begin

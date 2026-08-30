@@ -52,7 +52,7 @@ create or replace function analytics.get_last_opponent(
 )
 returns varchar(100)
 as $$
-declare 
+DECLARE
     season_schema text;
 	opponent_name varchar(100);
 	query text;
