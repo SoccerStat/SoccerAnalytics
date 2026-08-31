@@ -18,6 +18,7 @@ def run(args):
     min_season = args.min_season
     max_season = args.max_season
     update_teams_performance = args.update_teams_performance
+    points_deductions = args.points_deductions
     update_players_performance = args.update_players_performance
 
     if not max_season:
@@ -39,13 +40,14 @@ def run(args):
     embed_table(db=db, schema="upper", table="continental_cup", name_col="name")
     embed_table(db=db, schema="upper", table="domestic_cup", name_col="name")
 
+    if points_deductions:
+        teams_points_deductions = PointsDeductions(db)
+        teams_points_deductions.process_points_deductions_table()
+
     if update_teams_performance:
         teams_performance = TeamsPerformance(db)
         teams_performance.process_performance_table(min_season, max_season)
         teams_performance.process_mapping_clubs_table()
-
-        teams_points_deductions = PointsDeductions(db)
-        teams_points_deductions.process_points_deductions_table()
 
         all_teams = AllTeams(db)
         all_teams.process_all_teams_table()
