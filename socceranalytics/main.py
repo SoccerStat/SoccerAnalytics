@@ -1,5 +1,6 @@
 from socceranalytics.all_items.all_teams import AllTeams
 from socceranalytics.by_season_data.fill_position_team_player import TeamPlayer
+from socceranalytics.misc.points_deductions import PointsDeductions
 from socceranalytics.performance.teams_performance import TeamsPerformance
 from socceranalytics.performance.players_performance import PlayersPerformance
 
@@ -43,8 +44,8 @@ def run(args):
         teams_performance.process_performance_table(min_season, max_season)
         teams_performance.process_mapping_clubs_table()
 
-        # TODO: créer une table analytics.staging_teams_points_deductions qui regroupe les points de pénalité
-        #   Pour pouvoir ensuite la joindre avec staging_teams_performance dans les fonctions de teams_ranking
+        teams_points_deductions = PointsDeductions(db)
+        teams_points_deductions.process_points_deductions_table()
 
         all_teams = AllTeams(db)
         all_teams.process_all_teams_table()

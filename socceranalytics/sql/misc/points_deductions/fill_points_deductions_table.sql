@@ -6,7 +6,7 @@ WITH points_deductions AS (
         t.id AS id_team,
         c.name AS club,
         points_deductions
-    FROM season_2021_2022.team t
+    FROM season_{season}.team t
     LEFT JOIN upper.championship chp
     on t.competition = chp.id
     LEFT JOIN upper.continental_cup c_cup
