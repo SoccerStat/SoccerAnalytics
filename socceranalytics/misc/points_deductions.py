@@ -19,13 +19,13 @@ class PointsDeductions:
         self.db.execute_sql_file(self.sql_path, "truncate_points_deductions_table.sql")
 
         log("\tFilling the Teams' points deductions table...")
-        teams_ranking_template = self.db.read_sql_file(self.sql_path, "fill_points_deductions_table.sql")
+        points_deductions_template = self.db.read_sql_file(self.sql_path, "fill_points_deductions_table.sql")
 
         seasons = self.data_loader.get_seasons(min_season, max_season)
 
         for season in seasons:
             log(f"\t\t{season}")
-            teams_ranking_template.format(season=season)
+            self.db.execute_query(points_deductions_template.format(season=season))
 
         n_rows_inserted_table = self.db.execute_query(
             "SELECT count(*) from analytics.staging_teams_points_deductions;",
