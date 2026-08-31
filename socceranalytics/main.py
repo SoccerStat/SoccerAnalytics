@@ -42,7 +42,7 @@ def run(args):
 
     if update_points_deductions:
         teams_points_deductions = PointsDeductions(db)
-        teams_points_deductions.process_points_deductions_table()
+        teams_points_deductions.process_points_deductions_table(min_season, max_season)
 
     if update_teams_performance:
         teams_performance = TeamsPerformance(db)
