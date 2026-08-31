@@ -208,7 +208,7 @@ begin
 		'Attendance',
 		'Matches',
 		'Points',
-		'Points/Match',
+		'Points/Match (exclude p.d.)',
 		'Wins',
 		'Draws',
 		'Loses',
