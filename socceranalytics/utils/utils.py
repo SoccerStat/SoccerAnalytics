@@ -24,9 +24,9 @@ def parse_args():
     parser.add_argument("--env", type=str, required=True, choices=["dev", "prod"])
     parser.add_argument("--min_season", type=season_type, required=False)
     parser.add_argument("--max_season", type=season_type, required=False)
-    parser.add_argument("--update_points_deductions", type=bool, required=False, default=False)
-    parser.add_argument("--update_teams_performance", type=bool, required=False, default=False)
-    parser.add_argument("--update_players_performance", type=bool, required=False, default=False)
+    parser.add_argument("--update_points_deductions", type=bool, required=False, default=True)
+    parser.add_argument("--update_teams_performance", type=bool, required=False, default=True)
+    parser.add_argument("--update_players_performance", type=bool, required=False, default=True)
 
     return parser.parse_args()
 
